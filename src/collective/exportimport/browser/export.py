@@ -207,6 +207,20 @@ class RichttextFieldSerializerWithRawText(DefaultFieldSerializer):
             }
 
 
+if HAS_AT and HAS_BLOB:
+
+    @adapter(INamedImageField, IBaseObject, ICollectiveExportimportLayer)
+    class ATImageFieldSerializerWithBlobs(DefaultFieldSerializer):
+        def __call__(self):
+            pass
+
+
+    @adapter(INamedFileField, IBaseObject, ICollectiveExportimportLayer)
+    class ATFileFieldSerializerWithBlobs(DefaultFieldSerializer):
+        def __call__(self):
+            pass
+
+
 @adapter(IRelationValue)
 @implementer(IJsonCompatible)
 def relationvalue_converter_uuid(value):

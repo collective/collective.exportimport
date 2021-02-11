@@ -27,6 +27,9 @@
       permission="cmf.ManagePortal"
       />
 
+  <adapter zcml:condition="installed Products.Archetypes" factory=".export.ATFileFieldSerializerWithBlobs" />
+  <adapter zcml:condition="installed Products.Archetypes" factory=".export.ATImageFieldSerializerWithBlobs" />
+
   <adapter factory=".export.FileFieldSerializerWithBlobs" />
   <adapter factory=".export.ImageFieldSerializerWithBlobs" />
   <adapter factory=".export.RichttextFieldSerializerWithRawText" />
