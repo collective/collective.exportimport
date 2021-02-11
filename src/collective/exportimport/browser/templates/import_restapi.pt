@@ -1,0 +1,53 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="plone.z3cform"
+      metal:use-macro="context/main_template/macros/master">
+
+<div metal:fill-slot="main">
+    <tal:main-macro metal:define-macro="main">
+
+      <h1 class="documentFirstHeading">Export content using plone.restapi</h1>
+
+      <p class="documentDescription">Export all instances of one content types as one json file.</p>
+
+        <form action="@@export_restapi" method="post" enctype="multipart/form-data">
+            <div class="field">
+              <label for="portal_type">
+                <span i18n:translate="">Content Type to export</span>
+              </label>
+              <select id="portal_type"
+                      name="portal_type">
+                <option selected="" value="" title="" i18n:translate="">Choose one</option>
+                <option tal:repeat="ptype view/portal_types"
+                        tal:content="string:${ptype/title} - ${ptype/value} (${ptype/number})"
+                        tal:attributes="value ptype/value; title ptype/title;">
+                </option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>
+                <input
+                    type="checkbox"
+                    name="include_blobs:boolean"
+                    id="include_blobs"
+                    value="0"
+                    />
+                Include images and files as base-64 encoded strings?
+              </label>
+            </div>
+
+            <div class="formControls" class="form-group">
+                <input type="hidden" name="form.submitted" value="1"/>
+                <button class="btn btn-primary submit-widget button-field context"
+                        type="submit" name="submit" value="export">Export
+                </button>
+            </div>
+        </form>
+
+    </tal:main-macro>
+</div>
+
+</html>

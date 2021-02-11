@@ -19,4 +19,24 @@
       directory="static"
       />
 
+  <browser:page
+      name="export_restapi"
+      for="zope.interface.Interface"
+      class=".export.ExportRestapi"
+      template="templates/export_restapi.pt"
+      permission="cmf.ManagePortal"
+      />
+
+  <adapter factory=".export.FileFieldSerializerWithBlobs" />
+  <adapter factory=".export.ImageFieldSerializerWithBlobs" />
+  <adapter factory=".export.RichttextFieldSerializerWithRawText" />
+
+  <browser:page
+      name="import_restapi"
+      for="zope.interface.Interface"
+      class=".import.ImportRestapi"
+      template="templates/import_restapi.pt"
+      permission="cmf.ManagePortal"
+      />
+
 </configure>
