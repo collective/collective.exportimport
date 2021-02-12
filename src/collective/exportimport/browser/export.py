@@ -8,18 +8,24 @@ from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.interfaces import IDexterityFTI
 from plone.namedfile.interfaces import INamedFileField
 from plone.namedfile.interfaces import INamedImageField
+from plone.restapi.interfaces import IFieldSerializer
 from plone.restapi.interfaces import IJsonCompatible
 from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.restapi.serializer.dxfields import DefaultFieldSerializer
 from Products.CMFCore.interfaces import IContentish
+from Products.CMFCore.utils import getToolByName
+from Products.CMFDynamicViewFTI.interfaces import IDynamicViewTypeInformation
 from Products.Five import BrowserView
 from z3c.relationfield.interfaces import IRelationValue
+from zc.relation.interfaces import ICatalog
 from zope.component import adapter
 from zope.component import getMultiAdapter
+from zope.component import queryUtility
 from zope.i18n import translate
 from zope.interface import alsoProvides
 from zope.interface import implementer
+from zope.interface import Interface
 from zope.interface import noLongerProvides
 
 import base64
@@ -35,7 +41,6 @@ except pkg_resources.DistributionNotFound:
     HAS_AT = False
 else:
     HAS_AT = True
-    from Products.Archetypes.interfaces import IBaseObject
 
 
 try:
@@ -44,12 +49,18 @@ except pkg_resources.DistributionNotFound:
     HAS_BLOB = False
 else:
     HAS_BLOB = True
-    from plone.app.blob.interfaces import IBlobField
-    from plone.app.blob.interfaces import IBlobImageField
-
 
 
 logger = logging.getLogger(__name__)
+
+
+class IBase64BlobsMarker(Interface):
+    """A marker interface to override default serializers."""
+
+
+class IRawRichTextMarker(Interface):
+    """A marker interface to override default serializers for Richtext."""
+
 
 
 class ExportRestapi(BrowserView):
@@ -60,6 +71,9 @@ class ExportRestapi(BrowserView):
 
     def __call__(self, portal_type=None, include_blobs=False):
         self.portal_type = portal_type
+
+        self.fixup_request()
+
         if not self.request.form.get('form.submitted', False):
             return self.index()
 
@@ -95,17 +109,32 @@ class ExportRestapi(BrowserView):
             'attachment; filename="{0}.json"'.format(self.portal_type))
         return response.write(data)
 
-    def export_content(self, include_blobs=False):
-        data = []
-        query = {'portal_type': self.portal_type, 'Language': 'all'}
+    def build_query(self):
+        query = {'portal_type': self.portal_type}
+        catalog = api.portal.get_tool('portal_catalog')
+        if 'Language' in catalog.indexes():
+            query['Language'] = 'all'
         # custom setting per type
         query.update(self.QUERY.get(self.portal_type, {}))
+        query = self.update_query(query)
+        return query
+
+    def update_query(self, query):
+        """Overwrite this if you want more control over which content to export."""
+        return query
+
+    def export_content(self, include_blobs=False):
+        data = []
+        query = self.build_query()
         brains = api.content.find(**query)
         logger.info(u'Exporting {} {}'.format(len(brains), self.portal_type))
 
-        if not include_blobs:
-            # remove browserlayer to skip finding the custom serializer
-            noLongerProvides(self.request, ICollectiveExportimportLayer)
+        if include_blobs:
+            # Add marker-interface to request to use our custom serializers
+            alsoProvides(self.request, IBase64BlobsMarker)
+
+        # Override richtext serializer to export links using resolveuid/xxx
+        alsoProvides(self.request, IRawRichTextMarker)
 
         for index, brain in enumerate(brains, start=1):
             skip = False
@@ -122,13 +151,14 @@ class ExportRestapi(BrowserView):
             try:
                 serializer = getMultiAdapter((obj, self.request), ISerializeToJson)
                 item = serializer(include_items=False)
+                item = self.fixup_item(item)
                 data.append(item)
             except Exception as e:
                 logger.info(e)
 
-        if not include_blobs:
-            # restore browserlayer
-            alsoProvides(self.request, ICollectiveExportimportLayer)
+        if include_blobs:
+            # remove marker interface
+            noLongerProvides(self.request, IBase64BlobsMarker)
 
         return data
 
@@ -138,10 +168,14 @@ class ExportRestapi(BrowserView):
         catalog = api.portal.get_tool('portal_catalog')
         portal_types = api.portal.get_tool('portal_types')
         results = []
+        query = self.build_query()
         for fti in portal_types.listTypeInfo():
-            if not IDexterityFTI.providedBy(fti):
+            if not IDexterityFTI.providedBy(fti) and not IDynamicViewTypeInformation.providedBy(fti):
+                # Ignore non-DX and non-AT types
                 continue
-            number = len(catalog(portal_type=fti.id, Language='all'))
+            query['portal_type'] = fti.id
+            query['limit'] = 1
+            number = len(catalog(**query))
             if number >= 1:
                 results.append({
                     'number': number,
@@ -151,8 +185,20 @@ class ExportRestapi(BrowserView):
                 })
         return sorted(results, key=itemgetter('title'))
 
+    def fixup_request(self):
+        """Use this to override stuff (e.g. force a specific language in request)."""
+        return
 
-@adapter(INamedImageField, IDexterityContent, ICollectiveExportimportLayer)
+    def fixup_item(self, item):
+        """Used this to modify the serialized data."""
+        # drop stuff not needed for export/import
+        item.pop('@components')
+        item.pop('next_item')
+        item.pop('previous_item')
+        return item
+
+
+@adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
 class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
     def __call__(self):
         image = self.field.get(self.context)
@@ -173,7 +219,7 @@ class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
         return json_compatible(result)
 
 
-@adapter(INamedFileField, IDexterityContent, ICollectiveExportimportLayer)
+@adapter(INamedFileField, IDexterityContent, IBase64BlobsMarker)
 class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
     def __call__(self):
         namedfile = self.field.get(self.context)
@@ -194,7 +240,7 @@ class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
         return json_compatible(result)
 
 
-@adapter(IRichText, IDexterityContent, ICollectiveExportimportLayer)
+@adapter(IRichText, IDexterityContent, IRawRichTextMarker)
 class RichttextFieldSerializerWithRawText(DefaultFieldSerializer):
     def __call__(self):
         value = self.get_value()
@@ -207,18 +253,58 @@ class RichttextFieldSerializerWithRawText(DefaultFieldSerializer):
             }
 
 
-if HAS_AT and HAS_BLOB:
+if HAS_AT:
+    from plone.restapi.serializer.atfields import DefaultFieldSerializer as ATDefaultFieldSerializer
+    from Products.Archetypes.interfaces.field import IFileField
+    from Products.Archetypes.interfaces import IBaseObject
+    from plone.app.blob.interfaces import IBlobField
+    from plone.app.blob.interfaces import IBlobImageField
+    from Products.Archetypes.interfaces.field import IImageField
+    from OFS.Image import Pdata
 
-    @adapter(INamedImageField, IBaseObject, ICollectiveExportimportLayer)
-    class ATImageFieldSerializerWithBlobs(DefaultFieldSerializer):
+    @adapter(IImageField, IBaseObject, IBase64BlobsMarker)
+    @implementer(IFieldSerializer)
+    class ATImageFieldSerializer(ATDefaultFieldSerializer):
         def __call__(self):
-            pass
+            image = self.field.get(self.context)
+            if not image:
+                return None
+            result = {
+                "filename": self.field.getFilename(self.context),
+                "content-type": image.getContentType(),
+                "data": base64.b64encode(image.data.data if isinstance(image.data, Pdata) else image.data),
+                "encoding": "base64",
+            }
+            return json_compatible(result)
 
 
-    @adapter(INamedFileField, IBaseObject, ICollectiveExportimportLayer)
-    class ATFileFieldSerializerWithBlobs(DefaultFieldSerializer):
+    @adapter(IFileField, IBaseObject, IBase64BlobsMarker)
+    @implementer(IFieldSerializer)
+    class ATFileFieldSerializer(ATDefaultFieldSerializer):
         def __call__(self):
-            pass
+            file_obj = self.field.get(self.context)
+            if not file_obj:
+                return None
+            result = {
+                "filename": self.field.getFilename(self.context),
+                "content-type": self.field.getContentType(self.context),
+                "data": base64.b64encode(file_obj.data.data),
+                "encoding": "base64",
+            }
+            return json_compatible(result)
+
+    @adapter(IBlobImageField, IBaseObject, IBase64BlobsMarker)
+    @implementer(IFieldSerializer)
+    class ATImageFieldSerializerWithBlobs(ATDefaultFieldSerializer):
+        # TODO
+        pass
+
+
+    @adapter(IBlobField, IBaseObject, IBase64BlobsMarker)
+    @implementer(IFieldSerializer)
+    class ATFileFieldSerializerWithBlobs(ATDefaultFieldSerializer):
+        # TODO
+        pass
 
 
 @adapter(IRelationValue)
@@ -248,9 +334,6 @@ class ExportRelations(BrowserView):
 
     def get_all_references(self):
         results = []
-        from Products.CMFCore.utils import getToolByName
-        from zope.component import queryUtility
-        from zc.relation.interfaces import ICatalog
 
         if HAS_AT:
             from Products.Archetypes.config import REFERENCE_CATALOG
@@ -270,19 +353,20 @@ class ExportRelations(BrowserView):
 
         # Dexterity
         # Get all data from zc.relation (relation_catalog)
-        portal_catalog = getToolByName(self.context, 'portal_catalog')
-        relation_catalog = queryUtility(ICatalog)
-        for rel in relation_catalog.findRelations():
-            if rel.from_path and rel.to_path:
-                from_brain = portal_catalog(path=dict(query=rel.from_path,
-                                                      depth=0))
-                to_brain = portal_catalog(path=dict(query=rel.to_path, depth=0))
-                if len(from_brain) > 0 and len(to_brain) > 0:
-                    results.append({
-                        'from_uuid': from_brain[0].UID,
-                        'to_uuid': to_brain[0].UID,
-                        'relationship': rel.from_attribute,
-                    })
+        relation_catalog = queryUtility(ICatalog, None)
+        if relation_catalog is not None:
+            portal_catalog = getToolByName(self.context, 'portal_catalog')
+            for rel in relation_catalog.findRelations():
+                if rel.from_path and rel.to_path:
+                    from_brain = portal_catalog(path=dict(query=rel.from_path,
+                                                          depth=0))
+                    to_brain = portal_catalog(path=dict(query=rel.to_path, depth=0))
+                    if len(from_brain) > 0 and len(to_brain) > 0:
+                        results.append({
+                            'from_uuid': from_brain[0].UID,
+                            'to_uuid': to_brain[0].UID,
+                            'relationship': rel.from_attribute,
+                        })
 
         return results
 
@@ -372,6 +456,7 @@ class ExportMembers(BrowserView):
             'groups': json_compatible(groups),
             }
         if member is not None:
+            # TODO: Add support for any additional member-properties.
             for prop in self.MEMBER_PROPERTIES:
                 props[prop] = json_compatible(member.getProperty(prop))
         return props
@@ -405,7 +490,10 @@ class ExportTranslations(BrowserView):
 
             if not skip:
                 results.append(item)
-                logger.info(item)
+
+        # TODO: Add support for LinguaPlone
+        # TODO: Add support for raptus.multilingual
+
         data = json.dumps(results, indent=4)
         filename = 'translations.json'
         self.request.response.setHeader('Content-Type', 'application/json')
@@ -435,10 +523,8 @@ class ExportLocalRoles(BrowserView):
         from Products.CMFPlone.utils import base_hasattr
 
         def get_localroles(obj, path):
-            roles = base_hasattr(obj, '__ac_local_roles__')
-            if not roles:
+            if not base_hasattr(obj, '__ac_local_roles__'):
                 return
-            logger.info(u'roles: {}'.format(roles))
             if not base_hasattr(obj, 'UID'):
                 return
             results.append({'uuid': obj.UID(), 'localroles': obj.__ac_local_roles__})

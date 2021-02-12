@@ -33,9 +33,10 @@
                     type="checkbox"
                     name="include_blobs:boolean"
                     id="include_blobs"
-                    value="0"
+                    value="1"
+                    checked
                     />
-                Include images and files as base-64 encoded strings?
+                Include data from image- and file-fields as base-64 encoded strings?
               </label>
             </div>
 
