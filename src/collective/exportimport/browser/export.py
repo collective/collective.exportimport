@@ -296,15 +296,33 @@ if HAS_AT:
     @adapter(IBlobImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
     class ATImageFieldSerializerWithBlobs(ATDefaultFieldSerializer):
-        # TODO
-        pass
 
+        def __call__(self):
+            image = self.field.get(self.context)
+            if not image:
+                return None
+            result = {
+                "filename": self.field.getFilename(self.context),
+                "content-type": image.getContentType(),
+                "data": base64.b64encode(image.data.data if isinstance(image.data, Pdata) else image.data),
+                "encoding": "base64",
+            }
+            return json_compatible(result)
 
     @adapter(IBlobField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
     class ATFileFieldSerializerWithBlobs(ATDefaultFieldSerializer):
-        # TODO
-        pass
+        def __call__(self):
+            file_obj = self.field.get(self.context)
+            if not file_obj:
+                return None
+            result = {
+                "filename": self.field.getFilename(self.context),
+                "content-type": self.field.getContentType(self.context),
+                "data": base64.b64encode(file_obj.data.data),
+                "encoding": "base64",
+            }
+            return json_compatible(result)
 
 
 @adapter(IRelationValue)
