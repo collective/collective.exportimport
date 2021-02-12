@@ -63,7 +63,7 @@ class IRawRichTextMarker(Interface):
 
 
 
-class ExportRestapi(BrowserView):
+class ExportContent(BrowserView):
 
     QUERY = {}
 

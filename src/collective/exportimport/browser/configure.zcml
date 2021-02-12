@@ -19,14 +19,44 @@
       directory="static"
       />
 
+  <!-- Exports -->
   <browser:page
-      name="export_restapi"
+      name="export_content"
       for="zope.interface.Interface"
-      class=".export.ExportRestapi"
-      template="templates/export_restapi.pt"
+      class=".export.ExportContent"
+      template="templates/export_form.pt"
       permission="cmf.ManagePortal"
       />
 
+  <browser:page
+      name="export_relations"
+      for="zope.interface.Interface"
+      class=".export.ExportRelations"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="export_members"
+      for="zope.interface.Interface"
+      class=".export.ExportMembers"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="export_translations"
+      for="zope.interface.Interface"
+      class=".export.ExportTranslations"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="export_localroles"
+      for="zope.interface.Interface"
+      class=".export.ExportLocalRoles"
+      permission="cmf.ManagePortal"
+      />
+
+  <!-- Serializers -->
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".export.ATFileFieldSerializer" />
   <adapter zcml:condition="installed Products.Archetypes"
@@ -42,10 +72,10 @@
   <adapter factory=".export.RichttextFieldSerializerWithRawText" />
 
   <browser:page
-      name="import_restapi"
+      name="import_content"
       for="zope.interface.Interface"
-      class=".import.ImportRestapi"
-      template="templates/import_restapi.pt"
+      class=".import.ImportContent"
+      template="templates/import_content.pt"
       permission="cmf.ManagePortal"
       />
 

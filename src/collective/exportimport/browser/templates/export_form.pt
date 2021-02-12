@@ -12,7 +12,7 @@
 
       <p class="documentDescription">Export all instances of one content types as one json file.</p>
 
-        <form action="@@export_restapi" method="post" enctype="multipart/form-data">
+        <form action="@@export_content" method="post" enctype="multipart/form-data">
             <div class="field">
               <label for="portal_type">
                 <span i18n:translate="">Content Type to export</span>
@@ -47,6 +47,10 @@
                         type="submit" name="submit" value="export">Export selected type
                 </button>
 
+            </div>
+            <div class="formControls" class="form-group">
+
+                <h2>Additional exports</h2>
                 <button class="btn btn-primary submit-widget button-field context"
                         type="submit" name="export_relations" value="export_relations">Export relations
                 </button>

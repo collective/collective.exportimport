@@ -2,6 +2,6 @@
 from Products.Five import BrowserView
 
 
-class ImportRestapi(BrowserView):
+class ImportContent(BrowserView):
 
     pass
