@@ -79,4 +79,12 @@
       permission="cmf.ManagePortal"
       />
 
+  <browser:page
+      zcml:condition="installed plone.app.multilingual"
+      name="import_translations"
+      for="zope.interface.Interface"
+      class=".import_forms.ImportTranslations"
+      permission="cmf.ManagePortal"
+      />
+
 </configure>

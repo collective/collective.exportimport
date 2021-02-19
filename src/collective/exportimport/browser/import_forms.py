@@ -3,7 +3,6 @@ from datetime import datetime
 from DateTime import DateTime
 from operator import itemgetter
 from plone import api
-from plone.app.multilingual.interfaces import ITranslationManager
 from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.interfaces import IDeserializeFromJson
 from Products.Five import BrowserView
@@ -23,6 +22,11 @@ try:
 except ImportError:
     HAS_RELAPI = False
 
+try:
+    from plone.app.multilingual.interfaces import ITranslationManager
+    HAS_PAM = True
+except ImportError:
+    HAS_PAM = False
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +181,7 @@ class ImportContent(BrowserView):
             new.modification_date = modification_date
             new.modification_date_migrated = modification_date
             # new.reindexObject(idxs=['modified'])
-            logger.info(f'Created {item["@type"]} {new.absolute_url()}')
+            logger.info('Created {} {}'.format(new.absolute_url(), item["@type"]))
             added.append(new.absolute_url())
         return added
 
@@ -226,7 +230,7 @@ class ImportContent(BrowserView):
         """Hook to inject dict-modifiers by types.
         """
         modifier = getattr(
-            self, f'fixup_{fix_portal_type(self.portal_type)}_dict', None
+            self, 'fixup_{}_dict'.format(fix_portal_type(self.portal_type)), None
         )
         if modifier and callable(modifier):
             item = modifier(item)
@@ -235,7 +239,7 @@ class ImportContent(BrowserView):
     def custom_modifier(self, obj):
         """Hook to inject modifiers of the imported item by type.
         """
-        modifier = getattr(self, f'fixup_{fix_portal_type(self.portal_type)}', None)
+        modifier = getattr(self, 'fixup_{}'.format(fix_portal_type(self.portal_type)), None)
         if modifier and callable(modifier):
             modifier(obj)
 
@@ -299,7 +303,7 @@ class ImportContent(BrowserView):
         if self.request.get('import_to_current_folder', None):
             return self.context
         method = getattr(
-            self, f'handle_{fix_portal_type(self.portal_type)}_container', None
+            self, 'handle_{}_container'.format(fix_portal_type(self.portal_type)), None
         )
         if method and callable(method):
             return method(item)
@@ -334,7 +338,7 @@ class ImportContent(BrowserView):
                     title=element,
                 )
                 logger.debug(
-                    f'Created container {folder.absolute_url()} to hold {item["@id"]}'
+                    u'Created container {} to hold {}'.format(folder.absolute_url(), item["@id"])
                 )
             else:
                 folder = folder[element]
@@ -346,101 +350,107 @@ def fix_portal_type(name):
     return name.lower().replace('.', '_').replace(' ', '')
 
 
-class ImportTranslations(BrowserView):
-    def __call__(self, jsonfile=None, return_json=False):
-        if jsonfile:
-            self.portal = api.portal.get()
-            status = 'success'
-            try:
-                if isinstance(jsonfile, str):
-                    return_json = True
-                    data = json.loads(jsonfile)
-                elif isinstance(jsonfile, FileUpload):
-                    data = json.loads(jsonfile.read())
+if HAS_PAM:
+
+    class ImportTranslations(BrowserView):
+        def __call__(self, jsonfile=None, return_json=False):
+            if jsonfile:
+                self.portal = api.portal.get()
+                status = 'success'
+                try:
+                    if isinstance(jsonfile, str):
+                        return_json = True
+                        data = json.loads(jsonfile)
+                    elif isinstance(jsonfile, FileUpload):
+                        data = json.loads(jsonfile.read())
+                    else:
+                        raise ('Data is neither text nor upload.')
+                except Exception as e:
+                    logger.error(e)
+                    status = 'error'
+                    msg = e
+                    api.portal.show_message(
+                        u'Fehler beim Dateiuplad: {}'.format(e),
+                        request=self.request,
+                    )
                 else:
-                    raise ('Data is neither text nor upload.')
-            except Exception as e:
-                logger.error(e)
-                status = 'error'
-                msg = e
-                api.portal.show_message(
-                    f'Fehler beim Dateiuplad: {e}',
-                    request=self.request,
-                )
-            else:
-                msg = self.do_import(data)
-                api.portal.show_message(msg, self.request)
+                    msg = self.do_import(data)
+                    api.portal.show_message(msg, self.request)
 
-        if return_json:
-            msg = {'state': status, 'msg': msg}
-            return json.dumps(msg)
-        return self.index()
+            if return_json:
+                msg = {'state': status, 'msg': msg}
+                return json.dumps(msg)
+            return self.index()
 
-    def do_import(self, data):
-        start = datetime.now()
-        self.import_translations(data)
-        transaction.commit()
-        end = datetime.now()
-        delta = end - start
-        msg = f'Imported translations in {delta.seconds} seconds'
-        logger.info(msg)
-        return msg
+        def do_import(self, data):
+            start = datetime.now()
+            self.import_translations(data)
+            transaction.commit()
+            end = datetime.now()
+            delta = end - start
+            msg = 'Imported translations in {} seconds'.format(delta.seconds)
+            logger.info(msg)
+            return msg
 
-    def import_translations(self, data):
-        imported = 0
-        empty = []
-        less_than_2 = []
-        for translationgroup in data:
-            if len(translationgroup) < 2:
-                continue
-
-            # Make sure we have content to translate
-            tg_with_obj = {}
-            for lang, uid in translationgroup.items():
-                obj = api.content.get(UID=uid)
-                if obj:
-                    tg_with_obj[lang] = obj
-                else:
-                    # logger.info(f'{uid} not found')
+        def import_translations(self, data):
+            imported = 0
+            empty = []
+            less_than_2 = []
+            for translationgroup in data:
+                if len(translationgroup) < 2:
                     continue
-            if not tg_with_obj:
-                empty.append(translationgroup)
-                continue
 
-            if len(tg_with_obj) < 2:
-                less_than_2.append(translationgroup)
-                logger.info(f'Only one item: {translationgroup}')
-                continue
+                # Make sure we have content to translate
+                tg_with_obj = {}
+                for lang, uid in translationgroup.items():
+                    obj = api.content.get(UID=uid)
+                    if obj:
+                        tg_with_obj[lang] = obj
+                    else:
+                        # logger.info(f'{uid} not found')
+                        continue
+                if not tg_with_obj:
+                    empty.append(translationgroup)
+                    continue
 
-            imported += 1
-            for index, (lang, obj) in enumerate(tg_with_obj.items()):
-                if index == 0:
-                    canonical = obj
-                else:
-                    translation = obj
-                    link_translations(canonical, translation, lang)
-        logger.info(
-            f'Imported {imported} translation-groups. For {len(less_than_2)} groups we found only one item. {len(empty)} groups without content dropped'
-        )
+                if len(tg_with_obj) < 2:
+                    less_than_2.append(translationgroup)
+                    logger.info(u'Only one item: {}'.format(translationgroup))
+                    continue
+
+                imported += 1
+                for index, (lang, obj) in enumerate(tg_with_obj.items()):
+                    if index == 0:
+                        canonical = obj
+                    else:
+                        translation = obj
+                        link_translations(canonical, translation, lang)
+            logger.info(
+                u'Imported {} translation-groups. For {} groups we found only one item. {} groups without content dropped'.format(
+                    imported,
+                    len(less_than_2),
+                    len(empty)
+                )
+            )
 
 
-def link_translations(obj, translation, language):
-    if obj is translation or obj.language == language:
-        logger.info(
-            'Not linking {} to {} ({})'.format(
+    def link_translations(obj, translation, language):
+        if obj is translation or obj.language == language:
+            logger.info(
+                'Not linking {} to {} ({})'.format(
+                    obj.absolute_url(), translation.absolute_url(), language
+                )
+            )
+            return
+        logger.debug(
+            'Linking {} to {} ({})'.format(
                 obj.absolute_url(), translation.absolute_url(), language
             )
         )
-        return
-    logger.debug(
-        'Linking {} to {} ({})'.format(
-            obj.absolute_url(), translation.absolute_url(), language
-        )
-    )
-    try:
-        ITranslationManager(obj).register_translation(language, translation)
-    except TypeError as e:
-        logger.info(f'Item is not translatable: {e}')
+        try:
+            ITranslationManager(obj).register_translation(language, translation)
+        except TypeError as e:
+            logger.info(u'Item is not translatable: {}'.format(e))
 
 
 class ImportMembers(BrowserView):
@@ -462,13 +472,13 @@ class ImportMembers(BrowserView):
                 status = 'error'
                 logger.error(e)
                 api.portal.show_message(
-                    f'Fehler beim Dateiuplad: {e}',
+                    u'Fehler beim Dateiuplad: {}'.format(e),
                     request=self.request,
                 )
             else:
                 groups = self.import_groups(data['groups'])
                 members = self.import_members(data['members'])
-                msg = f'Imported {groups} groups and {members} members'
+                msg = u'Imported {} groups and {} members'.format(groups, members)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {'state': status, 'msg': msg}
@@ -512,7 +522,7 @@ class ImportMembers(BrowserView):
         for item in data:
             username = item['username']
             if api.user.get(username=username) is not None:
-                logger.error(f'Skipping: User {username} already exists!')
+                logger.error(u'Skipping: User {} already exists!'.format(username))
                 continue
             password = item.pop('password')
             roles = item.pop('roles')
@@ -556,7 +566,7 @@ class ImportRelations(BrowserView):
             except Exception as e:
                 status = 'error'
                 logger.error(e)
-                msg = f'Fehler beim Dateiuplad: {e}'
+                msg = u'Fehler beim Dateiuplad: {}'.format(e)
                 api.portal.show_message(msg, request=self.request)
             else:
                 msg = self.do_import(data)
@@ -572,7 +582,7 @@ class ImportRelations(BrowserView):
         transaction.commit()
         end = datetime.now()
         delta = end - start
-        msg = f'Imported relations in {delta.seconds} seconds'
+        msg = 'Imported relations in {} seconds'.format(delta.seconds)
         logger.info(msg)
         return msg
 
