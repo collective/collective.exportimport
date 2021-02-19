@@ -23,53 +23,53 @@
   <browser:page
       name="export_content"
       for="zope.interface.Interface"
-      class=".export.ExportContent"
-      template="templates/export_form.pt"
+      class=".export_forms.ExportContent"
+      template="templates/export_content.pt"
       permission="cmf.ManagePortal"
       />
 
   <browser:page
       name="export_relations"
       for="zope.interface.Interface"
-      class=".export.ExportRelations"
+      class=".export_forms.ExportRelations"
       permission="cmf.ManagePortal"
       />
 
   <browser:page
       name="export_members"
       for="zope.interface.Interface"
-      class=".export.ExportMembers"
+      class=".export_forms.ExportMembers"
       permission="cmf.ManagePortal"
       />
 
   <browser:page
       name="export_translations"
       for="zope.interface.Interface"
-      class=".export.ExportTranslations"
+      class=".export_forms.ExportTranslations"
       permission="cmf.ManagePortal"
       />
 
   <browser:page
       name="export_localroles"
       for="zope.interface.Interface"
-      class=".export.ExportLocalRoles"
+      class=".export_forms.ExportLocalRoles"
       permission="cmf.ManagePortal"
       />
 
   <!-- Serializers -->
   <adapter zcml:condition="installed Products.Archetypes"
-      factory=".export.ATFileFieldSerializer" />
+      factory=".export_forms.ATFileFieldSerializer" />
   <adapter zcml:condition="installed Products.Archetypes"
-      factory=".export.ATImageFieldSerializer" />
+      factory=".export_forms.ATImageFieldSerializer" />
 
   <adapter zcml:condition="installed plone.app.blob"
-      factory=".export.ATFileFieldSerializerWithBlobs" />
+      factory=".export_forms.ATFileFieldSerializerWithBlobs" />
   <adapter zcml:condition="installed plone.app.blob"
-      factory=".export.ATImageFieldSerializerWithBlobs" />
+      factory=".export_forms.ATImageFieldSerializerWithBlobs" />
 
-  <adapter factory=".export.FileFieldSerializerWithBlobs" />
-  <adapter factory=".export.ImageFieldSerializerWithBlobs" />
-  <adapter factory=".export.RichttextFieldSerializerWithRawText" />
+  <adapter factory=".export_forms.FileFieldSerializerWithBlobs" />
+  <adapter factory=".export_forms.ImageFieldSerializerWithBlobs" />
+  <adapter factory=".export_forms.RichttextFieldSerializerWithRawText" />
 
   <browser:page
       name="import_content"

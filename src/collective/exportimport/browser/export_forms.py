@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from collections import OrderedDict
-from collective.exportimport.interfaces import ICollectiveExportimportLayer
 from operator import itemgetter
 from plone import api
 from plone.app.textfield.interfaces import IRichText
@@ -13,7 +11,6 @@ from plone.restapi.interfaces import IJsonCompatible
 from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.restapi.serializer.dxfields import DefaultFieldSerializer
-from Products.CMFCore.interfaces import IContentish
 from Products.CMFCore.utils import getToolByName
 from Products.CMFDynamicViewFTI.interfaces import IDynamicViewTypeInformation
 from Products.Five import BrowserView
@@ -31,7 +28,6 @@ from zope.interface import noLongerProvides
 import base64
 import json
 import logging
-import os
 import pkg_resources
 
 
@@ -60,7 +56,6 @@ class IBase64BlobsMarker(Interface):
 
 class IRawRichTextMarker(Interface):
     """A marker interface to override default serializers for Richtext."""
-
 
 
 class ExportContent(BrowserView):
@@ -107,7 +102,7 @@ class ExportContent(BrowserView):
         response.setHeader(
             'content-disposition',
             'attachment; filename="{0}.json"'.format(self.portal_type))
-        return response.write(data)
+        return data
 
     def build_query(self):
         query = {'portal_type': self.portal_type}
