@@ -28,33 +28,70 @@
 collective.exportimport
 =======================
 
-Tell me what your product does
+This is work-in-progress.
+Export is mostly working so far, import will come soon.
 
 Features
---------
+========
 
-- Can be bullet points
+* Export & Import content
+* Export & Import members and groups with their roles
+* Export & Import relations
+* Export & Import translations
+* Export & Import local roles
+
+Export supports:
+
+* Plone 4, 5 and 6
+* Archetypes and Dexterity
+* Python 2 and 3
+* plone.app.multilingual, Products.LinguaPlone, raptus.multilanguagefields (partly)
+
+Import supports:
+
+* Plone 5.2+, Dexterity, Python 2 and 3, plone.app.multilingual
+
+Use-cases
+=========
+
+Migrations
+----------
+
+When a in-place-migration is not required you can choose this addon to migrate the most important parts of your site to a current version:
+
+* Export content from a Plone site (it supports Plone 4 and 5, Archetypes and Dexterity, Python 2 and 3).
+* Import the exported content into a new site (Plone 5.2+, Dexterity, Python 3)
+* Export and import relations, translations, users, groups and local roles.
+
+It does not support any of the following data from your database:
+
+* content revisions
+* registry-settings
+* portlets
+* theme
+* installed addons
 
 
-Examples
---------
+Details
+=======
 
-This add-on can be seen in action at the following sites:
-- Is there a page on the internet where everybody can see the features?
+Export content
+--------------
+
+Exporting content is basically a wrapper for the serializers of plone.restapi:
+
+.. code-block:: python
+
+    from plone.restapi.interfaces import ISerializeToJson
+    from zope.component import getMultiAdapter
+
+    serializer = getMultiAdapter((obj, request), ISerializeToJson)
+    data = serializer(include_items=False)
 
 
-Documentation
--------------
+By
 
-Full documentation for end users can be found in the "docs" folder, and is also available online at http://docs.plone.org/foo/bar
-
-
-Translations
-------------
-
-This product has been translated into
-
-- Klingon (thanks, K'Plai)
+https://www.starzel.de
 
 
 Installation
@@ -72,6 +109,8 @@ Install collective.exportimport by adding it to your buildout::
 
 and then running ``bin/buildout``
 
+You don't need to install the add-on.
+
 
 Contribute
 ----------
@@ -85,7 +124,6 @@ Support
 -------
 
 If you are having issues, please let us know.
-We have a mailing list located at: project@example.com
 
 
 License
