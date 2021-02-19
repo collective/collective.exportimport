@@ -46,6 +46,10 @@ class ImportContent(BrowserView):
     # Exmaple: ['relatedItems']
     DROP_FIELDS = []
 
+    # Items with these uid will be ignored
+    # Example: ['04d1477583c74552a7fcd81a9085c620']
+    DROP_UIDS = []
+
     # These paths will be ignored
     # Example: ['/Plone/doormat/', '/Plone/import_files/']
     DROP_PATHS = []
@@ -119,6 +123,10 @@ class ImportContent(BrowserView):
         for index, item in enumerate(data, start=1):
             if self.limit and len(added) >= self.limit:
                 break
+
+            if item['UID'] in self.DROP_UIDS:
+                continue
+
             skip = False
             for drop in self.DROP_PATHS:
                 if drop in item['@id']:
