@@ -179,16 +179,18 @@ class ImportContent(BrowserView):
                 setattr(new, '_plone.uuid', uuid)
                 new.reindexObject(idxs=['UID'])
 
-            if item['review_state'] != 'private':
+            if item['review_state'] and item['review_state'] != 'private':
                 api.content.transition(to_state=item['review_state'], obj=new)
             self.custom_modifier(new)
 
             # set modified-date as a custom attribute as last step
-            modified_data = datetime.strptime(item['modified'], '%Y-%m-%dT%H:%M:%S%z')
-            modification_date = DateTime(modified_data)
-            new.modification_date = modification_date
-            new.modification_date_migrated = modification_date
-            # new.reindexObject(idxs=['modified'])
+            modified = item.get('modified', item.get('modification_date', None))
+            if modified:
+                modified_data = datetime.strptime(modified, '%Y-%m-%dT%H:%M:%S%z')
+                modification_date = DateTime(modified_data)
+                new.modification_date = modification_date
+                new.modification_date_migrated = modification_date
+                # new.reindexObject(idxs=['modified'])
             logger.info('Created {} {}'.format(new.absolute_url(), item["@type"]))
             added.append(new.absolute_url())
         return added
