@@ -74,7 +74,7 @@
   <browser:page
       name="import_content"
       for="zope.interface.Interface"
-      class=".import.ImportContent"
+      class=".import_forms.ImportContent"
       template="templates/import_content.pt"
       permission="cmf.ManagePortal"
       />
