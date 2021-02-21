@@ -105,7 +105,7 @@ class ExportContent(BrowserView):
         return data
 
     def build_query(self):
-        query = {'portal_type': self.portal_type}
+        query = {'portal_type': self.portal_type, 'sort_on': 'path'}
         catalog = api.portal.get_tool('portal_catalog')
         if 'Language' in catalog.indexes():
             query['Language'] = 'all'
@@ -143,10 +143,15 @@ class ExportContent(BrowserView):
             if not index % 100:
                 logger.info(u'Handled {} items...'.format(index))
             obj = brain.getObject()
+            obj = self.fixup_obj(obj)
+            if not obj:
+                continue
             try:
                 serializer = getMultiAdapter((obj, self.request), ISerializeToJson)
                 item = serializer(include_items=False)
                 item = self.fixup_item(item)
+                if not item:
+                    continue
                 data.append(item)
             except Exception as e:
                 logger.info(e)
@@ -184,8 +189,17 @@ class ExportContent(BrowserView):
         """Use this to override stuff (e.g. force a specific language in request)."""
         return
 
+    def fixup_obj(self, obj):
+        """Used this to fixup the content item before serialisation data.
+        Bad: Changing the content-item is a bad idea.
+        Good: Return None if you want to skip this particular object.
+        """
+        return obj
+
     def fixup_item(self, item):
-        """Used this to modify the serialized data."""
+        """Used this to modify the serialized data.
+        Return None if you want to skip this particular object.
+        """
         # drop stuff not needed for export/import
         item.pop('@components')
         item.pop('next_item')
