@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from hurry.filesize import size
 from operator import itemgetter
 from plone import api
 from plone.app.textfield.interfaces import IRichText
@@ -14,6 +15,7 @@ from plone.restapi.serializer.dxfields import DefaultFieldSerializer
 from Products.CMFCore.utils import getToolByName
 from Products.CMFDynamicViewFTI.interfaces import IDynamicViewTypeInformation
 from Products.Five import BrowserView
+from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from z3c.relationfield.interfaces import IRelationValue
 from zc.relation.interfaces import ICatalog
 from zope.component import adapter
@@ -29,7 +31,7 @@ import base64
 import json
 import logging
 import pkg_resources
-
+import six
 
 try:
     pkg_resources.get_distribution("Products.Archetypes")
@@ -46,6 +48,8 @@ except pkg_resources.DistributionNotFound:
 else:
     HAS_BLOB = True
 
+FILE_SIZE_WARNING = 10000000
+IMAGE_SIZE_WARNING = 5000000
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +64,8 @@ class IRawRichTextMarker(Interface):
 
 class ExportContent(BrowserView):
 
+    template = ViewPageTemplateFile('templates/export_content.pt')
+
     QUERY = {}
 
     DROP_PATHS = []
@@ -70,7 +76,7 @@ class ExportContent(BrowserView):
         self.fixup_request()
 
         if not self.request.form.get('form.submitted', False):
-            return self.index()
+            return self.template()
 
         if self.request.form.get('export_relations', False):
             view = ExportRelations(self.context, self.request)
@@ -89,7 +95,7 @@ class ExportContent(BrowserView):
             return view()
 
         if not self.portal_type:
-            return self.index()
+            return self.template()
 
         data = self.export_content(include_blobs=include_blobs)
         number = len(data)
@@ -102,7 +108,7 @@ class ExportContent(BrowserView):
         response.setHeader(
             'content-disposition',
             'attachment; filename="{0}.json"'.format(self.portal_type))
-        return data
+        return response.write(safe_bytes(data))
 
     def build_query(self):
         query = {'portal_type': self.portal_type, 'sort_on': 'path'}
@@ -151,6 +157,7 @@ class ExportContent(BrowserView):
                 item = serializer(include_items=False)
                 item = self.fixup_item(item)
                 if not item:
+                    logger.info(u'Skipping {}'.format(brain.getURL()))
                     continue
                 data.append(item)
             except Exception as e:
@@ -201,9 +208,9 @@ class ExportContent(BrowserView):
         Return None if you want to skip this particular object.
         """
         # drop stuff not needed for export/import
-        item.pop('@components')
-        item.pop('next_item')
-        item.pop('previous_item')
+        item.pop('@components', None)
+        item.pop('next_item', None)
+        item.pop('previous_item', None)
         return item
 
 
@@ -278,10 +285,13 @@ if HAS_AT:
             image = self.field.get(self.context)
             if not image:
                 return None
+            data = image.data.data if isinstance(image.data, Pdata) else image.data
+            if len(data) > IMAGE_SIZE_WARNING:
+                logger.info(u'Large image for {}: {}'.format(self.context.absolute_url(), size(len(data))))
             result = {
                 "filename": self.field.getFilename(self.context),
                 "content-type": image.getContentType(),
-                "data": base64.b64encode(image.data.data if isinstance(image.data, Pdata) else image.data),
+                "data": base64.b64encode(data),
                 "encoding": "base64",
             }
             return json_compatible(result)
@@ -294,10 +304,14 @@ if HAS_AT:
             file_obj = self.field.get(self.context)
             if not file_obj:
                 return None
+            data = file_obj.data.data if isinstance(file_obj.data, Pdata) else file_obj.data
+            if len(data) > FILE_SIZE_WARNING:
+                logger.info(u'Large file for {}: {}'.format(self.context.absolute_url(), size(len(data))))
+
             result = {
                 "filename": self.field.getFilename(self.context),
                 "content-type": self.field.getContentType(self.context),
-                "data": base64.b64encode(file_obj.data.data),
+                "data": base64.b64encode(data),
                 "encoding": "base64",
             }
             return json_compatible(result)
@@ -310,10 +324,13 @@ if HAS_AT:
             image = self.field.get(self.context)
             if not image:
                 return None
+            data = image.data.data if isinstance(image.data, Pdata) else image.data
+            if len(data) > IMAGE_SIZE_WARNING:
+                    logger.info(u'Large image for {}: {}'.format(self.context.absolute_url(), size(len(data))))
             result = {
                 "filename": self.field.getFilename(self.context),
                 "content-type": image.getContentType(),
-                "data": base64.b64encode(image.data.data if isinstance(image.data, Pdata) else image.data),
+                "data": base64.b64encode(data),
                 "encoding": "base64",
             }
             return json_compatible(result)
@@ -325,10 +342,13 @@ if HAS_AT:
             file_obj = self.field.get(self.context)
             if not file_obj:
                 return None
+            data = file_obj.data.data if isinstance(file_obj.data, Pdata) else file_obj.data
+            if len(data) > FILE_SIZE_WARNING:
+                logger.info(u'Large File for {}: {}'.format(self.context.absolute_url(), size(len(data))))
             result = {
                 "filename": self.field.getFilename(self.context),
                 "content-type": self.field.getContentType(self.context),
-                "data": base64.b64encode(file_obj.data.data),
+                "data": base64.b64encode(data),
                 "encoding": "base64",
             }
             return json_compatible(result)
@@ -357,7 +377,7 @@ class ExportRelations(BrowserView):
         self.request.response.setHeader(
             'Content-Disposition',
             'attachment; filename="{0}"'.format(filename))
-        return data
+        return response.write(safe_bytes(data))
 
     def get_all_references(self):
         results = []
@@ -430,7 +450,7 @@ class ExportMembers(BrowserView):
         response.setHeader(
             'content-disposition',
             'attachment; filename="members.json"')
-        return response.write(data)
+        return response.write(safe_bytes(data))
 
     def export_groups(self):
         data = []
@@ -527,7 +547,7 @@ class ExportTranslations(BrowserView):
         self.request.response.setHeader(
             'Content-Disposition',
             'attachment; filename="{0}"'.format(filename))
-        return data
+        return response.write(safe_bytes(data))
 
 
 class ExportLocalRoles(BrowserView):
@@ -560,4 +580,12 @@ class ExportLocalRoles(BrowserView):
         portal.ZopeFindAndApply(portal,
                                 search_sub=True,
                                 apply_func=get_localroles)
-        return results
+        return response.write(safe_bytes(data))
+
+
+def safe_bytes(value, encoding='utf-8'):
+    """Convert text to bytes of the specified encoding.
+    """
+    if isinstance(value, six.text_type):
+        value = value.encode(encoding)
+    return value

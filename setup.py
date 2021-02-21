@@ -52,6 +52,7 @@ setup(
         'z3c.jbot',
         'plone.api>=1.8.4',
         'plone.restapi',
+        'hurry.filesize',
     ],
     extras_require={
         'test': [
