@@ -124,7 +124,8 @@ class ImportContent(BrowserView):
             if self.limit and len(added) >= self.limit:
                 break
 
-            if item['UID'] in self.DROP_UIDS:
+            uuid = item['UID']
+            if uuid in self.DROP_UIDS:
                 continue
 
             skip = False
@@ -137,8 +138,12 @@ class ImportContent(BrowserView):
             if not index % 100:
                 logger.info('Imported {} items...'.format(index))
 
-            new_id = item['id']
-            uuid = item['UID']
+            new_id = item['@id'].split('/')[-1]
+            if new_id != item['id']:
+                logger.info(u'Conflicting ids in url ({}) and id . Using {}'.format(
+                    new_id, item['id'], new_id))
+                item['id'] = new_id
+
             item = self.handle_broken(item)
             item = self.handle_dropped(item)
             item = self.global_dict_modifier(item)
