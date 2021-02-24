@@ -61,6 +61,8 @@
       factory=".export_forms.ATFileFieldSerializer" />
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".export_forms.ATImageFieldSerializer" />
+  <adapter zcml:condition="installed Products.Archetypes"
+      factory=".export_forms.ATTextFieldSerializer" />
 
   <adapter zcml:condition="installed plone.app.blob"
       factory=".export_forms.ATFileFieldSerializerWithBlobs" />

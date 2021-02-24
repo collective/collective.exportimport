@@ -270,13 +270,15 @@ class RichttextFieldSerializerWithRawText(DefaultFieldSerializer):
 
 
 if HAS_AT:
-    from plone.restapi.serializer.atfields import DefaultFieldSerializer as ATDefaultFieldSerializer
-    from Products.Archetypes.interfaces.field import IFileField
-    from Products.Archetypes.interfaces import IBaseObject
+    from OFS.Image import Pdata
     from plone.app.blob.interfaces import IBlobField
     from plone.app.blob.interfaces import IBlobImageField
+    from plone.restapi.serializer.atfields import DefaultFieldSerializer as ATDefaultFieldSerializer
+    from Products.Archetypes.interfaces import IBaseObject
+    from Products.Archetypes.interfaces.field import IFileField
     from Products.Archetypes.interfaces.field import IImageField
-    from OFS.Image import Pdata
+    from Products.Archetypes.interfaces.field import ITextField
+
 
     @adapter(IImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -316,6 +318,7 @@ if HAS_AT:
             }
             return json_compatible(result)
 
+
     @adapter(IBlobImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
     class ATImageFieldSerializerWithBlobs(ATDefaultFieldSerializer):
@@ -335,6 +338,7 @@ if HAS_AT:
             }
             return json_compatible(result)
 
+
     @adapter(IBlobField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
     class ATFileFieldSerializerWithBlobs(ATDefaultFieldSerializer):
@@ -352,6 +356,24 @@ if HAS_AT:
                 "encoding": "base64",
             }
             return json_compatible(result)
+
+
+    @adapter(ITextField, IBaseObject, IRawRichTextMarker)
+    @implementer(IFieldSerializer)
+    class ATTextFieldSerializer(ATDefaultFieldSerializer):
+        def __call__(self):
+            data = self.field.getRaw(self.context)
+            if not data:
+                return
+            mimetype = self.field.getContentType(self.context)
+            if mimetype == 'text/html':
+                # cleanup crazy html but keep links with resolveuid
+                transforms = getToolByName(self.context, "portal_transforms")
+                data = transforms.convertTo('text/x-html-safe', data, mimetype=mimetype).getData()
+            return {
+                "content-type": json_compatible(mimetype),
+                "data": data,
+            }
 
 
 @adapter(IRelationValue)
