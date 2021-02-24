@@ -569,7 +569,7 @@ class ExportTranslations(BrowserView):
         self.request.response.setHeader(
             'Content-Disposition',
             'attachment; filename="{0}"'.format(filename))
-        return response.write(safe_bytes(data))
+        return self.request.response.write(safe_bytes(data))
 
 
 class ExportLocalRoles(BrowserView):
@@ -585,7 +585,7 @@ class ExportLocalRoles(BrowserView):
         self.request.response.setHeader(
             'Content-Disposition',
             'attachment; filename="{0}"'.format(filename))
-        return data
+        return self.request.response.write(safe_bytes(data))
 
     def all_localroles(self):
         results = []
@@ -602,7 +602,7 @@ class ExportLocalRoles(BrowserView):
         portal.ZopeFindAndApply(portal,
                                 search_sub=True,
                                 apply_func=get_localroles)
-        return response.write(safe_bytes(data))
+        return results
 
 
 def safe_bytes(value, encoding='utf-8'):
