@@ -3,11 +3,14 @@ from datetime import datetime
 from DateTime import DateTime
 from operator import itemgetter
 from plone import api
+from plone.api.exc import InvalidParameterError
 from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.interfaces import IDeserializeFromJson
+from plone.uuid.interfaces import IUUIDGenerator
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.component import getMultiAdapter
+from zope.component import getUtility
 from zope.interface import alsoProvides
 from ZPublisher.HTTPRequest import FileUpload
 
@@ -145,9 +148,17 @@ class ImportContent(BrowserView):
                 item['id'] = new_id
 
             item = self.handle_broken(item)
+            if not item:
+                continue
             item = self.handle_dropped(item)
+            if not item:
+                continue
             item = self.global_dict_modifier(item)
+            if not item:
+                continue
             item = self.custom_dict_modifier(item)
+            if not item:
+                continue
 
             container = self.handle_container(item) or container
             if not container:
@@ -171,21 +182,15 @@ class ImportContent(BrowserView):
             deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
             new = deserializer(validate_all=False, data=item)
 
-            if api.content.find(UID=uuid):
-                # this should only happen if you run import multiple times
-                logger.warn(
-                    'UID {} of {} already in use by {}'.format(
-                        uuid,
-                        item['id'],
-                        api.content.get(UID=uuid).absolute_url(),
-                    ),
-                )
-            else:
-                setattr(new, '_plone.uuid', uuid)
-                new.reindexObject(idxs=['UID'])
+            uuid = self.set_uuid(item, new)
+            if uuid != item['UID']:
+                item['UID'] = uuid
 
             if item['review_state'] and item['review_state'] != 'private':
-                api.content.transition(to_state=item['review_state'], obj=new)
+                try:
+                    api.content.transition(to_state=item['review_state'], obj=new)
+                except InvalidParameterError as e:
+                    logger.info(e)
             self.custom_modifier(new)
 
             # set modified-date as a custom attribute as last step
@@ -359,6 +364,24 @@ class ImportContent(BrowserView):
                 folder = folder[element]
 
         return folder
+
+    def set_uuid(self, item, obj):
+        uuid = item['UID']
+        if api.content.find(UID=uuid):
+            # this should only happen if you run import multiple times
+            generator = getUtility(IUUIDGenerator)
+            uuid = generator()
+            logger.warn(
+                'UID {} of {} already in use by {}. Using {}'.format(
+                    item['UID'],
+                    item['@id'],
+                    api.content.get(UID=item['UID']).absolute_url(),
+                    uuid
+                ),
+            )
+        setattr(obj, '_plone.uuid', uuid)
+        obj.reindexObject(idxs=['UID'])
+        return uuid
 
 
 def fix_portal_type(name):
