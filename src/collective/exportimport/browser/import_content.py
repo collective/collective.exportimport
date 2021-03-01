@@ -6,7 +6,6 @@ from plone.api.exc import InvalidParameterError
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.interfaces import IDeserializeFromJson
-from plone.uuid.interfaces import IUUIDGenerator
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.component import getMultiAdapter
@@ -152,7 +151,7 @@ class ImportContent(BrowserView):
 
             new_id = item['@id'].split('/')[-1]
             if new_id != item['id']:
-                logger.info(u'Conflicting ids in url ({}) and id . Using {}'.format(
+                logger.info(u'Conflicting ids in url ({}) and id ({}). Using {}'.format(
                     new_id, item['id'], new_id))
                 item['id'] = new_id
 
@@ -386,9 +385,8 @@ class ImportContent(BrowserView):
         uuid = item['UID']
         if api.content.find(UID=uuid):
             # this should only happen if you run import multiple times
-            generator = getUtility(IUUIDGenerator)
-            uuid = generator()
-            logger.warn(
+            uuid = obj.UID()
+            logger.info(
                 'UID {} of {} already in use by {}. Using {}'.format(
                     item['UID'],
                     item['@id'],
@@ -396,8 +394,9 @@ class ImportContent(BrowserView):
                     uuid
                 ),
             )
-        setattr(obj, '_plone.uuid', uuid)
-        obj.reindexObject(idxs=['UID'])
+        else:
+            setattr(obj, '_plone.uuid', uuid)
+            obj.reindexObject(idxs=['UID'])
         return uuid
 
 
