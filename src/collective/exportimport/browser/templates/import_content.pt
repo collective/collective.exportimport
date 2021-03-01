@@ -30,10 +30,37 @@
             </div>
 
             <div class="formControls" class="form-group">
+                <input type="hidden" name="form.submitted" value="1"/>
                 <button class="btn btn-primary submit-widget button-field context"
                         type="submit" name="submit" value="Import">Import
                 </button>
             </div>
+
+            <div class="formControls" class="form-group">
+
+                <h2>Additional imports</h2>
+                <button class="btn btn-primary submit-widget button-field context"
+                        type="submit" name="import_relations" value="import_relations">Import relations
+                </button>
+
+                <button class="btn btn-primary submit-widget button-field context"
+                        type="submit" name="import_translations" value="import_translations">Import translations
+                </button>
+
+                <button class="btn btn-primary submit-widget button-field context"
+                        type="submit" name="import_members" value="import_members">Import members
+                </button>
+
+                <button class="btn btn-primary submit-widget button-field context"
+                        type="submit" name="import_localroles" value="import_localroles">Import local roles
+                </button>
+
+                <button class="btn btn-primary submit-widget button-field context"
+                        type="submit" name="reset_modified_date" value="reset_modified_date">Reset modified date
+                </button>
+
+            </div>
+
         </form>
 
     </tal:main-macro>

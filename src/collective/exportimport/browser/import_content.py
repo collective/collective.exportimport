@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from DateTime import DateTime
-from operator import itemgetter
 from plone import api
 from plone.api.exc import InvalidParameterError
+from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.interfaces import IDeserializeFromJson
 from plone.uuid.interfaces import IUUIDGenerator
@@ -18,18 +18,6 @@ import json
 import logging
 import random
 import transaction
-
-try:
-    from collective.relationhelpers import api as relapi
-    HAS_RELAPI = True
-except ImportError:
-    HAS_RELAPI = False
-
-try:
-    from plone.app.multilingual.interfaces import ITranslationManager
-    HAS_PAM = True
-except ImportError:
-    HAS_PAM = False
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +51,26 @@ class ImportContent(BrowserView):
 
     def __call__(self, jsonfile=None, portal_type=None, return_json=False, limit=None):
         self.limit = limit
+        response = self.request.response
+
+        if not self.request.form.get('form.submitted', False):
+            return self.template()
+
+        if self.request.form.get('import_relations', False):
+            return response.redirect('@@import_relations')
+
+        if self.request.form.get('import_translations', False):
+            return response.redirect('@@import_translations')
+
+        if self.request.form.get('import_members', False):
+            return response.redirect('@@import_members')
+
+        if self.request.form.get('import_localroles', False):
+            return response.redirect('@@import_localroles')
+
+        if self.request.form.get('reset_modified_date', False):
+            return response.redirect('@@reset_modified_date')
+
         if jsonfile:
             self.portal = api.portal.get()
             status = 'success'
@@ -112,6 +120,7 @@ class ImportContent(BrowserView):
         return msg
 
     def import_new_content(self, data):
+        self.safe_portal_type = fix_portal_type(self.portal_type)
         added = []
         container = None
         container_path = self.CONTAINER.get(self.portal_type, None)
@@ -153,10 +162,10 @@ class ImportContent(BrowserView):
             item = self.handle_dropped(item)
             if not item:
                 continue
-            item = self.global_dict_modifier(item)
+            item = self.global_dict_hook(item)
             if not item:
                 continue
-            item = self.custom_dict_modifier(item)
+            item = self.custom_dict_hook(item)
             if not item:
                 continue
 
@@ -182,6 +191,9 @@ class ImportContent(BrowserView):
             deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
             new = deserializer(validate_all=False, data=item)
 
+            self.global_obj_hook(new, item)
+            self.custom_obj_hook(new, item)
+
             uuid = self.set_uuid(item, new)
             if uuid != item['UID']:
                 item['UID'] = uuid
@@ -191,7 +203,6 @@ class ImportContent(BrowserView):
                     api.content.transition(to_state=item['review_state'], obj=new)
                 except InvalidParameterError as e:
                     logger.info(e)
-            self.custom_modifier(new)
 
             # set modified-date as a custom attribute as last step
             modified = item.get('modified', item.get('modification_date', None))
@@ -230,7 +241,7 @@ class ImportContent(BrowserView):
                 item[key] = self.DEFAULTS[key]
         return item
 
-    def global_dict_modifier(self, item):
+    def global_dict_hook(self, item):
         """Overwrite this do general changes on the dict before deserializing.
 
         Example:
@@ -246,22 +257,28 @@ class ImportContent(BrowserView):
         """
         return item
 
-    def custom_dict_modifier(self, item):
-        """Hook to inject dict-modifiers by types.
+    def custom_dict_hook(self, item):
+        """Hook to inject dict-modifiers by type before deserializing.
+        E.g.: dict_hook_document(self, item)
         """
         modifier = getattr(
-            self, 'fixup_{}_dict'.format(fix_portal_type(self.portal_type)), None
+            self, 'dict_hook_{}'.format(self.safe_portal_type), None
         )
         if modifier and callable(modifier):
             item = modifier(item)
         return item
 
-    def custom_modifier(self, obj):
+    def global_obj_hook(self, obj, item):
+        """Override hook to modify all items of the imported item by type."""
+        return obj
+
+    def custom_obj_hook(self, obj, item):
         """Hook to inject modifiers of the imported item by type.
+        E.g.: obj_hook_newsitem(self, obj, item)
         """
-        modifier = getattr(self, 'fixup_{}'.format(fix_portal_type(self.portal_type)), None)
+        modifier = getattr(self, 'obj_hook_{}'.format(self.safe_portal_type), None)
         if modifier and callable(modifier):
-            modifier(obj)
+            modifier(obj, item)
 
     def handle_container(self, item):
         """Specify a container per item and type using custom methods
@@ -323,7 +340,7 @@ class ImportContent(BrowserView):
         if self.request.get('import_to_current_folder', None):
             return self.context
         method = getattr(
-            self, 'handle_{}_container'.format(fix_portal_type(self.portal_type)), None
+            self, 'handle_{}_container'.format(self.safe_portal_type), None
         )
         if method and callable(method):
             return method(item)
@@ -384,278 +401,9 @@ class ImportContent(BrowserView):
         return uuid
 
 
-def fix_portal_type(name):
-    return name.lower().replace('.', '_').replace(' ', '')
-
-
-if HAS_PAM:
-
-    class ImportTranslations(BrowserView):
-        def __call__(self, jsonfile=None, return_json=False):
-            if jsonfile:
-                self.portal = api.portal.get()
-                status = 'success'
-                try:
-                    if isinstance(jsonfile, str):
-                        return_json = True
-                        data = json.loads(jsonfile)
-                    elif isinstance(jsonfile, FileUpload):
-                        data = json.loads(jsonfile.read())
-                    else:
-                        raise ('Data is neither text nor upload.')
-                except Exception as e:
-                    logger.error(e)
-                    status = 'error'
-                    msg = e
-                    api.portal.show_message(
-                        u'Fehler beim Dateiuplad: {}'.format(e),
-                        request=self.request,
-                    )
-                else:
-                    msg = self.do_import(data)
-                    api.portal.show_message(msg, self.request)
-
-            if return_json:
-                msg = {'state': status, 'msg': msg}
-                return json.dumps(msg)
-            return self.index()
-
-        def do_import(self, data):
-            start = datetime.now()
-            self.import_translations(data)
-            transaction.commit()
-            end = datetime.now()
-            delta = end - start
-            msg = 'Imported translations in {} seconds'.format(delta.seconds)
-            logger.info(msg)
-            return msg
-
-        def import_translations(self, data):
-            imported = 0
-            empty = []
-            less_than_2 = []
-            for translationgroup in data:
-                if len(translationgroup) < 2:
-                    continue
-
-                # Make sure we have content to translate
-                tg_with_obj = {}
-                for lang, uid in translationgroup.items():
-                    obj = api.content.get(UID=uid)
-                    if obj:
-                        tg_with_obj[lang] = obj
-                    else:
-                        # logger.info(f'{uid} not found')
-                        continue
-                if not tg_with_obj:
-                    empty.append(translationgroup)
-                    continue
-
-                if len(tg_with_obj) < 2:
-                    less_than_2.append(translationgroup)
-                    logger.info(u'Only one item: {}'.format(translationgroup))
-                    continue
-
-                imported += 1
-                for index, (lang, obj) in enumerate(tg_with_obj.items()):
-                    if index == 0:
-                        canonical = obj
-                    else:
-                        translation = obj
-                        link_translations(canonical, translation, lang)
-            logger.info(
-                u'Imported {} translation-groups. For {} groups we found only one item. {} groups without content dropped'.format(
-                    imported,
-                    len(less_than_2),
-                    len(empty)
-                )
-            )
-
-
-    def link_translations(obj, translation, language):
-        if obj is translation or obj.language == language:
-            logger.info(
-                'Not linking {} to {} ({})'.format(
-                    obj.absolute_url(), translation.absolute_url(), language
-                )
-            )
-            return
-        logger.debug(
-            'Linking {} to {} ({})'.format(
-                obj.absolute_url(), translation.absolute_url(), language
-            )
-        )
-        try:
-            ITranslationManager(obj).register_translation(language, translation)
-        except TypeError as e:
-            logger.info(u'Item is not translatable: {}'.format(e))
-
-
-class ImportMembers(BrowserView):
-    """Import plone groups and members"""
-
-    def __call__(self, jsonfile=None, return_json=False):
-        if jsonfile:
-            self.portal = api.portal.get()
-            status = 'success'
-            try:
-                if isinstance(jsonfile, str):
-                    return_json = True
-                    data = json.loads(jsonfile)
-                elif isinstance(jsonfile, FileUpload):
-                    data = json.loads(jsonfile.read())
-                else:
-                    raise ('Data is neither text nor upload.')
-            except Exception as e:
-                status = 'error'
-                logger.error(e)
-                api.portal.show_message(
-                    u'Fehler beim Dateiuplad: {}'.format(e),
-                    request=self.request,
-                )
-            else:
-                groups = self.import_groups(data['groups'])
-                members = self.import_members(data['members'])
-                msg = u'Imported {} groups and {} members'.format(groups, members)
-                api.portal.show_message(msg, self.request)
-            if return_json:
-                msg = {'state': status, 'msg': msg}
-                return json.dumps(msg)
-
-        return self.index()
-
-    def import_groups(self, data):
-        acl = api.portal.get_tool('acl_users')
-        groupsIds = {item['id'] for item in acl.searchGroups()}
-
-        groupsNumber = 0
-        for item in data:
-            if item['groupid'] not in groupsIds:  # New group, 'have to create it
-                api.group.create(
-                    groupname=item['groupid'],
-                    title=item['title'],
-                    description=item['description'],
-                    roles=item['roles'],
-                    groups=item['groups'],
-                )
-                groupsNumber += 1
-        return groupsNumber
-
-    def import_members(self, data):
-        pr = api.portal.get_tool('portal_registration')
-        pg = api.portal.get_tool('portal_groups')
-        acl = api.portal.get_tool('acl_users')
-        groupsIds = {item['id'] for item in acl.searchGroups()}
-        groupsDict = {}
-
-        groupsNumber = 0
-        for item in data:
-            groups = item['groups']
-            for group in groups:
-                if group not in groupsIds:  # New group, 'have to create it
-                    pg.addGroup(group)
-                    groupsNumber += 1
-
-        usersNumber = 0
-        for item in data:
-            username = item['username']
-            if api.user.get(username=username) is not None:
-                logger.error(u'Skipping: User {} already exists!'.format(username))
-                continue
-            password = item.pop('password')
-            roles = item.pop('roles')
-            groups = item.pop('groups')
-            pr.addMember(username, password, roles, [], item)
-            for group in groups:
-                if group not in groupsDict.keys():
-                    groupsDict[group] = acl.getGroupById(group)
-                groupsDict[group].addMember(username)
-            usersNumber += 1
-
-        return usersNumber
-
-
-class ImportRelations(BrowserView):
-
-    # Overwrite to handle scustom relations
-    RELATIONSHIP_FIELD_MAPPING = {
-        # default relations of Plone 4 > 5
-        'Working Copy Relation': 'iterate-working-copy',
-        'relatesTo': 'relatedItems',
-    }
-
-    def __call__(self, jsonfile=None, return_json=False):
-
-        if not HAS_RELAPI:
-            api.portal.show_message('collctive.relationshelpers is missing', self.request)
-            self.index()
-
-        if jsonfile:
-            self.portal = api.portal.get()
-            status = 'success'
-            try:
-                if isinstance(jsonfile, str):
-                    return_json = True
-                    data = json.loads(jsonfile)
-                elif isinstance(jsonfile, FileUpload):
-                    data = json.loads(jsonfile.read())
-                else:
-                    raise ('Data is neither text nor upload.')
-            except Exception as e:
-                status = 'error'
-                logger.error(e)
-                msg = u'Fehler beim Dateiuplad: {}'.format(e)
-                api.portal.show_message(msg, request=self.request)
-            else:
-                msg = self.do_import(data)
-                api.portal.show_message(msg, self.request)
-            if return_json:
-                msg = {'state': status, 'msg': msg}
-                return json.dumps(msg)
-        return self.index()
-
-    def do_import(self, data):
-        start = datetime.now()
-        self.import_relations(data)
-        transaction.commit()
-        end = datetime.now()
-        delta = end - start
-        msg = 'Imported relations in {} seconds'.format(delta.seconds)
-        logger.info(msg)
-        return msg
-
-    def import_relations(self, data):
-        ignore = [
-            'translationOf',  # old LinguaPlone
-            'isReferencing',  # linkintegrity
-            'internal_references',  # obsolete
-            'link',  # tab
-            'link1',  # extranetfrontpage
-            'link2',  # extranetfrontpage
-            'link3',  # extranetfrontpage
-            'link4',  # extranetfrontpage
-            'box3_link',  # shopfrontpage
-            'box1_link',  # shopfrontpage
-            'box2_link',  # shopfrontpage
-            'source',  # remotedisplay
-            'internally_links_to',  # DoormatReference
-        ]
-        all_fixed_relations = []
-        for rel in data:
-            if rel['relationship'] in ignore:
-                continue
-            rel['from_attribute'] = self.get_from_attribute(rel)
-            all_fixed_relations.append(rel)
-        all_fixed_relations = sorted(
-            all_fixed_relations, key=itemgetter('from_uuid', 'from_attribute')
-        )
-        relapi.purge_relations()
-        relapi.cleanup_intids()
-        relapi.restore_relations(all_relations=all_fixed_relations)
-
-    def get_from_attribute(self, rel):
-        # Optionally handle special cases...
-        return self.RELATIONSHIP_FIELD_MAPPING.get(rel['relationship'], rel['relationship'])
+def fix_portal_type(portal_type):
+    normalizer = getUtility(IIDNormalizer)
+    return normalizer.normalize(portal_type).replace('-', '')
 
 
 class ResetModifiedDate(BrowserView):
