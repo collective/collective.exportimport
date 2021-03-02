@@ -326,4 +326,14 @@ class ImportLocalRoles(BrowserView):
         return self.index()
 
     def import_localroles(self, data):
-        raise NotImplementedError
+        results = 0
+        for item in data:
+            obj = api.content.get(UID=item['uuid'])
+            if not obj:
+                continue
+            localroles = item['localroles']
+            for userid in localroles:
+                obj.manage_setLocalRoles(userid=userid, roles=localroles[userid])
+            logger.info(u'Set roles on {}: {}'.format(obj.absolute_url(), localroles))
+            results += 1
+        return results
