@@ -118,9 +118,6 @@ class ExportContent(BrowserView):
 
     def build_query(self):
         query = {'portal_type': self.portal_type, 'sort_on': 'path'}
-        catalog = api.portal.get_tool('portal_catalog')
-        if 'Language' in catalog.indexes():
-            query['Language'] = 'all'
         # custom setting per type
         query.update(self.QUERY.get(self.portal_type, {}))
         query = self.update_query(query)
@@ -234,7 +231,7 @@ class ExportContent(BrowserView):
             self, 'dict_hook_{}'.format(self.safe_portal_type), None
         )
         if hook and callable(hook):
-            item = hook(item)
+            item = hook(item, obj)
         return item
 
 
