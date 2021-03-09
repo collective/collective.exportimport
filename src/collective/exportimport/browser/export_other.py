@@ -97,7 +97,7 @@ class ExportMembers(BrowserView):
         self.pms = api.portal.get_tool('portal_membership')
         data = {}
         data['groups'] = self.export_groups()
-        data['members'] = sorted(self.export_members())
+        data['members'] = [i for i in self.export_members()]
         msg = u'Exported {} groups and {} members'.format(len(data['groups']), len(data['members']))
         logger.info(msg)
         data = json.dumps(data, sort_keys=True, indent=4)
