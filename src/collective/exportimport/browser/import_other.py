@@ -200,6 +200,9 @@ class ImportMembers(BrowserView):
             password = item.pop('password')
             roles = item.pop('roles')
             groups = item.pop('groups')
+            if not item['email']:
+                logger.info(u'Skipping user {} without email: {}'.format(username, item))
+                continue
             pr.addMember(username, password, roles, [], item)
             for group in groups:
                 if group not in groupsDict.keys():
