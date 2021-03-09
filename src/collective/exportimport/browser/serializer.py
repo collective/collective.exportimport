@@ -1,33 +1,44 @@
+# -*- coding: utf-8 -*-
 from hurry.filesize import size
-from operator import itemgetter
-from plone import api
+from collective.exportimport.browser.export_content import IBase64BlobsMarker
+from collective.exportimport.browser.export_content import IRawRichTextMarker
 from plone.app.textfield.interfaces import IRichText
 from plone.dexterity.interfaces import IDexterityContent
-from plone.dexterity.interfaces import IDexterityFTI
 from plone.namedfile.interfaces import INamedFileField
 from plone.namedfile.interfaces import INamedImageField
-from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import IFieldSerializer
-from plone.restapi.interfaces import IJsonCompatible
-from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.restapi.serializer.dxfields import DefaultFieldSerializer
 from Products.CMFCore.utils import getToolByName
-from Products.CMFDynamicViewFTI.interfaces import IDynamicViewTypeInformation
-from Products.Five import BrowserView
-from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from z3c.relationfield.interfaces import IRelationValue
 from zope.component import adapter
-from zope.component import getMultiAdapter
-from zope.component import getUtility
-from zope.i18n import translate
-from zope.interface import alsoProvides
 from zope.interface import implementer
-from zope.interface import Interface
-from zope.interface import noLongerProvides
 
 import base64
+import logging
+import pkg_resources
 
+try:
+    pkg_resources.get_distribution("Products.Archetypes")
+except pkg_resources.DistributionNotFound:
+    HAS_AT = False
+else:
+    HAS_AT = True
+
+
+try:
+    pkg_resources.get_distribution("plone.app.blob")
+except pkg_resources.DistributionNotFound:
+    HAS_BLOB = False
+else:
+    HAS_BLOB = True
+
+FILE_SIZE_WARNING = 10000000
+IMAGE_SIZE_WARNING = 5000000
+
+logger = logging.getLogger(__name__)
+
+
+# Custom Serializers
 
 @adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
 class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
@@ -189,12 +200,3 @@ if HAS_AT:
                 "content-type": json_compatible(mimetype),
                 "data": data,
             }
-
-
-@adapter(IRelationValue)
-@implementer(IJsonCompatible)
-def relationvalue_converter_uuid(value):
-    """Save uuid instead of summary
-    """
-    if value.to_object:
-        return value.to_object.UID()
