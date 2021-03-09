@@ -8,9 +8,9 @@
 <div metal:fill-slot="main">
     <tal:main-macro metal:define-macro="main">
 
-      <h1 class="documentFirstHeading">Import Members</h1>
+      <h1 class="documentFirstHeading">Import Members, Groups and their Roles</h1>
 
-      <p class="documentDescription">Hier können sie manuell eine json Datei hochladen.</p>
+      <p class="documentDescription">Here you can upload a json-file.</p>
 
         <form action="@@import_members" method="post" enctype="multipart/form-data">
             <div class="form-group">
@@ -22,6 +22,125 @@
                 </button>
             </div>
         </form>
+
+        <div class="formControls" class="form-group">
+
+            <h2>Additional imports</h2>
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_relations'">Import relations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_translations'">Import translations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_members'">Import members
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_localroles'">Import local roles
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@reset_modified_date'">Reset modified date
+            </a>
+
+        </div>
+
+        <div>
+          <h3>Help</h3>
+          <p>Here is a example for the expected format. This is the format created by collective.exportimport when used for export.</p>
+          <pre>
+{
+    "groups": [
+        {
+            "description": "",
+            "email": "",
+            "groupid": "Reviewers",
+            "groups": [],
+            "roles": [
+                "Reviewer"
+            ],
+            "title": "Reviewers"
+        },
+        {
+            "description": "",
+            "email": "",
+            "groupid": "Site Administrators",
+            "groups": [],
+            "roles": [
+                "Site Administrator"
+            ],
+            "title": "Site Administrators"
+        },
+        {
+            "description": "Extranet Editors",
+            "email": "",
+            "groupid": "extranet",
+            "groups": [],
+            "roles": [
+                "Reader"
+            ],
+            "title": "Extranet Editors"
+        },
+    ],
+    "members": [
+        {
+            "description": "",
+            "email": "example@gmail.com",
+            "fullname": "Example Example",
+            "groups": [],
+            "home_page": "",
+            "last_login_time": "2016-06-25T00:03:04+00:00",
+            "listed": true,
+            "location": "",
+            "login_time": "2016-06-25T19:45:04+00:00",
+            "password": "{SSHA}W1YSVUajeCSgTYN1B1JxFzNZUa9n/rV+Ddvc",
+            "roles": [
+                "Reader"
+            ],
+            "username": "example1"
+        },
+        {
+            "description": "",
+            "email": "example2@example.com",
+            "fullname": "Example Example (Foo)",
+            "groups": [],
+            "home_page": "",
+            "last_login_time": "2016-04-19T08:56:06+00:00",
+            "listed": true,
+            "location": "",
+            "login_time": "2016-04-19T09:36:51+00:00",
+            "password": "{SSHA}q/ZTEW9yQJT7XxIbwASAv5dqctel/tlgQaKi",
+            "roles": [
+                "Member",
+                "Reader"
+            ],
+            "username": "example2"
+        },
+        {
+            "description": "",
+            "email": "example3@example.com",
+            "fullname": "Rest Test",
+            "groups": [],
+            "home_page": "",
+            "last_login_time": "2017-09-27T09:51:30+00:00",
+            "listed": true,
+            "location": "",
+            "login_time": "2017-09-27T09:51:30+00:00",
+            "password": "{SSHA}yU1PnlcM6NPd7054yPYgwnIWU4Z/f8WzHq8t",
+            "roles": [
+                "Member",
+                "Reader",
+                "Manager"
+            ],
+            "username": "example3"
+        }
+    ]
+}
+          </pre>
+        </div>
 
     </tal:main-macro>
 </div>

@@ -8,9 +8,9 @@
 <div metal:fill-slot="main">
     <tal:main-macro metal:define-macro="main">
 
-      <h1 class="documentFirstHeading">Import der Localroles</h1>
+      <h1 class="documentFirstHeading">Import Localroles</h1>
 
-      <p class="documentDescription">Hier können sie manuell eine json Datei hochladen.</p>
+      <p class="documentDescription">Here you can upload a json-file.</p>
 
         <form action="@@import_localroles" method="post" enctype="multipart/form-data">
             <div class="form-group">
@@ -18,10 +18,74 @@
             </div>
             <div class="formControls" class="form-group">
                 <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="submit" value="Hochladen">Hochladen
+                        type="submit" name="submit" value="Hochladen">Upload
                 </button>
             </div>
         </form>
+
+        <div class="formControls" class="form-group">
+
+            <h2>Additional imports</h2>
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_relations'">Import relations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_translations'">Import translations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_members'">Import members
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_localroles'">Import local roles
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@reset_modified_date'">Reset modified date
+            </a>
+
+        </div>
+
+        <div>
+          <h3>Help</h3>
+          <p>Here is a example for the expected format. This is the format created by collective.exportimport when used for export.</p>
+          <pre>
+[
+    {
+        "uuid": "108b9ca15b3f4680b448203ed2f798d1",
+        "localroles": {
+            "admin": [
+                "Owner"
+            ]
+        }
+    },
+    {
+        "uuid": "3aa61a2f6c6adb318296350bed4c6027",
+        "localroles": {
+            "admin": [
+                "Owner"
+            ],
+            "example2": [
+                "Reader"
+            ]
+        }
+    },
+    {
+        "uuid": "8d077efd4733b08f411208006539128d",
+        "localroles": {
+            "admin": [
+                "Owner"
+            ],
+            "example2": [
+                "Owner"
+            ]
+        }
+    }
+]
+            </pre>
+        </div>
 
     </tal:main-macro>
 </div>

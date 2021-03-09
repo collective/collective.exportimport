@@ -36,32 +36,32 @@
                 </button>
             </div>
 
-            <div class="formControls" class="form-group">
-
-                <h2>Additional imports</h2>
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="import_relations" value="import_relations">Import relations
-                </button>
-
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="import_translations" value="import_translations">Import translations
-                </button>
-
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="import_members" value="import_members">Import members
-                </button>
-
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="import_localroles" value="import_localroles">Import local roles
-                </button>
-
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="reset_modified_date" value="reset_modified_date">Reset modified date
-                </button>
-
-            </div>
-
         </form>
+
+        <div class="formControls" class="form-group">
+
+            <h2>Additional imports</h2>
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_relations'">Import relations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_translations'">Import translations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_members'">Import members
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_localroles'">Import local roles
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@reset_modified_date'">Reset modified date
+            </a>
+
+        </div>
 
     </tal:main-macro>
 </div>

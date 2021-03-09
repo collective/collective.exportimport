@@ -10,7 +10,7 @@
 
       <h1 class="documentFirstHeading">Import Relations</h1>
 
-      <p class="documentDescription">Hier können sie manuell eine json Datei hochladen.</p>
+      <p class="documentDescription">Here you can upload a json-file.</p>
 
         <form action="@@import_relations" method="post" enctype="multipart/form-data">
             <div class="form-group">
@@ -22,6 +22,55 @@
                 </button>
             </div>
         </form>
+
+        <div class="formControls" class="form-group">
+
+            <h2>Additional imports</h2>
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_relations'">Import relations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_translations'">Import translations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_members'">Import members
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_localroles'">Import local roles
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@reset_modified_date'">Reset modified date
+            </a>
+
+        </div>
+
+        <div>
+          <h3>Help</h3>
+          <p>Here is a example for the expected format. This is the format created by collective.exportimport when used for export.</p>
+          <pre>
+[
+    {
+        "to_uuid": "f83e9e7eff0b4d97a78b87b699f69eb5",
+        "relationship": "relatedItems",
+        "from_uuid": "6105de8ae2674b5e8433ed18fc305ab6"
+    },
+    {
+        "to_uuid": "38bf8ba02ab64607876c8942eb6d4dbd",
+        "relationship": "isReferencing",
+        "from_uuid": "71e3e0a6f06942fea36536fbed0f6c42"
+    },
+    {
+        "to_uuid": "8d3bd6e8267f4205a3dce581a0d05e48",
+        "relationship": "primary_picture",
+        "from_uuid": "71e3e0a6f06942fea36536fbed0f6c42"
+    }
+]
+            </pre>
+        </div>
 
     </tal:main-macro>
 </div>

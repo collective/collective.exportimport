@@ -8,9 +8,9 @@
 <div metal:fill-slot="main">
     <tal:main-macro metal:define-macro="main">
 
-      <h1 class="documentFirstHeading">Import der Übersetzungen</h1>
+      <h1 class="documentFirstHeading">Import translations</h1>
 
-      <p class="documentDescription">Hier können sie manuell eine json Datei hochladen.</p>
+      <p class="documentDescription">Here you can upload a json-file.</p>
 
         <form action="@@import_translations" method="post" enctype="multipart/form-data">
             <div class="form-group">
@@ -22,6 +22,50 @@
                 </button>
             </div>
         </form>
+
+        <div class="formControls" class="form-group">
+
+            <h2>Additional imports</h2>
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_relations'">Import relations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_translations'">Import translations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_members'">Import members
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_localroles'">Import local roles
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@reset_modified_date'">Reset modified date
+            </a>
+
+        </div>
+
+        <div>
+          <h3>Help</h3>
+          <p>Here is a example for the expected format. This is the format created by collective.exportimport when used for export.</p>
+          <pre>
+[
+    {
+        "fr": "8fadf82915554bed8e4ad832175d789a",
+        "de": "2a938385be574886b37fd842ef5659b7",
+        "en": "6e2fb9b53be94950bea89ba2059e22c1"
+    },
+    {
+        "fr": "ac572c20519e400eac192fef2d046708",
+        "de": "ac8da5f9449144e69919a8193cde473d",
+        "en": "e75a4faae73e499f89890375e67dff36"
+    }
+]
+          </pre>
+        </div>
 
     </tal:main-macro>
 </div>

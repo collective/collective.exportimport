@@ -28,8 +28,7 @@
 collective.exportimport
 =======================
 
-This is work-in-progress.
-Export is mostly working so far, import will come soon.
+Export and import content, members, relations, translations and localroles
 
 Features
 ========
@@ -45,7 +44,7 @@ Export supports:
 * Plone 4, 5 and 6
 * Archetypes and Dexterity
 * Python 2 and 3
-* plone.app.multilingual, Products.LinguaPlone, raptus.multilanguagefields (partly)
+* plone.app.multilingual, Products.LinguaPlone, raptus.multilanguagefields
 
 Import supports:
 
@@ -57,7 +56,7 @@ Use-cases
 Migrations
 ----------
 
-When a in-place-migration is not required you can choose this addon to migrate the most important parts of your site to a current version:
+When a in-place-migration is not required you can choose this addon to migrate the most important parts of your site to json and then import it into a new Plone instance of your targeted version:
 
 * Export content from a Plone site (it supports Plone 4 and 5, Archetypes and Dexterity, Python 2 and 3).
 * Import the exported content into a new site (Plone 5.2+, Dexterity, Python 3)
@@ -71,6 +70,17 @@ It does not support any of the following data from your database:
 * theme
 * installed addons
 
+Other
+-----
+
+You can use this addon to
+
+* Archive your content as json
+* Export data to prepare a migration to another system
+* Combine content from mutiple plone-sites into one.
+* Import a plone-site as a subsite into another.
+* Import contyent from other systems as long as it fits the required format.
+* ...
 
 Details
 =======
@@ -88,8 +98,140 @@ Exporting content is basically a wrapper for the serializers of plone.restapi:
     serializer = getMultiAdapter((obj, request), ISerializeToJson)
     data = serializer(include_items=False)
 
+Import content
+--------------
 
-By
+Importing content is a elaborate wrapper for the deserializers of plone.restapi:
+
+.. code-block:: python
+
+    from plone.restapi.interfaces import IDeserializeFromJson
+    from zope.component import getMultiAdapter
+
+    container.invokeFactory(item['@type'], item['id'])
+    deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
+    new = deserializer(validate_all=False, data=item)
+
+
+Customize export and import
+===========================
+
+This addon is meant to be adapted to your requirements and has multiple hooks to do so.
+
+
+Export Example
+--------------
+
+.. code-block:: python
+
+    from collective.exportimport.browser.export_content import ExportContent
+
+    class CustomExportContent(ExportContent):
+
+        QUERY = {
+            'Document': {'review_state': ['published', 'pending']},
+        }
+
+        DROP_PATHS = [
+            '/Plone/userportal',
+            '/Plone/en/obsolete_content',
+        ]
+
+        DROP_UIDS = [
+            '71e3e0a6f06942fea36536fbed0f6c42',
+        ]
+
+        def fixup_request(self):
+            """Use this to override stuff befor ethe export starts
+            (e.g. force a specific language in the request)."""
+            return
+
+        def global_obj_hook(self, obj):
+            """Inspect the content item before serialisation data.
+            Bad: Changing the content-item is a horrible idea.
+            Good: Return None if you want to skip this particular object.
+            """
+            return obj
+
+        def global_dict_hook(self, item, obj):
+            """Use this to modify or skip the serialized data.
+            Return None if you want to skip this particular object.
+            """
+            return item
+
+        def dict_hook_document(self, item, obj):
+            """Use this to modify or skip the serialized data by type.
+            Return the modified dict (item) or None if you want to skip this particular object.
+            """
+            return item
+
+
+Register it with your own browserlayer to override the default:
+
+.. code-block:: xml
+
+  <browser:page
+      name="export_content"
+      for="zope.interface.Interface"
+      class=".browser.export.CustomExportContent"
+      layer="My.Custom.IBrowserlayer"
+      permission="cmf.ManagePortal"
+      />
+
+
+Import Example
+--------------
+
+.. code-block:: python
+
+    from collective.exportimport.browser.import_content import ImportContent
+
+    class CustomImportContent(ImportContent):
+
+        CONTAINER = {'Event': '/imported-events'}
+
+        # These fields will be ignored
+        DROP_FIELDS = ['relatedItems']
+
+        # Items with these uid will be ignored
+        DROP_UIDS = ['04d1477583c74552a7fcd81a9085c620']
+
+        # These paths will be ignored
+        DROP_PATHS = ['/Plone/doormat/', '/Plone/import_files/']
+
+        # Default values for some fields
+        DEFAULTS = {'which_price': 'normal'}
+
+        def global_dict_hook(self, item):
+            if isinstance(item.get('description', None), dict):
+                item['description'] = item['description']['data']
+            if isinstance(item.get('rights', None), dict):
+                item['rights'] = item['rights']['data']
+            return item
+
+        def dict_hook_customtype(self, item):
+            # change the type
+            item['@type'] = 'anothertype'
+            # drop a field
+            item.pop('experiences', None)
+            return item
+
+
+Register it:
+
+.. code-block:: xml
+
+  <browser:page
+      name="import_content"
+      for="zope.interface.Interface"
+      class=".browser.import.CustomImportContent"
+      layer="My.Custom.IBrowserlayer"
+      permission="cmf.ManagePortal"
+      />
+
+
+
+Written by
 
 https://www.starzel.de
 
@@ -117,7 +259,6 @@ Contribute
 
 - Issue Tracker: https://github.com/collective/collective.exportimport/issues
 - Source Code: https://github.com/collective/collective.exportimport
-- Documentation: https://docs.plone.org/foo/bar
 
 
 Support
