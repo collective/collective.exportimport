@@ -50,6 +50,26 @@ Import supports:
 
 * Plone 5.2+, Dexterity, Python 2 and 3, plone.app.multilingual
 
+Useage
+======
+
+Export
+------
+
+Use the form with the URL ``/@@export_content``, and select which content type you want to export:
+
+.. image:: ./docs/export.png
+
+Import
+------
+
+Use the form with the URL ``/@@import_content``, and upload a json-file that you want to import:
+
+.. image:: ./docs/import.png
+
+The exports and imports for
+
+
 Use-cases
 =========
 
@@ -230,10 +250,48 @@ Register it:
       />
 
 
+Use in code
+-----------
+
+It is possible to import data in a setuphandler or upgrade-step:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from plone import api
+
+    def full_import():
+        portal = api.portal.get()
+        request = aq_get(portal, 'REQUEST')
+
+        import_content = api.content.get_view('import_content', portal, request)
+        path = Path(os.path.dirname(__file__)) / 'Document.json'
+        import_content(jsonfile=path.read_text(), portal_type=item.stem, return_json=True)
+
+        path = Path(os.path.dirname(__file__)) / 'Event.json'
+        import_content(jsonfile=path.read_text(), portal_type=item.stem, return_json=True)
+
+        import_translations = api.content.get_view('import_translations', portal, request)
+        path = Path(os.path.dirname(__file__)) / 'translations.json'
+        import_translations(jsonfile=path.read_text())
+
+        import_relations = api.content.get_view('import_relations', portal, request)
+        path = Path(os.path.dirname(__file__)) / 'relations.json'
+        import_relations(jsonfile=path.read_text())
+
+        import_members = api.content.get_view('import_members', portal, request)
+        path = Path(os.path.dirname(__file__)) / 'members.json'
+        import_members(jsonfile=path.read_text())
+
 
 Written by
+----------
 
-https://www.starzel.de
+.. image:: ./docs/starzel.png
+    :target: https://www.starzel.de
+    :alt: Starzel.de
+
+
 
 
 Installation
