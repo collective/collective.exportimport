@@ -2,3 +2,5 @@ graft src/collective
 graft docs
 include *.rst
 global-exclude *.pyc
+include *.GPL
+include *.txt
