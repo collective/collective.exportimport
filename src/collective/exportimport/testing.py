@@ -21,11 +21,12 @@ class CollectiveExportimportLayer(PloneSandboxLayer):
         # The z3c.autoinclude feature is disabled in the Plone fixture base
         # layer.
         import plone.restapi
+
         self.loadZCML(package=plone.restapi)
         self.loadZCML(package=collective.exportimport)
 
     def setUpPloneSite(self, portal):
-        applyProfile(portal, 'collective.exportimport:default')
+        applyProfile(portal, "collective.exportimport:default")
 
 
 COLLECTIVE_EXPORTIMPORT_FIXTURE = CollectiveExportimportLayer()
@@ -33,13 +34,13 @@ COLLECTIVE_EXPORTIMPORT_FIXTURE = CollectiveExportimportLayer()
 
 COLLECTIVE_EXPORTIMPORT_INTEGRATION_TESTING = IntegrationTesting(
     bases=(COLLECTIVE_EXPORTIMPORT_FIXTURE,),
-    name='CollectiveExportimportLayer:IntegrationTesting',
+    name="CollectiveExportimportLayer:IntegrationTesting",
 )
 
 
 COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING = FunctionalTesting(
     bases=(COLLECTIVE_EXPORTIMPORT_FIXTURE,),
-    name='CollectiveExportimportLayer:FunctionalTesting',
+    name="CollectiveExportimportLayer:FunctionalTesting",
 )
 
 
@@ -49,5 +50,5 @@ COLLECTIVE_EXPORTIMPORT_ACCEPTANCE_TESTING = FunctionalTesting(
         REMOTE_LIBRARY_BUNDLE_FIXTURE,
         z2.ZSERVER_FIXTURE,
     ),
-    name='CollectiveExportimportLayer:AcceptanceTesting',
+    name="CollectiveExportimportLayer:AcceptanceTesting",
 )

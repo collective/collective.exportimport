@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 # Custom Serializers
 
+
 @adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
 class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
     def __call__(self):
@@ -47,7 +48,7 @@ class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
         if not image:
             return None
 
-        if 'built-in function id' in image.filename:
+        if "built-in function id" in image.filename:
             filename = self.context.id
         else:
             filename = image.filename
@@ -55,7 +56,7 @@ class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
         result = {
             "filename": filename,
             "content-type": image.contentType,
-            "data":  base64.b64encode(image.data),
+            "data": base64.b64encode(image.data),
             "encoding": "base64",
         }
         return json_compatible(result)
@@ -68,7 +69,7 @@ class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
         if namedfile is None:
             return None
 
-        if 'built-in function id' in namedfile.filename:
+        if "built-in function id" in namedfile.filename:
             filename = self.context.id
         else:
             filename = namedfile.filename
@@ -99,12 +100,13 @@ if HAS_AT:
     from OFS.Image import Pdata
     from plone.app.blob.interfaces import IBlobField
     from plone.app.blob.interfaces import IBlobImageField
-    from plone.restapi.serializer.atfields import DefaultFieldSerializer as ATDefaultFieldSerializer
+    from plone.restapi.serializer.atfields import (
+        DefaultFieldSerializer as ATDefaultFieldSerializer,
+    )
     from Products.Archetypes.interfaces import IBaseObject
     from Products.Archetypes.interfaces.field import IFileField
     from Products.Archetypes.interfaces.field import IImageField
     from Products.Archetypes.interfaces.field import ITextField
-
 
     @adapter(IImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -115,7 +117,11 @@ if HAS_AT:
                 return None
             data = image.data.data if isinstance(image.data, Pdata) else image.data
             if len(data) > IMAGE_SIZE_WARNING:
-                logger.info(u'Large image for {}: {}'.format(self.context.absolute_url(), size(len(data))))
+                logger.info(
+                    u"Large image for {}: {}".format(
+                        self.context.absolute_url(), size(len(data))
+                    )
+                )
             result = {
                 "filename": self.field.getFilename(self.context),
                 "content-type": image.getContentType(),
@@ -123,7 +129,6 @@ if HAS_AT:
                 "encoding": "base64",
             }
             return json_compatible(result)
-
 
     @adapter(IFileField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -132,9 +137,17 @@ if HAS_AT:
             file_obj = self.field.get(self.context)
             if not file_obj:
                 return None
-            data = file_obj.data.data if isinstance(file_obj.data, Pdata) else file_obj.data
+            data = (
+                file_obj.data.data
+                if isinstance(file_obj.data, Pdata)
+                else file_obj.data
+            )
             if len(data) > FILE_SIZE_WARNING:
-                logger.info(u'Large file for {}: {}'.format(self.context.absolute_url(), size(len(data))))
+                logger.info(
+                    u"Large file for {}: {}".format(
+                        self.context.absolute_url(), size(len(data))
+                    )
+                )
 
             result = {
                 "filename": self.field.getFilename(self.context),
@@ -144,18 +157,20 @@ if HAS_AT:
             }
             return json_compatible(result)
 
-
     @adapter(IBlobImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
     class ATImageFieldSerializerWithBlobs(ATDefaultFieldSerializer):
-
         def __call__(self):
             image = self.field.get(self.context)
             if not image:
                 return None
             data = image.data.data if isinstance(image.data, Pdata) else image.data
             if len(data) > IMAGE_SIZE_WARNING:
-                logger.info(u'Large image for {}: {}'.format(self.context.absolute_url(), size(len(data))))
+                logger.info(
+                    u"Large image for {}: {}".format(
+                        self.context.absolute_url(), size(len(data))
+                    )
+                )
             result = {
                 "filename": self.field.getFilename(self.context),
                 "content-type": image.getContentType(),
@@ -164,7 +179,6 @@ if HAS_AT:
             }
             return json_compatible(result)
 
-
     @adapter(IBlobField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
     class ATFileFieldSerializerWithBlobs(ATDefaultFieldSerializer):
@@ -172,9 +186,17 @@ if HAS_AT:
             file_obj = self.field.get(self.context)
             if not file_obj:
                 return None
-            data = file_obj.data.data if isinstance(file_obj.data, Pdata) else file_obj.data
+            data = (
+                file_obj.data.data
+                if isinstance(file_obj.data, Pdata)
+                else file_obj.data
+            )
             if len(data) > FILE_SIZE_WARNING:
-                logger.info(u'Large File for {}: {}'.format(self.context.absolute_url(), size(len(data))))
+                logger.info(
+                    u"Large File for {}: {}".format(
+                        self.context.absolute_url(), size(len(data))
+                    )
+                )
             result = {
                 "filename": self.field.getFilename(self.context),
                 "content-type": self.field.getContentType(self.context),
@@ -182,7 +204,6 @@ if HAS_AT:
                 "encoding": "base64",
             }
             return json_compatible(result)
-
 
     @adapter(ITextField, IBaseObject, IRawRichTextMarker)
     @implementer(IFieldSerializer)
@@ -192,10 +213,12 @@ if HAS_AT:
             if not data:
                 return
             mimetype = self.field.getContentType(self.context)
-            if mimetype == 'text/html':
+            if mimetype == "text/html":
                 # cleanup crazy html but keep links with resolveuid
                 transforms = getToolByName(self.context, "portal_transforms")
-                data = transforms.convertTo('text/x-html-safe', data, mimetype=mimetype).getData()
+                data = transforms.convertTo(
+                    "text/x-html-safe", data, mimetype=mimetype
+                ).getData()
             return {
                 "content-type": json_compatible(mimetype),
                 "data": data,

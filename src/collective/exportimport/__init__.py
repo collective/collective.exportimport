@@ -3,4 +3,4 @@
 from zope.i18nmessageid import MessageFactory
 
 
-_ = MessageFactory('collective.exportimport')
+_ = MessageFactory("collective.exportimport")

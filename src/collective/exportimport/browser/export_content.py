@@ -39,7 +39,7 @@ class IRawRichTextMarker(Interface):
 
 class ExportContent(BrowserView):
 
-    template = ViewPageTemplateFile('templates/export_content.pt')
+    template = ViewPageTemplateFile("templates/export_content.pt")
 
     QUERY = {}
 
@@ -52,22 +52,22 @@ class ExportContent(BrowserView):
 
         self.fixup_request()
 
-        if not self.request.form.get('form.submitted', False):
+        if not self.request.form.get("form.submitted", False):
             return self.template()
 
-        if self.request.form.get('export_relations', False):
+        if self.request.form.get("export_relations", False):
             view = ExportRelations(self.context, self.request)
             return view()
 
-        if self.request.form.get('export_translations', False):
+        if self.request.form.get("export_translations", False):
             view = ExportTranslations(self.context, self.request)
             return view()
 
-        if self.request.form.get('export_members', False):
+        if self.request.form.get("export_members", False):
             view = ExportMembers(self.context, self.request)
             return view()
 
-        if self.request.form.get('export_localroles', False):
+        if self.request.form.get("export_localroles", False):
             view = ExportLocalRoles(self.context, self.request)
             return view()
 
@@ -76,19 +76,20 @@ class ExportContent(BrowserView):
 
         data = self.export_content(include_blobs=include_blobs)
         number = len(data)
-        msg = u'Exported {} {}'.format(number, self.portal_type)
+        msg = u"Exported {} {}".format(number, self.portal_type)
         logger.info(msg)
         data = json.dumps(data, sort_keys=True, indent=4)
         response = self.request.response
-        response.setHeader('content-type', 'application/json')
-        response.setHeader('content-length', len(data))
+        response.setHeader("content-type", "application/json")
+        response.setHeader("content-length", len(data))
         response.setHeader(
-            'content-disposition',
-            'attachment; filename="{0}.json"'.format(self.portal_type))
+            "content-disposition",
+            'attachment; filename="{0}.json"'.format(self.portal_type),
+        )
         return response.write(safe_bytes(data))
 
     def build_query(self):
-        query = {'portal_type': self.portal_type, 'sort_on': 'path'}
+        query = {"portal_type": self.portal_type, "sort_on": "path"}
         # custom setting per type
         query.update(self.QUERY.get(self.portal_type, {}))
         query = self.update_query(query)
@@ -102,7 +103,7 @@ class ExportContent(BrowserView):
         data = []
         query = self.build_query()
         brains = api.content.find(**query)
-        logger.info(u'Exporting {} {}'.format(len(brains), self.portal_type))
+        logger.info(u"Exporting {} {}".format(len(brains), self.portal_type))
         self.safe_portal_type = fix_portal_type(self.portal_type)
 
         if include_blobs:
@@ -125,7 +126,7 @@ class ExportContent(BrowserView):
                 continue
 
             if not index % 100:
-                logger.info(u'Handled {} items...'.format(index))
+                logger.info(u"Handled {} items...".format(index))
             obj = brain.getObject()
             obj = self.global_obj_hook(obj)
             if not obj:
@@ -135,12 +136,12 @@ class ExportContent(BrowserView):
                 item = serializer(include_items=False)
                 item = self.global_dict_hook(item, obj)
                 if not item:
-                    logger.info(u'Skipping {}'.format(brain.getURL()))
+                    logger.info(u"Skipping {}".format(brain.getURL()))
                     continue
 
                 item = self.custom_dict_hook(item, obj)
                 if not item:
-                    logger.info(u'Skipping {}'.format(brain.getURL()))
+                    logger.info(u"Skipping {}".format(brain.getURL()))
                     continue
 
                 data.append(item)
@@ -154,27 +155,31 @@ class ExportContent(BrowserView):
         return data
 
     def portal_types(self):
-        """A list with info on all content types with existing items.
-        """
-        catalog = api.portal.get_tool('portal_catalog')
-        portal_types = api.portal.get_tool('portal_types')
+        """A list with info on all content types with existing items."""
+        catalog = api.portal.get_tool("portal_catalog")
+        portal_types = api.portal.get_tool("portal_types")
         results = []
         query = self.build_query()
         for fti in portal_types.listTypeInfo():
-            if not IDexterityFTI.providedBy(fti) and not IDynamicViewTypeInformation.providedBy(fti):
+            if not IDexterityFTI.providedBy(
+                fti
+            ) and not IDynamicViewTypeInformation.providedBy(fti):
                 # Ignore non-DX and non-AT types
                 continue
-            query['portal_type'] = fti.id
-            query['limit'] = 1
+            query["portal_type"] = fti.id
+            query["limit"] = 1
             number = len(catalog(**query))
             if number >= 1:
-                results.append({
-                    'number': number,
-                    'value': fti.id,
-                    'title': translate(
-                        fti.title, domain='plone', context=self.request)
-                })
-        return sorted(results, key=itemgetter('title'))
+                results.append(
+                    {
+                        "number": number,
+                        "value": fti.id,
+                        "title": translate(
+                            fti.title, domain="plone", context=self.request
+                        ),
+                    }
+                )
+        return sorted(results, key=itemgetter("title"))
 
     def fixup_request(self):
         """Use this to override stuff (e.g. force a specific language in request)."""
@@ -198,9 +203,7 @@ class ExportContent(BrowserView):
         Use this to modify or skip the serialized data by type.
         Return a dict or None if you want to skip this particular object.
         """
-        hook = getattr(
-            self, 'dict_hook_{}'.format(self.safe_portal_type), None
-        )
+        hook = getattr(self, "dict_hook_{}".format(self.safe_portal_type), None)
         if hook and callable(hook):
             item = hook(item, obj)
         return item
@@ -208,21 +211,19 @@ class ExportContent(BrowserView):
 
 def fix_portal_type(portal_type):
     normalizer = getUtility(IIDNormalizer)
-    return normalizer.normalize(portal_type).replace('-', '')
+    return normalizer.normalize(portal_type).replace("-", "")
 
 
 @adapter(IRelationValue)
 @implementer(IJsonCompatible)
 def relationvalue_converter_uuid(value):
-    """Save uuid instead of summary
-    """
+    """Save uuid instead of summary"""
     if value.to_object:
         return value.to_object.UID()
 
 
-def safe_bytes(value, encoding='utf-8'):
-    """Convert text to bytes of the specified encoding.
-    """
+def safe_bytes(value, encoding="utf-8"):
+    """Convert text to bytes of the specified encoding."""
     if isinstance(value, six.text_type):
         value = value.encode(encoding)
     return value
