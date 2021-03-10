@@ -2,13 +2,6 @@
    If you want to learn more about writing documentation, please check out: http://docs.plone.org/about/documentation_styleguide.html
    This text does not appear on pypi or github. It is a comment.
 
-.. image:: https://travis-ci.org/collective/collective.exportimport.svg?branch=master
-    :target: https://travis-ci.org/collective/collective.exportimport
-
-.. image:: https://coveralls.io/repos/github/collective/collective.exportimport/badge.svg?branch=master
-    :target: https://coveralls.io/github/collective/collective.exportimport?branch=master
-    :alt: Coveralls
-
 .. image:: https://img.shields.io/pypi/v/collective.exportimport.svg
     :target: https://pypi.python.org/pypi/collective.exportimport/
     :alt: Latest Version
@@ -50,8 +43,8 @@ Import supports:
 
 * Plone 5.2+, Dexterity, Python 2 and 3, plone.app.multilingual
 
-Useage
-======
+Usage
+=====
 
 Export
 ------
@@ -60,6 +53,11 @@ Use the form with the URL ``/@@export_content``, and select which content type y
 
 .. image:: ./docs/export.png
 
+The downloaded json-file will have the name of the selecte type, e.h. ``Folder.json``.
+
+The exports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@export_members``, ``/@@export_relations``, ``/@@export_localroles``, ``/@@export_translations``.
+
+
 Import
 ------
 
@@ -67,7 +65,10 @@ Use the form with the URL ``/@@import_content``, and upload a json-file that you
 
 .. image:: ./docs/import.png
 
-The exports and imports for
+
+The imports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@import_members``, ``/@@import_relations``, ``/@@import_localroles``, ``/@@import_translations``.
+
+As a last step in a migration there is another view ``@@reset_modified_date`` that resets the modified date on imported content to the date initially contained in the imported json-file. This is necessary since varous changes during a migration will likely result in a updated modified-date. During import the original is stored as ``obj.modification_date_migrated`` on each new object and this view sets this date.
 
 
 Use-cases
