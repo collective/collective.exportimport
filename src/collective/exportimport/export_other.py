@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from OFS.interfaces import IOrderedContainer
+from operator import itemgetter
 from plone import api
 from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
@@ -285,7 +286,7 @@ class ExportOrdering(BrowserView):
 
         portal = api.portal.get()
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_position_in_parent)
-        return results
+        return sorted(results, key=itemgetter("order"))
 
 
 def safe_bytes(value, encoding="utf-8"):
