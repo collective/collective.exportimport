@@ -5,7 +5,11 @@ Changelog
 1.0a2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Simplify package structure and remove all unneeded files
+  [pbauer]
+
+- Add export/import for position in parent
+  [pbauer]
 
 
 1.0a1 (2021-03-10)

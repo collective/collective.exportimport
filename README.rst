@@ -145,7 +145,7 @@ Export Example
 
 .. code-block:: python
 
-    from collective.exportimport.browser.export_content import ExportContent
+    from collective.exportimport.export_content import ExportContent
 
     class CustomExportContent(ExportContent):
 
@@ -194,7 +194,7 @@ Register it with your own browserlayer to override the default:
   <browser:page
       name="export_content"
       for="zope.interface.Interface"
-      class=".browser.export.CustomExportContent"
+      class=".custom_export.CustomExportContent"
       layer="My.Custom.IBrowserlayer"
       permission="cmf.ManagePortal"
       />
@@ -205,7 +205,7 @@ Import Example
 
 .. code-block:: python
 
-    from collective.exportimport.browser.import_content import ImportContent
+    from collective.exportimport.import_content import ImportContent
 
     class CustomImportContent(ImportContent):
 
@@ -245,7 +245,7 @@ Register it:
   <browser:page
       name="import_content"
       for="zope.interface.Interface"
-      class=".browser.import.CustomImportContent"
+      class=".custom_import.CustomImportContent"
       layer="My.Custom.IBrowserlayer"
       permission="cmf.ManagePortal"
       />

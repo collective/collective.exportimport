@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+from OFS.interfaces import IOrderedContainer
 from plone import api
 from plone.restapi.serializer.converters import json_compatible
+from plone.uuid.interfaces import IUUID
 from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
 from zc.relation.interfaces import ICatalog
@@ -241,14 +243,48 @@ class ExportLocalRoles(BrowserView):
         from Products.CMFPlone.utils import base_hasattr
 
         def get_localroles(obj, path):
+            uid = IUUID(obj, None)
+            if not uid:
+                return
             if not base_hasattr(obj, "__ac_local_roles__"):
                 return
-            if not base_hasattr(obj, "UID"):
-                return
-            results.append({"uuid": obj.UID(), "localroles": obj.__ac_local_roles__})
+            results.append({"uuid": uid, "localroles": obj.__ac_local_roles__})
 
         portal = api.portal.get()
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_localroles)
+        return results
+
+
+class ExportOrdering(BrowserView):
+    """Export all local roles"""
+
+    def __call__(self):
+        all_orders = self.all_orders()
+        data = json.dumps(all_orders, indent=4)
+        filename = "ordering.json"
+        self.request.response.setHeader("Content-type", "application/json")
+        self.request.response.setHeader("content-length", len(data))
+        self.request.response.setHeader(
+            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+        )
+        return self.request.response.write(safe_bytes(data))
+
+    def all_orders(self):
+        results = []
+
+        def get_position_in_parent(obj, path):
+            uid = IUUID(obj, None)
+            if not uid:
+                return
+            parent = obj.__parent__
+            ordered = IOrderedContainer(parent, None)
+            if ordered is not None:
+                order = ordered.getObjectPosition(obj.getId())
+                results.append({"uuid": uid, "order": order})
+            return
+
+        portal = api.portal.get()
+        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_position_in_parent)
         return results
 
 

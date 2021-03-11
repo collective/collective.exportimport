@@ -346,3 +346,49 @@ class ImportLocalRoles(BrowserView):
             logger.info(u"Set roles on {}: {}".format(obj.absolute_url(), localroles))
             results += 1
         return results
+
+
+class ImportOrdering(BrowserView):
+    """Import content order"""
+
+    def __call__(self, jsonfile=None, return_json=False):
+        if jsonfile:
+            self.portal = api.portal.get()
+            status = "success"
+            try:
+                if isinstance(jsonfile, str):
+                    return_json = True
+                    data = json.loads(jsonfile)
+                elif isinstance(jsonfile, FileUpload):
+                    data = json.loads(jsonfile.read())
+                else:
+                    raise ("Data is neither text nor upload.")
+            except Exception as e:
+                status = "error"
+                logger.error(e)
+                api.portal.show_message(
+                    u"Fehler beim Dateiuplad: {}".format(e),
+                    request=self.request,
+                )
+            else:
+                orders = self.import_ordering(data)
+                msg = u"Imported {} orders".format(localroles)
+                api.portal.show_message(msg, self.request)
+            if return_json:
+                msg = {"state": status, "msg": msg}
+                return json.dumps(msg)
+
+        return self.index()
+
+    def import_ordering(self, data):
+        results = 0
+        for item in data:
+            obj = api.content.get(UID=item["uuid"])
+            if not obj:
+                continue
+            ordered = IOrderedContainer(obj.__parent__, None)
+            if not ordered:
+                continue
+            ordered.moveObjectToPosition(obj.getId(), item["order"])
+            results += 1
+        return results

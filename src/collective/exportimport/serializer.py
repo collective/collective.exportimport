@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from hurry.filesize import size
-from collective.exportimport.browser.export_content import IBase64BlobsMarker
-from collective.exportimport.browser.export_content import IRawRichTextMarker
+from collective.exportimport.interfaces import IBase64BlobsMarker
+from collective.exportimport.interfaces import IRawRichTextMarker
 from plone.app.textfield.interfaces import IRichText
 from plone.dexterity.interfaces import IDexterityContent
 from plone.namedfile.interfaces import INamedFileField

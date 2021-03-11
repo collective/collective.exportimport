@@ -2,20 +2,128 @@
     xmlns="http://namespaces.zope.org/zope"
     xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
     xmlns:i18n="http://namespaces.zope.org/i18n"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
     xmlns:plone="http://namespaces.plone.org/plone"
     i18n_domain="collective.exportimport">
 
   <i18n:registerTranslations directory="locales" />
 
-
-  <include package=".browser" />
-
-
+  <!-- Exports -->
+  <browser:page
+      name="export_content"
+      for="zope.interface.Interface"
+      class=".export_content.ExportContent"
+      template="templates/export_content.pt"
+      permission="cmf.ManagePortal"
       />
 
+  <browser:page
+      name="export_relations"
+      for="zope.interface.Interface"
+      class=".export_other.ExportRelations"
+      permission="cmf.ManagePortal"
       />
 
+  <browser:page
+      name="export_members"
+      for="zope.interface.Interface"
+      class=".export_other.ExportMembers"
+      permission="cmf.ManagePortal"
       />
 
+  <browser:page
+      name="export_translations"
+      for="zope.interface.Interface"
+      class=".export_other.ExportTranslations"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="export_localroles"
+      for="zope.interface.Interface"
+      class=".export_other.ExportLocalRoles"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="export_ordering"
+      for="zope.interface.Interface"
+      class=".export_other.ExportOrdering"
+      permission="cmf.ManagePortal"
+      />
+
+  <!-- Serializers -->
+  <adapter zcml:condition="installed Products.Archetypes"
+      factory=".serializer.ATFileFieldSerializer" />
+  <adapter zcml:condition="installed Products.Archetypes"
+      factory=".serializer.ATImageFieldSerializer" />
+  <adapter zcml:condition="installed Products.Archetypes"
+      factory=".serializer.ATTextFieldSerializer" />
+
+  <adapter zcml:condition="installed plone.app.blob"
+      factory=".serializer.ATFileFieldSerializerWithBlobs" />
+  <adapter zcml:condition="installed plone.app.blob"
+      factory=".serializer.ATImageFieldSerializerWithBlobs" />
+
+  <adapter factory=".serializer.FileFieldSerializerWithBlobs" />
+  <adapter factory=".serializer.ImageFieldSerializerWithBlobs" />
+  <adapter factory=".serializer.RichttextFieldSerializerWithRawText" />
+
+  <browser:page
+      name="import_content"
+      for="zope.interface.Interface"
+      class=".import_content.ImportContent"
+      template="templates/import_content.pt"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="reset_modified_date"
+      for="zope.interface.Interface"
+      class=".import_content.ResetModifiedDate"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      zcml:condition="installed plone.app.multilingual"
+      name="import_translations"
+      for="zope.interface.Interface"
+      class=".import_other.ImportTranslations"
+      template="templates/import_translations.pt"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="import_members"
+      for="zope.interface.Interface"
+      class=".import_other.ImportMembers"
+      template="templates/import_members.pt"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="import_relations"
+      for="zope.interface.Interface"
+      class=".import_other.ImportRelations"
+      template="templates/import_relations.pt"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="import_localroles"
+      for="zope.interface.Interface"
+      class=".import_other.ImportLocalRoles"
+      template="templates/import_localroles.pt"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="import_ordering"
+      for="zope.interface.Interface"
+      class=".import_other.ImportOrdering"
+      template="templates/import_ordering.pt"
+      permission="cmf.ManagePortal"
+      />
 
 </configure>

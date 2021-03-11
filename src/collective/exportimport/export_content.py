@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-from collective.exportimport.browser.export_other import ExportLocalRoles
-from collective.exportimport.browser.export_other import ExportMembers
-from collective.exportimport.browser.export_other import ExportRelations
-from collective.exportimport.browser.export_other import ExportTranslations
+from collective.exportimport.export_other import ExportLocalRoles
+from collective.exportimport.export_other import ExportMembers
+from collective.exportimport.export_other import ExportRelations
+from collective.exportimport.export_other import ExportTranslations
+from collective.exportimport.interfaces import IBase64BlobsMarker
+from collective.exportimport.interfaces import IRawRichTextMarker
 from operator import itemgetter
 from plone import api
 from plone.dexterity.interfaces import IDexterityFTI
@@ -27,14 +29,6 @@ import logging
 import six
 
 logger = logging.getLogger(__name__)
-
-
-class IBase64BlobsMarker(Interface):
-    """A marker interface to override default serializers."""
-
-
-class IRawRichTextMarker(Interface):
-    """A marker interface to override default serializers for Richtext."""
 
 
 class ExportContent(BrowserView):

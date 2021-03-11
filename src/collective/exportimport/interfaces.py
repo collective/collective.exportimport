@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """Module where all interfaces, events and exceptions live."""
+from zope.interface import Interface
 
-from zope.publisher.interfaces.browser import IDefaultBrowserLayer
+
+class IBase64BlobsMarker(Interface):
+    """A marker interface to override default serializers."""
 
 
-class ICollectiveExportimportLayer(IDefaultBrowserLayer):
-    """Marker interface that defines a browser layer."""
+class IRawRichTextMarker(Interface):
+    """A marker interface to override default serializers for Richtext."""
