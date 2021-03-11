@@ -31,6 +31,7 @@ Features
 * Export & Import relations
 * Export & Import translations
 * Export & Import local roles
+* Export & Import order (position in parent)
 
 Export supports:
 
@@ -55,7 +56,7 @@ Use the form with the URL ``/@@export_content``, and select which content type y
 
 The downloaded json-file will have the name of the selecte type, e.h. ``Folder.json``.
 
-The exports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@export_members``, ``/@@export_relations``, ``/@@export_localroles``, ``/@@export_translations``.
+The exports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@export_members``, ``/@@export_relations``, ``/@@export_localroles``, ``/@@export_translations``, ``/@@export_ordering``.
 
 
 Import
@@ -66,7 +67,7 @@ Use the form with the URL ``/@@import_content``, and upload a json-file that you
 .. image:: ./docs/import.png
 
 
-The imports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@import_members``, ``/@@import_relations``, ``/@@import_localroles``, ``/@@import_translations``.
+The imports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@import_members``, ``/@@import_relations``, ``/@@import_localroles``, ``/@@import_translations``, ``/@@import_ordering``..
 
 As a last step in a migration there is another view ``@@reset_modified_date`` that resets the modified date on imported content to the date initially contained in the imported json-file. This is necessary since varous changes during a migration will likely result in a updated modified-date. During import the original is stored as ``obj.modification_date_migrated`` on each new object and this view sets this date.
 
@@ -283,6 +284,13 @@ It is possible to import data in a setuphandler or upgrade-step:
         import_members = api.content.get_view('import_members', portal, request)
         path = Path(os.path.dirname(__file__)) / 'members.json'
         import_members(jsonfile=path.read_text())
+
+        import_ordering = api.content.get_view('import_ordering', portal, request)
+        path = Path(os.path.dirname(__file__)) / 'ordering.json'
+        import_ordering(jsonfile=path.read_text())
+
+        reset_modified = api.content.get_view('reset_modified_date', portal, request)
+        reset_modified()
 
 
 Written by
