@@ -16,7 +16,7 @@ long_description = "\n\n".join(
 
 setup(
     name="collective.exportimport",
-    version="1.0a2.dev0",
+    version="1.0a2",
     description="An add-on for Plone to Export and import content, members, relations, translations and localroles.",
     long_description=long_description,
     # Get more from https://pypi.org/classifiers/

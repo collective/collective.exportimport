@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.0a2 (unreleased)
+1.0a2 (2021-03-11)
 ------------------
 
 - Simplify package structure and remove all unneeded files
