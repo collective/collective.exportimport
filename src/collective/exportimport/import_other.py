@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
 from Products.Five import BrowserView
