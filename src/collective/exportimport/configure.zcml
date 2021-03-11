@@ -7,39 +7,15 @@
 
   <i18n:registerTranslations directory="locales" />
 
-  <!--
-    Be careful if you use general includeDependencies, it can have side effects!
-    Better import explicit packages or configurations ;)
-  -->
-  <!--<includeDependencies package="." />-->
 
   <include package=".browser" />
 
-  <include file="permissions.zcml" />
 
-  <genericsetup:registerProfile
-      name="default"
-      title="collective.exportimport"
-      directory="profiles/default"
-      description="Installs the collective.exportimport add-on."
-      provides="Products.GenericSetup.interfaces.EXTENSION"
-      post_handler=".setuphandlers.post_install"
       />
 
-  <genericsetup:registerProfile
-      name="uninstall"
-      title="collective.exportimport (uninstall)"
-      directory="profiles/uninstall"
-      description="Uninstalls the collective.exportimport add-on."
-      provides="Products.GenericSetup.interfaces.EXTENSION"
-      post_handler=".setuphandlers.uninstall"
       />
 
-  <utility
-      factory=".setuphandlers.HiddenProfiles"
-      name="collective.exportimport-hiddenprofiles"
       />
 
-  <!-- -*- extra stuff goes here -*- -->
 
 </configure>
