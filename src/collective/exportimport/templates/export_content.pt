@@ -67,6 +67,10 @@
                         type="submit" name="export_localroles" value="export_localroles">Export local roles
                 </button>
 
+                <button class="btn btn-primary submit-widget button-field context"
+                        type="submit" name="export_ordering" value="export_ordering">Export object position in parent
+                </button>
+
             </div>
         </form>
 

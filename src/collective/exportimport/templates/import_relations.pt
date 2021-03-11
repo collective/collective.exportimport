@@ -12,7 +12,7 @@
 
       <p class="documentDescription">Here you can upload a json-file.</p>
 
-        <form action="@@import_relations" method="post" enctype="multipart/form-data">
+        <form action="@@import_relations" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <input type="file" name="jsonfile"/><br/>
             </div>
@@ -40,6 +40,10 @@
 
             <a class="btn btn-primary submit-widget button-field context"
                tal:attributes="href python: portal_url + '/@@import_localroles'">Import local roles
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_ordering'">Import Object Positions in Parent
             </a>
 
             <a class="btn btn-primary submit-widget button-field context"

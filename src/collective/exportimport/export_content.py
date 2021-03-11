@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from collective.exportimport.export_other import ExportLocalRoles
 from collective.exportimport.export_other import ExportMembers
+from collective.exportimport.export_other import ExportOrdering
 from collective.exportimport.export_other import ExportRelations
 from collective.exportimport.export_other import ExportTranslations
 from collective.exportimport.interfaces import IBase64BlobsMarker
@@ -63,6 +64,10 @@ class ExportContent(BrowserView):
 
         if self.request.form.get("export_localroles", False):
             view = ExportLocalRoles(self.context, self.request)
+            return view()
+
+        if self.request.form.get("export_ordering", False):
+            view = ExportOrdering(self.context, self.request)
             return view()
 
         if not self.portal_type:

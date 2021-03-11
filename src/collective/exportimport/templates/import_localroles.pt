@@ -43,6 +43,10 @@
             </a>
 
             <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_ordering'">Import Object Positions in Parent
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
                tal:attributes="href python: portal_url + '/@@reset_modified_date'">Reset modified date
             </a>
 
