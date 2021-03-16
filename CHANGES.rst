@@ -5,7 +5,8 @@ Changelog
 1.0a3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add option to save export on server.
+  [pbauer]
 
 
 1.0a2 (2021-03-11)

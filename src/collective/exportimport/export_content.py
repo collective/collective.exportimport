@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from App.config import getConfiguration
 from collective.exportimport.export_other import ExportLocalRoles
 from collective.exportimport.export_other import ExportMembers
 from collective.exportimport.export_other import ExportOrdering
@@ -27,6 +28,7 @@ from zope.interface import noLongerProvides
 
 import json
 import logging
+import os
 import six
 
 logger = logging.getLogger(__name__)
@@ -42,7 +44,7 @@ class ExportContent(BrowserView):
 
     DROP_PATHS = []
 
-    def __call__(self, portal_type=None, include_blobs=False):
+    def __call__(self, portal_type=None, include_blobs=False, download_to_server=False):
         self.portal_type = portal_type
 
         self.fixup_request()
@@ -77,15 +79,26 @@ class ExportContent(BrowserView):
         number = len(data)
         msg = u"Exported {} {}".format(number, self.portal_type)
         logger.info(msg)
+        filename = '{}.json'.format(self.portal_type)
         data = json.dumps(data, sort_keys=True, indent=4)
-        response = self.request.response
-        response.setHeader("content-type", "application/json")
-        response.setHeader("content-length", len(data))
-        response.setHeader(
-            "content-disposition",
-            'attachment; filename="{0}.json"'.format(self.portal_type),
-        )
-        return response.write(safe_bytes(data))
+        api.portal.show_message(msg, self.request)
+        if not download_to_server:
+            response = self.request.response
+            response.setHeader("content-type", "application/json")
+            response.setHeader("content-length", len(data))
+            response.setHeader(
+                "content-disposition",
+                'attachment; filename="{0}"'.format(filename),
+            )
+            return response.write(safe_bytes(data))
+        else:
+            cfg = getConfiguration()
+            filepath = os.path.join(cfg.clienthome, filename)
+            with open(filepath, 'w') as f:
+                f.write(data)
+                logger.info(u"Saved {} to {}".format(filename, filepath))
+            url = self.context.absolute_url()
+            self.request.response.redirect(url)
 
     def build_query(self):
         query = {"portal_type": self.portal_type, "sort_on": "path"}
@@ -166,7 +179,6 @@ class ExportContent(BrowserView):
                 # Ignore non-DX and non-AT types
                 continue
             query["portal_type"] = fti.id
-            query["limit"] = 1
             number = len(catalog(**query))
             if number >= 1:
                 results.append(
