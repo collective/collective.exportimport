@@ -229,9 +229,9 @@ class ImportRelations(BrowserView):
 
         if not HAS_RELAPI:
             api.portal.show_message(
-                "collctive.relationshelpers is missing", self.request
+                "collective.relationhelpers is not available", self.request
             )
-            self.index()
+            return self.index()
 
         if jsonfile:
             self.portal = api.portal.get()
@@ -373,7 +373,7 @@ class ImportOrdering(BrowserView):
                 )
             else:
                 orders = self.import_ordering(data)
-                msg = u"Imported {} orders".format(localroles)
+                msg = u"Imported {} orders".format(orders)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
