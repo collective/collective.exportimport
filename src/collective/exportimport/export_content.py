@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
 from App.config import getConfiguration
-from collective.exportimport.export_other import ExportLocalRoles
-from collective.exportimport.export_other import ExportMembers
-from collective.exportimport.export_other import ExportOrdering
-from collective.exportimport.export_other import ExportRelations
-from collective.exportimport.export_other import ExportTranslations
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
 from operator import itemgetter
@@ -51,26 +46,6 @@ class ExportContent(BrowserView):
 
         if not self.request.form.get("form.submitted", False):
             return self.template()
-
-        if self.request.form.get("export_relations", False):
-            view = ExportRelations(self.context, self.request)
-            return view()
-
-        if self.request.form.get("export_translations", False):
-            view = ExportTranslations(self.context, self.request)
-            return view()
-
-        if self.request.form.get("export_members", False):
-            view = ExportMembers(self.context, self.request)
-            return view()
-
-        if self.request.form.get("export_localroles", False):
-            view = ExportLocalRoles(self.context, self.request)
-            return view()
-
-        if self.request.form.get("export_ordering", False):
-            view = ExportOrdering(self.context, self.request)
-            return view()
 
         if not self.portal_type:
             return self.template()

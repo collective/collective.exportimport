@@ -51,25 +51,25 @@
             <div class="formControls" class="form-group">
 
                 <h2>Additional exports</h2>
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="export_relations" value="export_relations">Export relations
-                </button>
+                <a class="btn btn-primary submit-widget button-field context"
+                   tal:attributes="href python: portal_url + '/@@export_relations'">Export relations
+                </a>
 
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="export_translations" value="export_translations">Export translations
-                </button>
+                <a class="btn btn-primary submit-widget button-field context"
+                   tal:attributes="href python: portal_url + '/@@export_translations'">Export translations
+                </a>
 
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="export_members" value="export_members">Export members
-                </button>
+                <a class="btn btn-primary submit-widget button-field context"
+                   tal:attributes="href python: portal_url + '/@@export_members'">Export members
+                </a>
 
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="export_localroles" value="export_localroles">Export local roles
-                </button>
+                <a class="btn btn-primary submit-widget button-field context"
+                   tal:attributes="href python: portal_url + '/@@export_localroles'">Export local roles
+                </a>
 
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="export_ordering" value="export_ordering">Export object position in parent
-                </button>
+                <a class="btn btn-primary submit-widget button-field context"
+                   tal:attributes="href python: portal_url + '/@@export_ordering'">Export object positions in Parent
+                </a>
 
             </div>
         </form>
