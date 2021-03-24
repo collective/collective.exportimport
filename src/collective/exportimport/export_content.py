@@ -52,12 +52,22 @@ class ExportContent(BrowserView):
 
         data = self.export_content(include_blobs=include_blobs)
         number = len(data)
-        msg = u"Exported {} {}".format(number, self.portal_type)
-        logger.info(msg)
         filename = '{}.json'.format(self.portal_type)
         data = json.dumps(data, sort_keys=True, indent=4)
-        api.portal.show_message(msg, self.request)
-        if not download_to_server:
+
+        if download_to_server:
+            cfg = getConfiguration()
+            filepath = os.path.join(cfg.clienthome, filename)
+            with open(filepath, 'w') as f:
+                f.write(data)
+            msg = u"Exported {} {} as {} to {}".format(number, self.portal_type, filename, filepath)
+            logger.info(msg)
+            api.portal.show_message(msg, self.request)
+            self.request.response.redirect(self.request['ACTUAL_URL'])
+        else:
+            msg = u"Exported {} {}".format(number, self.portal_type)
+            logger.info(msg)
+            api.portal.show_message(msg, self.request)
             response = self.request.response
             response.setHeader("content-type", "application/json")
             response.setHeader("content-length", len(data))
@@ -66,14 +76,6 @@ class ExportContent(BrowserView):
                 'attachment; filename="{0}"'.format(filename),
             )
             return response.write(safe_bytes(data))
-        else:
-            cfg = getConfiguration()
-            filepath = os.path.join(cfg.clienthome, filename)
-            with open(filepath, 'w') as f:
-                f.write(data)
-                logger.info(u"Saved {} to {}".format(filename, filepath))
-            url = self.context.absolute_url()
-            self.request.response.redirect(url)
 
     def build_query(self):
         query = {"portal_type": self.portal_type, "sort_on": "path"}
