@@ -8,6 +8,12 @@ Changelog
 - Add option to save export on server.
   [pbauer]
 
+- Fix issues in import_relations and import_ordering.
+  [pbauer]
+
+- Use links to other exports in export_content for easier override.
+  [pbauer]
+
 
 1.0a2 (2021-03-11)
 ------------------

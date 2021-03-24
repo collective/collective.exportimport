@@ -293,13 +293,64 @@ It is possible to import data in a setuphandler or upgrade-step:
         reset_modified()
 
 
+Save all content to ``var/instance/``:
+
+.. code-block:: python
+
+    from plone import api
+    from Products.Five import BrowserView
+
+    class ExportAll(BrowserView):
+
+        def __call__(self):
+            portal_types = api.portal.get_tool('portal_types').keys()
+            export_content = api.content.get_view('export_content', self.context, self.request)
+            self.request.form['form.submitted'] = True
+            for portal_type in portal_types:
+                export_content(portal_type=portal_type, include_blobs=True, download_to_server=True)
+
+Import all content from ``var/instance/import/``:
+
+.. code-block:: python
+
+    from App.config import getConfiguration
+    from pathlib import Path
+    from plone import api
+    from plone.protect.interfaces import IDisableCSRFProtection
+    from Products.Five import BrowserView
+    from zope.interface import alsoProvides
+
+    import os
+
+    class ImportAll(BrowserView):
+
+        def __call__(self):
+            alsoProvides(self.request, IDisableCSRFProtection)
+            # Start with folderish content!
+            portal_types = [
+                'Folder',
+                'File',
+                'Image',
+                'Document',
+                'News Item',
+                'Event',
+                'Collection',
+                'Link',
+            ]
+            instance_path = getConfiguration().clienthome
+            import_content = api.content.get_view('import_content', self.context, self.request)
+            self.request.form['form.submitted'] = True
+            for portal_type in portal_types:
+                path = Path(instance_path) / 'import' / f'{portal_type}.json'
+                import_content(jsonfile=path.read_text(), portal_type=portal_type, return_json=True)
+
+
 Written by
 ----------
 
 .. image:: ./docs/starzel.png
     :target: https://www.starzel.de
     :alt: Starzel.de
-
 
 
 
