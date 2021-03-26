@@ -135,6 +135,35 @@ Importing content is a elaborate wrapper for the deserializers of plone.restapi:
     new = deserializer(validate_all=False, data=item)
 
 
+Use for migrations from Archetypes to Dexterity
+-----------------------------------------------
+
+Exporting Archetypes content and importing that as Dexterity content works fine but due to changes in field-names some settings would get lost.
+For example the setting to exclude content from the navigation was renamed from ``excludeFromNav`` to ``exclude_from_nav``.
+
+To fix this you can modify the data during import like the following example.
+
+.. code-block:: python
+
+    from collective.exportimport.import_content import ImportContent
+
+    class CustomImportContent(ImportContent):
+
+        def global_dict_hook(self, item):
+            if item.get("expirationDate"):
+                item["expires"] = item["expirationDate"]
+            if item.get("effectiveDate"):
+                item["effective"] = item["effectiveDate"]
+            if item.get("excludeFromNav"):
+                item["exclude_from_nav"] = item["excludeFromNav"]
+            return item
+
+
+Obviously you can use the same approach to handle any changes that you made to your custom content-types.
+For more details on customizing see below.
+
+
+
 Customize export and import
 ===========================
 
