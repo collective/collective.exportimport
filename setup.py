@@ -21,7 +21,7 @@ setup(
     long_description=long_description,
     # Get more from https://pypi.org/classifiers/
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 2 - Beta",
         "Intended Audience :: Developers",
         "Environment :: Web Environment",
         "Framework :: Plone",
