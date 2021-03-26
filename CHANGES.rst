@@ -14,6 +14,9 @@ Changelog
 - Use links to other exports in export_content for easier override.
   [pbauer]
 
+- Add support for exporting LinguaPlone translations.
+  [pbauer]
+
 
 1.0a2 (2021-03-11)
 ------------------
