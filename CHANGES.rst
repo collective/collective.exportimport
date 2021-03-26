@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.0a3 (unreleased)
+1.0b1 (2021-03-26)
 ------------------
 
 - Add option to save export on server.
