@@ -185,11 +185,57 @@ class ExportTranslations(BrowserView):
     DROP_PATH = []
 
     def __call__(self):
+        all_translations = self.all_translations()
+        data = json.dumps(all_translations, indent=4)
+        filename = "translations.json"
+        self.request.response.setHeader("Content-type", "application/json")
+        self.request.response.setHeader("content-length", len(data))
+        self.request.response.setHeader(
+            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+        )
+        return self.request.response.write(safe_bytes(data))
+
+
+    def all_translations(self):
+        results = []
+
+        # Archetypes with LinguaPlone
+        if HAS_AT:
+            try:
+                pkg_resources.get_distribution("Products.LinguaPlone")
+            except pkg_resources.DistributionNotFound:
+                HAS_LINGUAPLONE = False
+            else:
+                HAS_LINGUAPLONE = True
+
+            if HAS_LINGUAPLONE:
+                from Products.Archetypes.config import REFERENCE_CATALOG
+                # Get all data from the reference_catalog if it exists
+                reference_catalog = getToolByName(self.context, REFERENCE_CATALOG, None)
+                if reference_catalog is not None:
+                    for ref in reference_catalog(relationship='translationOf'):
+                        source = api.content.get(UID=ref.sourceUID)
+                        if not source:
+                            continue
+                        item = {}
+                        translations = source.getTranslations()
+                        for lang in translations:
+                            if not lang:
+                                logger.info(u'Skip translation: {}'.format(lang))
+                                continue
+                            uuid = IUUID(translations[lang][0], None)
+                            if uuid:
+                                item[lang] = uuid
+                        if len(item) < 2:
+                            continue
+                        results.append(item)
+
+        # Archetypes and Dexterity with plone.app.multilingual
         portal_catalog = api.portal.get_tool("portal_catalog")
         if "TranslationGroup" not in portal_catalog.indexes():
-            logger.info(u"No index TranslationGroup (p.a.multilingual not installed)")
-            return
-        results = []
+            logger.debug(u"No index TranslationGroup (p.a.multilingual not installed)")
+            return results
+
         for uid in portal_catalog.uniqueValuesFor("TranslationGroup"):
             brains = portal_catalog(TranslationGroup=uid)
 
@@ -212,17 +258,7 @@ class ExportTranslations(BrowserView):
 
             if not skip:
                 results.append(item)
-
-        # TODO: Add support for LinguaPlone
-        # TODO: Add support for raptus.multilingual
-
-        data = json.dumps(results, indent=4)
-        filename = "translations.json"
-        self.request.response.setHeader("Content-Type", "application/json")
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        return results
 
 
 class ExportLocalRoles(BrowserView):
