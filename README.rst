@@ -54,7 +54,7 @@ Use the form with the URL ``/@@export_content``, and select which content type y
 
 .. image:: ./docs/export.png
 
-The downloaded json-file will have the name of the selected type, e.h. ``Folder.json``.
+The downloaded json-file will have the name of the selected type, e.g. ``Folder.json``.
 
 The exports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@export_members``, ``/@@export_relations``, ``/@@export_localroles``, ``/@@export_translations``, ``/@@export_ordering``.
 
