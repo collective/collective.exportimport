@@ -101,7 +101,7 @@ You can use this addon to
 * Export data to prepare a migration to another system
 * Combine content from mutiple plone-sites into one.
 * Import a plone-site as a subsite into another.
-* Import contyent from other systems as long as it fits the required format.
+* Import content from other systems as long as it fits the required format.
 * ...
 
 Details
