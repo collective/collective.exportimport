@@ -163,6 +163,13 @@ Obviously you can use the same approach to handle any changes that you made to y
 For more details on customizing see below.
 
 
+Control creating imported content
+---------------------------------
+
+Imported content is initially created with ``invokeFactory`` using portal_type and id of the exported item before deserialing the rest of the data.
+You can set additional values by specifying a dict ``factory_kwargs`` that will be passed to the facory.
+Like this you can set values on the imported object that are expected to be there by subscribers to IObjectAddedEvent.
+
 
 Customize export and import
 ===========================

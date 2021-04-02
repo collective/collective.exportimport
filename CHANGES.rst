@@ -5,7 +5,9 @@ Changelog
 1.0b2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Support setting values with ``factory_kwargs`` when creating instances during import.
+  This can be used to set values that need to be there during subscribers to IObjectAddedEvent.
+  [pbauer]
 
 
 1.0b1 (2021-03-26)

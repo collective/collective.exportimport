@@ -188,7 +188,8 @@ class ImportContent(BrowserView):
                     )
                 )
 
-            container.invokeFactory(item["@type"], item["id"])
+            factory_kwargs = item.get('factory_kwargs', {})
+            container.invokeFactory(item["@type"], item["id"], **factory_kwargs)
             new = container[item["id"]]
 
             # import using plone.restapi deserializers
