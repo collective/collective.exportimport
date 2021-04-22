@@ -16,6 +16,7 @@ from ZPublisher.HTTPRequest import FileUpload
 import json
 import logging
 import random
+import six
 import transaction
 
 logger = logging.getLogger(__name__)
@@ -415,8 +416,11 @@ class ResetModifiedDate(BrowserView):
     def __call__(self):
         portal = api.portal.get()
         alsoProvides(self.request, IDisableCSRFProtection)
+        amount = 0
 
         def fix_modified(obj, path):
+            if six.PY3:
+                nonlocal amount
             modified = getattr(obj, "modification_date_migrated", None)
             if not modified:
                 return
@@ -424,6 +428,9 @@ class ResetModifiedDate(BrowserView):
                 obj.modification_date = modified
                 # del obj.modification_date_migrated
                 obj.reindexObject(idxs=["modified"])
+                amount += 1
 
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=fix_modified)
-        return "Done!"
+        msg = "Reset modification date for {} items.".format(amount)
+        api.portal.show_message(msg, self.request)
+        return self.request.response.redirect(self.context.absolute_url())
