@@ -13,6 +13,7 @@ from zope.component import getUtility
 from zope.interface import alsoProvides
 from ZPublisher.HTTPRequest import FileUpload
 
+import ijson
 import json
 import logging
 import random
@@ -72,25 +73,29 @@ class ImportContent(BrowserView):
 
         if jsonfile:
             self.portal = api.portal.get()
+            self.portal_type = portal_type
             status = "success"
             try:
                 if isinstance(jsonfile, str):
-                    if not portal_type:
+                    if not self.portal_type:
                         raise RuntimeError(
                             "portal_types required when passing a string"
                         )
-                    self.portal_type = portal_type
                     return_json = True
-                    data = json.loads(jsonfile)
-                elif isinstance(jsonfile, FileUpload):
-                    self.portal_type = jsonfile.filename.split(".json")[0]
-                    data = json.loads(jsonfile.read())
+                    data = ijson.items(jsonfile, 'item')
+                elif isinstance(jsonfile, FileUpload) or hasattr(jsonfile, 'read'):
+                    if not self.portal_type:
+                        if hasattr(jsonfile, 'filename'):
+                            self.portal_type = jsonfile.filename.split(".json")[0]
+                        elif hasattr(jsonfile, 'name'):
+                            self.portal_type = jsonfile.name.split("/")[-1].split(".json")[0]
+                    data = ijson.items(jsonfile, 'item')
                 else:
-                    raise ("Data is neither text nor upload.")
+                    raise RuntimeError("Data is neither text, file nor upload.")
             except Exception as e:
-                logger.error(e)
+                logger.error(str(e))
                 status = "error"
-                msg = e
+                msg = str(e)
                 api.portal.show_message(
                     u"Exception during uplad: {}".format(e),
                     request=self.request,
@@ -131,7 +136,10 @@ class ImportContent(BrowserView):
                         container_path, self.portal_type
                     )
                 )
-        logger.info(u"Importing {} {}".format(len(data), self.portal_type))
+        if getattr(data, 'len', None):
+            logger.info(u"Importing {} {}".format(len(data), self.portal_type))
+        else:
+            logger.info(u"Importing {}".format(self.portal_type))
         for index, item in enumerate(data, start=1):
             if self.limit and len(added) >= self.limit:
                 break
