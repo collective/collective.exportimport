@@ -325,6 +325,37 @@ class ExportOrdering(BrowserView):
         return sorted(results, key=itemgetter("order"))
 
 
+class ExportDefaultPages(BrowserView):
+    """Export all default_page settings."""
+
+    def __call__(self):
+        all_default_pages = self.all_default_pages()
+        data = json.dumps(all_default_pages, indent=4)
+        filename = "defaultpages.json"
+        self.request.response.setHeader("Content-type", "application/json")
+        self.request.response.setHeader("content-length", len(data))
+        self.request.response.setHeader(
+            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+        )
+        return self.request.response.write(safe_bytes(data))
+
+    def all_default_pages(self):
+        results = []
+
+        def get_default_page(obj, path):
+            uid = IUUID(obj, None)
+            if not uid:
+                return
+            default_page = obj.getDefaultPage()
+            if default_page:
+                results.append({"uuid": uid, "default_page": default_page})
+            return
+
+        portal = api.portal.get()
+        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_default_page)
+        return results
+
+
 def safe_bytes(value, encoding="utf-8"):
     """Convert text to bytes of the specified encoding."""
     if isinstance(value, six.text_type):

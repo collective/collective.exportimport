@@ -84,6 +84,10 @@
                 </a>
 
                 <a class="btn btn-primary submit-widget button-field context"
+                   tal:attributes="href python: portal_url + '/@@export_defaultpages'">Export default pages
+                </a>
+
+                <a class="btn btn-primary submit-widget button-field context"
                    tal:attributes="href python: portal_url + '/@@export_ordering'">Export object positions in Parent
                 </a>
 
