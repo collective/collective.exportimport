@@ -59,6 +59,8 @@ setup(
         "plone.api>=1.8.4",
         "plone.restapi",
         "hurry.filesize",
+        "plone.app.contenttypes",
+        "z3c.relationfield",
     ],
     entry_points="""
     [z3c.autoinclude.plugin]

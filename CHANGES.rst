@@ -5,7 +5,8 @@ Changelog
 1.1 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Add plone.app.contenttypes and z3c.relationfield as dependencies.
+  [erral]
 
 
 1.0 (2021-04-27)
