@@ -24,7 +24,19 @@ from zope.interface import noLongerProvides
 import json
 import logging
 import os
+import pkg_resources
 import six
+
+try:
+    pkg_resources.get_distribution("Products.Archetypes")
+except pkg_resources.DistributionNotFound:
+    ReferenceField = None
+    IBaseObject = None
+    HAS_AT = False
+else:
+    from Products.Archetypes.atapi import ReferenceField
+    from Products.Archetypes.interfaces import IBaseObject
+    HAS_AT = True
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +51,9 @@ class ExportContent(BrowserView):
 
     DROP_PATHS = []
 
-    def __call__(self, portal_type=None, include_blobs=False, download_to_server=False):
+    def __call__(self, portal_type=None, include_blobs=False, download_to_server=False, migration=True):
         self.portal_type = portal_type
+        self.migration = migration
 
         self.fixup_request()
 
@@ -123,6 +136,8 @@ class ExportContent(BrowserView):
             try:
                 serializer = getMultiAdapter((obj, self.request), ISerializeToJson)
                 item = serializer(include_items=False)
+                if self.migration:
+                    item = self.update_data_for_migration(item, obj)
                 item = self.global_dict_hook(item, obj)
                 if not item:
                     logger.info(u"Skipping {}".format(brain.getURL()))
@@ -196,6 +211,59 @@ class ExportContent(BrowserView):
             item = hook(item, obj)
         return item
 
+    def update_data_for_migration(self, item, obj):
+        """Update serialized data to optimze use for migrations.
+
+        1. Drop unused data
+        2. Remove all relationfields (done with the serializer relationvalue_converter)
+        3. Change some default-fieldnames (AT to DX)
+        4. Fix issue with AT Text fields
+        5. Fix collection-criteria
+        6. Fix image links and scales
+        """
+        # 1. Drop unused data
+        item.pop('@components', None)
+        item.pop('next_item', None)
+        item.pop('previous_item', None)
+        item.pop('immediatelyAddableTypes', None)
+        item.pop('locallyAllowedTypes', None)
+
+        # 2. Remove all relationfields
+        if HAS_AT and IBaseObject.providedBy(obj):
+            for field in obj.schema.fields():
+                if isinstance(field, ReferenceField):
+                    item.pop(field.__name__, None)
+
+        # 3. Change default-fieldnames (AT to DX)
+        if item.get("subject"):
+            item["subjects"] = item["subject"]
+            item.pop("subject")
+        if item.get("excludeFromNav", None) is not None:
+            item["exclude_from_nav"] = item["excludeFromNav"]
+            item.pop("excludeFromNav")
+        if item.get("expirationDate"):
+            item["expires"] = item["expirationDate"]
+            item.pop("expirationDate")
+        if item.get("effectiveDate"):
+            item["effective"] = item["effectiveDate"]
+            item.pop("effectiveDate")
+        if item.get("creation_date"):
+            item["created"] = item["creation_date"]
+            item.pop("creation_date")
+        if item.get("modification_date"):
+            item["modified"] = item["modification_date"]
+            item.pop("modification_date")
+
+        # 4. Fix issue with AT Text fields
+        # This is done in the ATTextFieldSerializer
+
+        # 5. Fix collection-criteria
+        # TODO
+
+        # 6. Fix image links and scales
+        # TODO
+
+        return item
 
 def fix_portal_type(portal_type):
     normalizer = getUtility(IIDNormalizer)
