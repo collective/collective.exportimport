@@ -333,6 +333,7 @@ class ExportOrdering(BrowserView):
             ordered = IOrderedContainer(parent, None)
             if ordered is not None:
                 order = ordered.getObjectPosition(obj.getId())
+                if order is not None:
                 results.append({"uuid": uid, "order": order})
             return
 
