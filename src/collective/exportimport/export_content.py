@@ -4,13 +4,17 @@ from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
 from operator import itemgetter
 from plone import api
+from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.interfaces import IDexterityFTI
+from plone.dexterity.utils import iterSchemata
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import IJsonCompatible
 from plone.restapi.interfaces import ISerializeToJson
 from Products.CMFDynamicViewFTI.interfaces import IDynamicViewTypeInformation
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from z3c.relationfield.interfaces import IRelationChoice
+from z3c.relationfield.interfaces import IRelationList
 from z3c.relationfield.interfaces import IRelationValue
 from zope.component import adapter
 from zope.component import getMultiAdapter
@@ -20,6 +24,7 @@ from zope.interface import alsoProvides
 from zope.interface import implementer
 from zope.interface import Interface
 from zope.interface import noLongerProvides
+from zope.schema import getFields
 
 import json
 import logging
@@ -233,6 +238,12 @@ class ExportContent(BrowserView):
             for field in obj.schema.fields():
                 if isinstance(field, ReferenceField):
                     item.pop(field.__name__, None)
+        if HAS_DX and IDexterityContent.providedBy(obj):
+            for schema in iterSchemata(obj):
+                for name, field in getFields(schema).items():
+                    if IRelationChoice.providedBy(field) or
+                            IRelationList.providedBy(field):
+                        item.pop(name, None)
 
         # 3. Change default-fieldnames (AT to DX)
         if item.get("subject"):
