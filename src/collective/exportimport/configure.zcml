@@ -53,6 +53,13 @@
       permission="cmf.ManagePortal"
       />
 
+  <browser:page
+      name="export_defaultpages"
+      for="zope.interface.Interface"
+      class=".export_other.ExportDefaultPages"
+      permission="cmf.ManagePortal"
+      />
+
   <!-- Serializers -->
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATFileFieldSerializer" />
@@ -123,6 +130,14 @@
       for="zope.interface.Interface"
       class=".import_other.ImportOrdering"
       template="templates/import_ordering.pt"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="import_defaultpages"
+      for="zope.interface.Interface"
+      class=".import_other.ImportDefaultPages"
+      template="templates/import_defaultpages.pt"
       permission="cmf.ManagePortal"
       />
 

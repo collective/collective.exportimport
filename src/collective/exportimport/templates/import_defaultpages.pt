@@ -8,17 +8,17 @@
 <div metal:fill-slot="main">
     <tal:main-macro metal:define-macro="main">
 
-      <h1 class="documentFirstHeading">Import translations</h1>
+      <h1 class="documentFirstHeading">Import Default Pages</h1>
 
       <p class="documentDescription">Here you can upload a json-file.</p>
 
-        <form action="@@import_translations" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
+        <form action="@@import_defaultpages" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <input type="file" name="jsonfile"/><br/>
             </div>
             <div class="formControls" class="form-group">
                 <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="submit" value="Hochladen">Hochladen
+                        type="submit" name="submit" value="Upload">Upload
                 </button>
             </div>
         </form>
@@ -62,14 +62,20 @@
           <pre>
 [
     {
-        "fr": "8fadf82915554bed8e4ad832175d789a",
-        "de": "2a938385be574886b37fd842ef5659b7",
-        "en": "6e2fb9b53be94950bea89ba2059e22c1"
+        "uuid": "af553734a2e94b2b8d37fab0ea44f633",
+        "default_page": "some-page"
     },
     {
-        "fr": "ac572c20519e400eac192fef2d046708",
-        "de": "ac8da5f9449144e69919a8193cde473d",
-        "en": "e75a4faae73e499f89890375e67dff36"
+        "uuid": "20dc2f0b3097dd98dee533f3b537b42b",
+        "default_page": "about-us"
+    },
+    {
+        "uuid": "651a58b887d344c02c4ce689251f4a85",
+        "default_page": "background-infos"
+    },
+    {
+        "uuid": "fff6deb0b812dd80f9366de68a868ae2",
+        "default_page": "history"
     }
 ]
           </pre>

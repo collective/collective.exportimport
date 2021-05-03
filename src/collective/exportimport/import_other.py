@@ -47,7 +47,7 @@ if HAS_PAM:
                     status = "error"
                     msg = e
                     api.portal.show_message(
-                        u"Fehler beim Dateiuplad: {}".format(e),
+                        u"Failure while uploading: {}".format(e),
                         request=self.request,
                     )
                 else:
@@ -146,7 +146,7 @@ class ImportMembers(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    u"Fehler beim Dateiuplad: {}".format(e),
+                    u"Failure while uploading: {}".format(e),
                     request=self.request,
                 )
             else:
@@ -247,7 +247,7 @@ class ImportRelations(BrowserView):
             except Exception as e:
                 status = "error"
                 logger.error(e)
-                msg = u"Fehler beim Dateiuplad: {}".format(e)
+                msg = u"Failure while uploading: {}".format(e)
                 api.portal.show_message(msg, request=self.request)
             else:
                 msg = self.do_import(data)
@@ -322,7 +322,7 @@ class ImportLocalRoles(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    u"Fehler beim Dateiuplad: {}".format(e),
+                    u"Failure while uploading: {}".format(e),
                     request=self.request,
                 )
             else:
@@ -368,7 +368,7 @@ class ImportOrdering(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    u"Fehler beim Dateiuplad: {}".format(e),
+                    u"Failure while uploading: {}".format(e),
                     request=self.request,
                 )
             else:
@@ -392,4 +392,49 @@ class ImportOrdering(BrowserView):
                 continue
             ordered.moveObjectToPosition(obj.getId(), item["order"])
             results += 1
+        return results
+
+
+class ImportDefaultPages(BrowserView):
+    """Import default pages"""
+
+    def __call__(self, jsonfile=None, return_json=False):
+        if jsonfile:
+            self.portal = api.portal.get()
+            status = "success"
+            try:
+                if isinstance(jsonfile, str):
+                    return_json = True
+                    data = json.loads(jsonfile)
+                elif isinstance(jsonfile, FileUpload):
+                    data = json.loads(jsonfile.read())
+                else:
+                    raise ("Data is neither text nor upload.")
+            except Exception as e:
+                status = "error"
+                logger.error(e)
+                api.portal.show_message(
+                    u"Failure while uploading: {}".format(e),
+                    request=self.request,
+                )
+            else:
+                defaultpages = self.import_default_pages(data)
+                msg = u"Changed {} default pages".format(defaultpages)
+                api.portal.show_message(msg, self.request)
+            if return_json:
+                msg = {"state": status, "msg": msg}
+                return json.dumps(msg)
+
+        return self.index()
+
+    def import_default_pages(self, data):
+        results = 0
+        for item in data:
+            obj = api.content.get(UID=item["uuid"])
+            if not obj:
+                continue
+            old = obj.getDefaultPage()
+            obj.setDefaultPage(item["default_page"])
+            if old != obj.getDefaultPage():
+                results += 1
         return results
