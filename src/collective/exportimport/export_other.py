@@ -58,10 +58,10 @@ class ExportRelations(BrowserView):
                     if not source or not target:
                         continue
                     item = {
-                            "from_uuid": rel.sourceUID,
-                            "to_uuid": rel.targetUID,
-                            "relationship": rel.relationship,
-                        }
+                        "from_uuid": rel.sourceUID,
+                        "to_uuid": rel.targetUID,
+                        "relationship": rel.relationship,
+                    }
                     if self.debug:
                         item["from_path"] = source.absolute_url_path()
                         item["to_path"] = target.absolute_url_path()
@@ -78,10 +78,10 @@ class ExportRelations(BrowserView):
                     to_brain = portal_catalog(path=dict(query=rel.to_path, depth=0))
                     if len(from_brain) > 0 and len(to_brain) > 0:
                         item = {
-                                "from_uuid": from_brain[0].UID,
-                                "to_uuid": to_brain[0].UID,
-                                "relationship": rel.from_attribute,
-                            }
+                            "from_uuid": from_brain[0].UID,
+                            "to_uuid": to_brain[0].UID,
+                            "relationship": rel.from_attribute,
+                        }
                         if self.debug:
                             item["from_path"] = from_brain[0].getPath()
                             item["to_path"] = to_brain[0].getPath()

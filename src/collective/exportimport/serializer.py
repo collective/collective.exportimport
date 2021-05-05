@@ -103,6 +103,7 @@ if HAS_AT:
     from plone.restapi.serializer.atfields import (
         DefaultFieldSerializer as ATDefaultFieldSerializer,
     )
+    from Products.Archetypes.atapi import RichWidget
     from Products.Archetypes.interfaces import IBaseObject
     from Products.Archetypes.interfaces.field import IFileField
     from Products.Archetypes.interfaces.field import IImageField
@@ -212,14 +213,17 @@ if HAS_AT:
             data = self.field.getRaw(self.context)
             if not data:
                 return
-            mimetype = self.field.getContentType(self.context)
-            if mimetype == "text/html":
-                # cleanup crazy html but keep links with resolveuid
-                transforms = getToolByName(self.context, "portal_transforms")
-                data = transforms.convertTo(
-                    "text/x-html-safe", data, mimetype=mimetype
-                ).getData()
-            return {
-                "content-type": json_compatible(mimetype),
-                "data": data,
-            }
+            if isinstance(self.field.widget, RichWidget):
+                mimetype = self.field.getContentType(self.context)
+                if mimetype == "text/html":
+                    # cleanup crazy html but keep links with resolveuid
+                    transforms = getToolByName(self.context, "portal_transforms")
+                    data = transforms.convertTo(
+                        "text/x-html-safe", data, mimetype=mimetype
+                    ).getData()
+                return {
+                    "content-type": json_compatible(mimetype),
+                    "data": json_compatible(data),
+                }
+            else:
+                return json_compatible(data)
