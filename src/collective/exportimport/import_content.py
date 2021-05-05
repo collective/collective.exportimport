@@ -16,6 +16,7 @@ from ZPublisher.HTTPRequest import FileUpload
 import ijson
 import json
 import logging
+import os
 import random
 import transaction
 
@@ -49,7 +50,7 @@ class ImportContent(BrowserView):
     # Example: {'which_price': 'normal'}
     DEFAULTS = {}
 
-    def __call__(self, jsonfile=None, portal_type=None, return_json=False, limit=None):
+    def __call__(self, jsonfile=None, portal_type=None, return_json=False, limit=None, server_file=None):
         self.limit = limit
         response = self.request.response
 
@@ -71,6 +72,34 @@ class ImportContent(BrowserView):
         if self.request.form.get("reset_modified_date", False):
             return response.redirect("@@reset_modified_date")
 
+        # If we open a server file, we should close it at the end.
+        close_file = False
+        if server_file and jsonfile:
+            # This is an error.  But when you upload 10 GB AND select a server file,
+            # it is a pity when you would have to upload again.
+            api.portal.show_message(
+                u"json file was uploaded, so the selected server file was ignored.",
+                request=self.request,
+                type="warn"
+            )
+            server_file = None
+        if server_file and not jsonfile:
+            if server_file in self.server_files:
+                for path in self.import_paths:
+                    full_path = os.path.join(path, server_file)
+                    if os.path.exists(full_path):
+                        logger.info("Using server file %s", full_path)
+                        # Open the file in binary mode and use it as jsonfile.
+                        jsonfile = open(full_path, "rb")
+                        close_file = True
+                        break
+            else:
+                api.portal.show_message(
+                    u"File not found on server.",
+                    request=self.request,
+                    type="warn"
+                )
+                server_file = None
         if jsonfile:
             self.portal = api.portal.get()
             self.portal_type = portal_type
@@ -104,10 +133,35 @@ class ImportContent(BrowserView):
                 msg = self.do_import(data)
                 api.portal.show_message(msg, self.request)
 
+        if close_file:
+            jsonfile.close()
         if return_json:
             msg = {"state": status, "msg": msg}
             return json.dumps(msg)
         return self.template()
+
+    @property
+    def import_paths(self):
+        # Adapted from ObjectManager.list_imports, which lists zexps.
+        # We list all possible paths (import directory in client home
+        # and instance home), without caring whether they exist.
+        listing = []
+        for impath in self.context._getImportPaths():
+            directory = os.path.join(impath, "import")
+            listing.append(directory)
+        listing.sort()
+        return listing
+
+    @property
+    def server_files(self):
+        # Adapted from ObjectManager.list_imports, which lists zexps.
+        listing = []
+        for directory in self.import_paths:
+            if not os.path.isdir(directory):
+                continue
+            listing += [f for f in os.listdir(directory) if f.endswith(".json")]
+        listing.sort()
+        return listing
 
     def do_import(self, data):
         start = datetime.now()
