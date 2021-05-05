@@ -62,7 +62,11 @@ setup(
         "ijson",
     ],
     extras_require={
-        "test": ["plone.app.testing"],
+        "test": [
+            "plone.app.testing",
+            # needed as test dependency of plone.app.event:
+            "plone.app.robotframework",
+        ],
     },
     entry_points="""
     [z3c.autoinclude.plugin]
