@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from Acquisition import aq_base
 from App.config import getConfiguration
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
@@ -140,7 +141,10 @@ class ExportContent(BrowserView):
                 continue
             try:
                 serializer = getMultiAdapter((obj, self.request), ISerializeToJson)
+                if getattr(aq_base(obj), 'isPrincipiaFolderish', False):
                 item = serializer(include_items=False)
+                else:
+                    item = serializer()
                 if self.migration:
                     item = self.update_data_for_migration(item, obj)
                 item = self.global_dict_hook(item, obj)
@@ -238,11 +242,10 @@ class ExportContent(BrowserView):
             for field in obj.schema.fields():
                 if isinstance(field, ReferenceField):
                     item.pop(field.__name__, None)
-        if HAS_DX and IDexterityContent.providedBy(obj):
+        elif IDexterityContent.providedBy(obj):
             for schema in iterSchemata(obj):
                 for name, field in getFields(schema).items():
-                    if IRelationChoice.providedBy(field) or
-                            IRelationList.providedBy(field):
+                    if IRelationChoice.providedBy(field) or IRelationList.providedBy(field):
                         item.pop(name, None)
 
         # 3. Change default-fieldnames (AT to DX)
