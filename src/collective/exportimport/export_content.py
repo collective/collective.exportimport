@@ -142,7 +142,7 @@ class ExportContent(BrowserView):
             try:
                 serializer = getMultiAdapter((obj, self.request), ISerializeToJson)
                 if getattr(aq_base(obj), 'isPrincipiaFolderish', False):
-                item = serializer(include_items=False)
+                    item = serializer(include_items=False)
                 else:
                     item = serializer()
                 if self.migration:
