@@ -48,6 +48,23 @@ logger = logging.getLogger(__name__)
 
 _marker = object()
 
+# copied from plone.app.contenttypes inplace migration
+LISTING_VIEW_MAPPING = {  # OLD (AT and old DX) : NEW
+    'all_content': 'full_view',
+    'atct_album_view': 'album_view',
+    'atct_topic_view': 'listing_view',
+    'collection_view': 'listing_view',
+    'folder_album_view': 'album_view',
+    'folder_full_view': 'full_view',
+    'folder_listing': 'listing_view',
+    'folder_listing_view': 'listing_view',
+    'folder_summary_view': 'summary_view',
+    'folder_tabular_view': 'tabular_view',
+    'standard_view': 'listing_view',
+    'thumbnail_view': 'album_view',
+    'view': 'listing_view',
+}
+
 
 class ExportContent(BrowserView):
 
@@ -231,6 +248,8 @@ class ExportContent(BrowserView):
         4. Fix issue with AT Text fields
         5. Fix collection-criteria
         6. Fix image links and scales
+        7. Fix view names on Folder, Collection, Topic CT's
+
         """
         # 1. Drop unused data
         item.pop('@components', None)
@@ -278,6 +297,13 @@ class ExportContent(BrowserView):
 
         # 6. Fix image links and scales
         # TODO
+
+        # 7. Fix view names on Folders and Collection
+        # import pdb; pdb.set_trace()
+        if self.safe_portal_type in ('collection', 'topic', 'folder'):
+            old_layout = item.get('layout','does_not_exist')
+            if old_layout in LISTING_VIEW_MAPPING:
+                item['layout'] = LISTING_VIEW_MAPPING[old_layout]
 
         return item
 
