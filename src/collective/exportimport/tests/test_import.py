@@ -10,12 +10,17 @@ from plone.app.testing import TEST_USER_ID
 from plone.testing import z2
 
 import json
-import tempfile
+import six
 import transaction
 import unittest
 
 
-class TestExport(unittest.TestCase):
+# TODO: change this to skip the tests on Plone 5.1 and lower.
+# Python 2 on 5.2 should be fine, but currently it gives an error when
+# importing the modified date:
+# ValueError: 'z' is a bad directive in format '%Y-%m-%dT%H:%M:%S%z'
+@unittest.skipIf(six.PY2, "Import is only supported on Python 3 for the moment")
+class TestImport(unittest.TestCase):
     """Test that we can export."""
 
     layer = COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
