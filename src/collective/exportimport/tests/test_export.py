@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 from collective.exportimport.testing import (
-    COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,
-)  # noqa: E501
+    COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,  # noqa: E501,
+)
+from plone import api
+from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
 from plone.testing import z2
 
 import json
+import transaction
 import unittest
 
 
@@ -38,7 +41,37 @@ class TestExport(unittest.TestCase):
         self.assertIn("Export local roles", browser.contents)
         self.assertIn("Export default pages", browser.contents)
         self.assertIn("Export object positions", browser.contents)
-        # browser.getControl(name="portal_type").value = ["Document"]
+        # We cannot choose a portal_type, because there is no content to export.
+        self.assertEqual(browser.getControl(name="portal_type").options, [""])
+
+    def test_export_content_document(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        doc = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        transaction.commit()
+
+        # Now export Documents.
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        self.assertEqual(portal_type.value, [""])
+        self.assertIn("Document", portal_type.options)
+        self.assertNotIn("Folder", portal_type.options)
+        portal_type.value = ["Document"]
+        browser.getControl("Export selected type").click()
+
+        # We should have gotten json.
+        data = json.loads(browser.contents)
+        self.assertEqual(len(data), 1)
+
+        # Check a few important keys.
+        info = data[0]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/doc1")
+        self.assertEqual(info["@type"], "Document")
+        self.assertEqual(info["title"], doc.Title())
 
     def test_export_members(self):
         browser = self.open_page("@@export_members")
