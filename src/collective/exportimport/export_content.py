@@ -46,6 +46,8 @@ else:
 
 logger = logging.getLogger(__name__)
 
+_marker = object()
+
 
 class ExportContent(BrowserView):
 
@@ -249,24 +251,24 @@ class ExportContent(BrowserView):
                         item.pop(name, None)
 
         # 3. Change default-fieldnames (AT to DX)
-        if item.get("subject"):
-            item["subjects"] = item["subject"]
-            item.pop("subject")
-        if item.get("excludeFromNav", None) is not None:
-            item["exclude_from_nav"] = item["excludeFromNav"]
-            item.pop("excludeFromNav")
-        if item.get("expirationDate"):
-            item["expires"] = item["expirationDate"]
-            item.pop("expirationDate")
-        if item.get("effectiveDate"):
-            item["effective"] = item["effectiveDate"]
-            item.pop("effectiveDate")
-        if item.get("creation_date"):
-            item["created"] = item["creation_date"]
-            item.pop("creation_date")
-        if item.get("modification_date"):
-            item["modified"] = item["modification_date"]
-            item.pop("modification_date")
+        item = migrate_field(item, 'excludeFromNav', 'exclude_from_nav')
+        item = migrate_field(item, 'allowDiscussion', 'allow_discussion')
+        item = migrate_field(item, 'subject', 'subjects')
+
+        # Some Date fields
+        item = migrate_field(item, 'expirationDate', 'expires')
+        item = migrate_field(item, 'effectiveDate', 'effective')
+        item = migrate_field(item, 'creation_date', 'created')
+        item = migrate_field(item, 'modification_date', 'modified')
+
+        # Event fields
+        item = migrate_field(item, 'startDate', 'start')
+        item = migrate_field(item, 'endDate', 'end')
+        item = migrate_field(item, 'openEnd', 'open_end')
+        item = migrate_field(item, 'wholeDay', 'whole_day')
+        item = migrate_field(item, 'contactEmail', 'contact_email')
+        item = migrate_field(item, 'contactName', 'contact_name')
+        item = migrate_field(item, 'contactPhone', 'contact_phone')
 
         # 4. Fix issue with AT Text fields
         # This is done in the ATTextFieldSerializer
@@ -282,6 +284,12 @@ class ExportContent(BrowserView):
 def fix_portal_type(portal_type):
     normalizer = getUtility(IIDNormalizer)
     return normalizer.normalize(portal_type).replace("-", "")
+
+
+def migrate_field(item, old, new):
+    if item.get(old, _marker) is not _marker:
+        item[new] = item.pop(old)
+    return item
 
 
 @adapter(IRelationValue)
