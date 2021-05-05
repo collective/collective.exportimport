@@ -59,6 +59,7 @@ setup(
         "plone.api>=1.8.4",
         "plone.restapi",
         "hurry.filesize",
+        "ijson",
     ],
     entry_points="""
     [z3c.autoinclude.plugin]
