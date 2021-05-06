@@ -152,7 +152,12 @@ class ExportMembers(BrowserView):
         acl = api.portal.get_tool("acl_users")
         users = acl.source_users
         passwords = users._user_passwords
-        return passwords.get(userId, "")
+        password = passwords.get(userId, "")
+        if six.PY3 and isinstance(password, bytes):
+            # bytes are not json serializable.
+            # Happens at least in the tests.
+            password = password.decode("utf-8")
+        return password
 
     def _getUserData(self, userId):
         member = self.pms.getMemberById(userId)
@@ -168,6 +173,7 @@ class ExportMembers(BrowserView):
         ]
         # userid, password, roles
         props = {
+            # TODO: We should have userid and username (login name).
             "username": userId,
             "password": self._getUserPassword(userId),
             "roles": json_compatible(roles),

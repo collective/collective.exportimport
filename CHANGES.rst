@@ -5,7 +5,8 @@ Changelog
 1.1 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Add option to import file from server.
+  [maurits]
 
 
 1.0 (2021-04-27)
