@@ -2,6 +2,7 @@
 from Acquisition import aq_base
 from App.config import getConfiguration
 from collective.exportimport.interfaces import IBase64BlobsMarker
+from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
 from operator import itemgetter
 from plone import api
@@ -136,6 +137,10 @@ class ExportContent(BrowserView):
         if include_blobs:
             # Add marker-interface to request to use our custom serializers
             alsoProvides(self.request, IBase64BlobsMarker)
+
+        if self.migration:
+            # Add marker-interface to request to use custom serializers
+            alsoProvides(self.request, IMigrationMarker)
 
         # Override richtext serializer to export links using resolveuid/xxx
         alsoProvides(self.request, IRawRichTextMarker)
@@ -299,13 +304,13 @@ class ExportContent(BrowserView):
         # TODO
 
         # 7. Fix view names on Folders and Collection
-        # import pdb; pdb.set_trace()
         if self.safe_portal_type in ('collection', 'topic', 'folder'):
-            old_layout = item.get('layout','does_not_exist')
+            old_layout = item.get('layout', 'does_not_exist')
             if old_layout in LISTING_VIEW_MAPPING:
                 item['layout'] = LISTING_VIEW_MAPPING[old_layout]
 
         return item
+
 
 def fix_portal_type(portal_type):
     normalizer = getUtility(IIDNormalizer)

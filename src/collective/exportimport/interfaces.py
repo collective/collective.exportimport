@@ -9,3 +9,7 @@ class IBase64BlobsMarker(Interface):
 
 class IRawRichTextMarker(Interface):
     """A marker interface to override default serializers for Richtext."""
+
+
+class IMigrationMarker(Interface):
+    """A marker interface to override default serializers when data is used for migrations."""
