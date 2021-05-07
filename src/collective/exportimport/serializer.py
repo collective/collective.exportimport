@@ -2,6 +2,7 @@
 from hurry.filesize import size
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
+from collective.exportimport.interfaces import IMigrationMarker
 from plone.app.textfield.interfaces import IRichText
 from plone.dexterity.interfaces import IDexterityContent
 from plone.namedfile.interfaces import INamedFileField
@@ -44,7 +45,10 @@ logger = logging.getLogger(__name__)
 @adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
 class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
     def __call__(self):
-        image = self.field.get(self.context)
+        try:
+            image = self.field.get(self.context)
+        except AttributeError:
+            image = None
         if not image:
             return None
 
@@ -65,7 +69,10 @@ class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
 @adapter(INamedFileField, IDexterityContent, IBase64BlobsMarker)
 class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
     def __call__(self):
-        namedfile = self.field.get(self.context)
+        try:
+            namedfile = self.field.get(self.context)
+        except AttributeError:
+            namedfile = None
         if namedfile is None:
             return None
 
@@ -100,13 +107,23 @@ if HAS_AT:
     from OFS.Image import Pdata
     from plone.app.blob.interfaces import IBlobField
     from plone.app.blob.interfaces import IBlobImageField
+    from plone.app.contenttypes.migration.topics import CONVERTERS
+    from plone.app.querystring.interfaces import IQuerystringRegistryReader
+    from plone.registry.interfaces import IRegistry
+    from plone.restapi.interfaces import ISerializeToJson
     from plone.restapi.serializer.atfields import (
         DefaultFieldSerializer as ATDefaultFieldSerializer,
     )
+    from plone.restapi.serializer.atcontent import SerializeToJson
+    from Products.Archetypes.atapi import RichWidget
     from Products.Archetypes.interfaces import IBaseObject
     from Products.Archetypes.interfaces.field import IFileField
     from Products.Archetypes.interfaces.field import IImageField
+    from Products.Archetypes.interfaces.field import IReferenceField
     from Products.Archetypes.interfaces.field import ITextField
+    from Products.ATContentTypes.interfaces.topic import IATTopic
+    from zope.component import getUtility
+
 
     @adapter(IImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -129,6 +146,7 @@ if HAS_AT:
                 "encoding": "base64",
             }
             return json_compatible(result)
+
 
     @adapter(IFileField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -157,6 +175,7 @@ if HAS_AT:
             }
             return json_compatible(result)
 
+
     @adapter(IBlobImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
     class ATImageFieldSerializerWithBlobs(ATDefaultFieldSerializer):
@@ -178,6 +197,7 @@ if HAS_AT:
                 "encoding": "base64",
             }
             return json_compatible(result)
+
 
     @adapter(IBlobField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -205,6 +225,7 @@ if HAS_AT:
             }
             return json_compatible(result)
 
+
     @adapter(ITextField, IBaseObject, IRawRichTextMarker)
     @implementer(IFieldSerializer)
     class ATTextFieldSerializer(ATDefaultFieldSerializer):
@@ -212,14 +233,62 @@ if HAS_AT:
             data = self.field.getRaw(self.context)
             if not data:
                 return
-            mimetype = self.field.getContentType(self.context)
-            if mimetype == "text/html":
-                # cleanup crazy html but keep links with resolveuid
-                transforms = getToolByName(self.context, "portal_transforms")
-                data = transforms.convertTo(
-                    "text/x-html-safe", data, mimetype=mimetype
-                ).getData()
-            return {
-                "content-type": json_compatible(mimetype),
-                "data": data,
-            }
+            if isinstance(self.field.widget, RichWidget):
+                mimetype = self.field.getContentType(self.context)
+                if mimetype == "text/html":
+                    # cleanup crazy html but keep links with resolveuid
+                    transforms = getToolByName(self.context, "portal_transforms")
+                    data = transforms.convertTo(
+                        "text/x-html-safe", data, mimetype=mimetype
+                    ).getData()
+                return {
+                    "content-type": json_compatible(mimetype),
+                    "data": json_compatible(data),
+                }
+            else:
+                return json_compatible(data)
+
+
+    @implementer(ISerializeToJson)
+    @adapter(IATTopic, IMigrationMarker)
+    class SerializeTopicToJson(SerializeToJson):
+        """This uses the topic migration from p.a.contenttypes to turn Criteria into a Querystring.
+        """
+
+        def __call__(self, version=None, include_items=False):
+            topic_metadata = super(SerializeTopicToJson, self).__call__(
+                version=version
+            )
+            result = topic_metadata
+            formquery = []
+
+            reg = getUtility(IRegistry)
+            reader = IQuerystringRegistryReader(reg)
+            self.registry = reader.parseRegistry()
+
+            criteria = self.context.listCriteria()
+            for criterion in criteria:
+                type_ = criterion.__class__.__name__
+                if type_ == 'ATSortCriterion':
+                    # Sort order and direction are now stored in the Collection.
+                    self._collection_sort_reversed = criterion.getReversed()
+                    self._collection_sort_on = criterion.Field()
+                    logger.debug(
+                        'Sort on %r, reverse: %s.',
+                        self._collection_sort_on,
+                        self._collection_sort_reversed,
+                    )
+                    continue
+
+                converter = CONVERTERS.get(type_)
+                if converter is None:
+                    msg = 'Unsupported criterion {0}'.format(type_)
+                    logger.error(msg)
+                    raise ValueError(msg)
+                try:
+                    converter(formquery, criterion, self.registry)
+                except Exception as e:
+                    logger.info(e)
+
+            topic_metadata['criteria'] = json_compatible(formquery)
+            return result

@@ -2,6 +2,7 @@
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
+from plone.app.uuid.utils import uuidToObject
 from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
 from Products.CMFCore.utils import getToolByName
@@ -27,7 +28,8 @@ logger = logging.getLogger(__name__)
 class ExportRelations(BrowserView):
     """Export all relations"""
 
-    def __call__(self):
+    def __call__(self, debug=False):
+        self.debug = debug
         all_stored_relations = self.get_all_references()
         data = json.dumps(all_stored_relations, indent=4)
         filename = "relations.json"
@@ -51,13 +53,19 @@ class ExportRelations(BrowserView):
                 ref_catalog = reference_catalog._catalog
                 for rid in ref_catalog.data:
                     rel = ref_catalog[rid]
-                    results.append(
-                        {
-                            "from_uuid": rel.sourceUID,
-                            "to_uuid": rel.targetUID,
-                            "relationship": rel.relationship,
-                        }
-                    )
+                    source = uuidToObject(rel.sourceUID)
+                    target = uuidToObject(rel.targetUID)
+                    if not source or not target:
+                        continue
+                    item = {
+                        "from_uuid": rel.sourceUID,
+                        "to_uuid": rel.targetUID,
+                        "relationship": rel.relationship,
+                    }
+                    if self.debug:
+                        item["from_path"] = source.absolute_url_path()
+                        item["to_path"] = target.absolute_url_path()
+                    results.append(item)
 
         # Dexterity
         # Get all data from zc.relation (relation_catalog)
@@ -69,13 +77,15 @@ class ExportRelations(BrowserView):
                     from_brain = portal_catalog(path=dict(query=rel.from_path, depth=0))
                     to_brain = portal_catalog(path=dict(query=rel.to_path, depth=0))
                     if len(from_brain) > 0 and len(to_brain) > 0:
-                        results.append(
-                            {
-                                "from_uuid": from_brain[0].UID,
-                                "to_uuid": to_brain[0].UID,
-                                "relationship": rel.from_attribute,
-                            }
-                        )
+                        item = {
+                            "from_uuid": from_brain[0].UID,
+                            "to_uuid": to_brain[0].UID,
+                            "relationship": rel.from_attribute,
+                        }
+                        if self.debug:
+                            item["from_path"] = from_brain[0].getPath()
+                            item["to_path"] = to_brain[0].getPath()
+                        results.append(item)
 
         return results
 
@@ -323,7 +333,8 @@ class ExportOrdering(BrowserView):
             ordered = IOrderedContainer(parent, None)
             if ordered is not None:
                 order = ordered.getObjectPosition(obj.getId())
-                results.append({"uuid": uid, "order": order})
+                if order is not None:
+                    results.append({"uuid": uid, "order": order})
             return
 
         portal = api.portal.get()
