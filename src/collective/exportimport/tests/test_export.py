@@ -93,3 +93,29 @@ class TestExport(unittest.TestCase):
         for member in members:
             if member["username"] == TEST_USER_ID:
                 self.assertTrue(member["roles"], ["Member"])
+
+    def test_export_defaultpages_empty(self):
+        browser = self.open_page("@@export_defaultpages")
+        data = json.loads(browser.contents)
+        self.assertListEqual(data, [])
+
+    def test_export_defaultpages(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        doc1 = api.content.create(
+            container=folder1, type="Document", id="doc1", title="Document 1"
+        )
+        folder1._setProperty("default_page", "doc1")
+        transaction.commit()
+
+        browser = self.open_page("@@export_defaultpages")
+        data = json.loads(browser.contents)
+        self.assertListEqual(
+            data,
+            [{'default_page': 'doc1', 'uuid': folder1.UID()}],
+        )

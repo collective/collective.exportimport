@@ -147,3 +147,52 @@ class TestImport(unittest.TestCase):
         new_doc = portal["doc1"]
         self.assertEqual(new_doc.Title(), "Document 1")
         self.assertEqual(new_doc.portal_type, "Document")
+
+    def test_import_defaultpages(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        doc1 = api.content.create(
+            container=folder1, type="Document", id="doc1", title="Document 1"
+        )
+        folder1._setProperty("default_page", "doc1")
+        transaction.commit()
+
+        # Export it.
+        browser = self.open_page("@@export_defaultpages")
+        raw_data = browser.contents
+
+        # Now remove the default page setting.
+        folder1._delProperty("default_page")
+        transaction.commit()
+        self.assertFalse(folder1.getProperty("default_page"))
+
+        # Now import it.
+        browser = self.open_page("@@import_defaultpages")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "defaultpages.json")
+        browser.getForm(action="@@import_defaultpages").submit()
+        self.assertIn("Changed 1 default page", browser.contents)
+
+        # The default page should be back.
+        self.assertEqual(folder1.getProperty("default_page"), "doc1")
+
+        # Set a different default page.
+        doc2 = api.content.create(
+            container=folder1, type="Document", id="doc2", title="Document 2"
+        )
+        folder1._updateProperty("default_page", "doc2")
+        transaction.commit()
+
+        # Import again.
+        browser = self.open_page("@@import_defaultpages")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "defaultpages.json")
+        browser.getForm(action="@@import_defaultpages").submit()
+
+        # The default page should be back.
+        self.assertEqual(folder1.getProperty("default_page"), "doc1")
