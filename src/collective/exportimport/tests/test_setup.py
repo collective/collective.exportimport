@@ -19,15 +19,11 @@ class TestSetup(unittest.TestCase):
 
     layer = COLLECTIVE_EXPORTIMPORT_INTEGRATION_TESTING
 
-    def setUp(self):
-        """Custom shared utility setup for tests."""
-        self.portal = self.layer['portal']
-        if get_installer:
-            self.installer = get_installer(self.portal, self.layer['request'])
-        else:
-            self.installer = api.portal.get_tool('portal_quickinstaller')
-
     def test_restapi_installed(self):
         """Test if restapi is installed, because we need it."""
-        self.assertTrue(self.installer.isProductInstalled(
-            'plone.restapi'))
+        if get_installer:
+            installer = get_installer(self.layer['portal'], self.layer['request'])
+            self.assertTrue(installer.is_product_installed('plone.restapi'))
+        else:
+            installer = api.portal.get_tool('portal_quickinstaller')
+            self.assertTrue(installer.isProductInstalled('plone.restapi'))
