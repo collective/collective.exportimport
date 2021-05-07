@@ -9,7 +9,7 @@ from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
-from plone.testing import z2
+from plone.testing import zope
 
 import json
 import os
@@ -48,7 +48,7 @@ class TestImport(unittest.TestCase):
 
     def open_page(self, page):
         """Create a testbrowser, open a page, return the browser."""
-        browser = z2.Browser(self.layer["app"])
+        browser = zope.Browser(self.layer["app"])
         browser.handleErrors = False
         browser.addHeader(
             "Authorization",
