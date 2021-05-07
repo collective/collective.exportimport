@@ -44,7 +44,10 @@ logger = logging.getLogger(__name__)
 @adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
 class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
     def __call__(self):
-        image = self.field.get(self.context)
+        try:
+            image = self.field.get(self.context)
+        except AttributeError:
+            image = None
         if not image:
             return None
 
@@ -65,7 +68,10 @@ class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
 @adapter(INamedFileField, IDexterityContent, IBase64BlobsMarker)
 class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
     def __call__(self):
-        namedfile = self.field.get(self.context)
+        try:
+            namedfile = self.field.get(self.context)
+        except AttributeError:
+            namedfile = None
         if namedfile is None:
             return None
 
