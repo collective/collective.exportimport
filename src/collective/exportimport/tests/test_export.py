@@ -2,6 +2,7 @@
 from collective.exportimport.testing import (
     COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,  # noqa: E501,
 )
+from OFS.interfaces import IOrderedContainer
 from plone import api
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
@@ -119,3 +120,56 @@ class TestExport(unittest.TestCase):
             data,
             [{'default_page': 'doc1', 'uuid': folder1.UID()}],
         )
+
+    def test_export_ordering(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        doc1 = api.content.create(
+            container=folder1, type="Document", id="doc1", title="Document 1"
+        )
+        doc2 = api.content.create(
+            container=folder1, type="Document", id="doc2", title="Document 2"
+        )
+        doc3 = api.content.create(
+            container=folder1, type="Document", id="doc3", title="Document 3"
+        )
+        transaction.commit()
+
+        # Export.
+        browser = self.open_page("@@export_ordering")
+        data = json.loads(browser.contents)
+
+        # Turn the list into a dict for easier searching and comparing.
+        data_uuid2order = {}
+        for item in data:
+            data_uuid2order[item["uuid"]] = item["order"]
+        data_uuids = sorted(data_uuid2order.keys())
+
+        # All content UIDs are in the export:
+        content_uuids = sorted([item.UID() for item in (folder1, doc1, doc2, doc3)])
+        self.assertListEqual(data_uuids, content_uuids)
+
+        # All documents have the correct order:
+        self.assertEqual(data_uuid2order[doc1.UID()], 0)
+        self.assertEqual(data_uuid2order[doc2.UID()], 1)
+        self.assertEqual(data_uuid2order[doc3.UID()], 2)
+
+        # Reorder the documents.
+        ordered = IOrderedContainer(folder1)
+        ordered.moveObjectsToTop(["doc3"])
+        transaction.commit()
+
+        # Export and check.
+        browser = self.open_page("@@export_ordering")
+        data = json.loads(browser.contents)
+        data_uuid2order = {}
+        for item in data:
+            data_uuid2order[item["uuid"]] = item["order"]
+        self.assertEqual(data_uuid2order[doc3.UID()], 0)
+        self.assertEqual(data_uuid2order[doc1.UID()], 1)
+        self.assertEqual(data_uuid2order[doc2.UID()], 2)

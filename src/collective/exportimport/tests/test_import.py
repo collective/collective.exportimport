@@ -3,6 +3,7 @@ from App.config import getConfiguration
 from collective.exportimport.testing import (
     COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,  # noqa: E501,,
 )
+from OFS.interfaces import IOrderedContainer
 from plone import api
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
@@ -196,3 +197,42 @@ class TestImport(unittest.TestCase):
 
         # The default page should be back.
         self.assertEqual(folder1.getProperty("default_page"), "doc1")
+
+    def test_import_ordering(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        doc1 = api.content.create(
+            container=folder1, type="Document", id="doc1", title="Document 1"
+        )
+        doc2 = api.content.create(
+            container=folder1, type="Document", id="doc2", title="Document 2"
+        )
+        doc3 = api.content.create(
+            container=folder1, type="Document", id="doc3", title="Document 3"
+        )
+        transaction.commit()
+
+        # Export.
+        browser = self.open_page("@@export_ordering")
+        raw_data = browser.contents
+
+        # Reorder the documents.
+        ordered = IOrderedContainer(folder1)
+        ordered.moveObjectsToTop(["doc3"])
+        transaction.commit()
+
+        # Import and check.
+        browser = self.open_page("@@import_ordering")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "ordering.json")
+        browser.getForm(action="@@import_ordering").submit()
+        self.assertIn("Imported 4 orders", browser.contents)
+        # The documents have the original order again.
+        self.assertEqual(ordered.getObjectPosition("doc1"), 0)
+        self.assertEqual(ordered.getObjectPosition("doc2"), 1)
+        self.assertEqual(ordered.getObjectPosition("doc3"), 2)
