@@ -60,6 +60,7 @@ setup(
         "plone.restapi",
         "hurry.filesize",
         "ijson",
+        "six",
     ],
     extras_require={
         "test": [

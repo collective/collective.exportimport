@@ -8,6 +8,7 @@ from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.interfaces import IDeserializeFromJson
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from six.moves.urllib.parse import unquote
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.interface import alsoProvides
@@ -212,7 +213,7 @@ class ImportContent(BrowserView):
             if not index % 100:
                 logger.info("Imported {} items...".format(index))
 
-            new_id = item["@id"].split("/")[-1]
+            new_id = unquote(item["@id"]).split("/")[-1]
             if new_id != item["id"]:
                 logger.info(
                     u"Conflicting ids in url ({}) and id ({}). Using {}".format(
