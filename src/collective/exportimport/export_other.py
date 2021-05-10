@@ -29,6 +29,10 @@ class ExportRelations(BrowserView):
     """Export all relations"""
 
     def __call__(self, debug=False):
+        self.title = 'Export relations'
+        if not self.request.form.get("form.submitted", False):
+            return self.index()
+
         self.debug = debug
         all_stored_relations = self.get_all_references()
         data = json.dumps(all_stored_relations, indent=4)
@@ -108,6 +112,10 @@ class ExportMembers(BrowserView):
     AUTO_ROLES = ["Authenticated"]
 
     def __call__(self):
+        self.title = 'Export members, groups and roles'
+        if not self.request.form.get("form.submitted", False):
+            return self.index()
+
         self.pms = api.portal.get_tool("portal_membership")
         data = {}
         data["groups"] = self.export_groups()
@@ -201,6 +209,10 @@ class ExportTranslations(BrowserView):
     DROP_PATH = []
 
     def __call__(self):
+        self.title = 'Export translations'
+        if not self.request.form.get("form.submitted", False):
+            return self.index()
+
         all_translations = self.all_translations()
         data = json.dumps(all_translations, indent=4)
         filename = "translations.json"
@@ -281,6 +293,10 @@ class ExportLocalRoles(BrowserView):
     """Export all local roles"""
 
     def __call__(self):
+        self.title = 'Export local roles'
+        if not self.request.form.get("form.submitted", False):
+            return self.index()
+
         all_localroles = self.all_localroles()
         data = json.dumps(all_localroles, indent=4)
         filename = "localroles.json"
@@ -312,6 +328,10 @@ class ExportOrdering(BrowserView):
     """Export all local roles"""
 
     def __call__(self):
+        self.title = 'Export ordering'
+        if not self.request.form.get("form.submitted", False):
+            return self.index()
+
         all_orders = self.all_orders()
         data = json.dumps(all_orders, indent=4)
         filename = "ordering.json"
@@ -346,6 +366,10 @@ class ExportDefaultPages(BrowserView):
     """Export all default_page settings."""
 
     def __call__(self):
+        self.title = 'Export default pages'
+        if not self.request.form.get("form.submitted", False):
+            return self.index()
+
         all_default_pages = self.all_default_pages()
         data = json.dumps(all_default_pages, indent=4)
         filename = "defaultpages.json"

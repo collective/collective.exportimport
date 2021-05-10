@@ -81,35 +81,10 @@
                 </button>
 
             </div>
-            <div class="formControls" class="form-group">
 
-                <h2>Additional exports</h2>
-                <a class="btn btn-primary submit-widget button-field context"
-                   tal:attributes="href python: portal_url + '/@@export_relations'">Export relations
-                </a>
-
-                <a class="btn btn-primary submit-widget button-field context"
-                   tal:attributes="href python: portal_url + '/@@export_translations'">Export translations
-                </a>
-
-                <a class="btn btn-primary submit-widget button-field context"
-                   tal:attributes="href python: portal_url + '/@@export_members'">Export members
-                </a>
-
-                <a class="btn btn-primary submit-widget button-field context"
-                   tal:attributes="href python: portal_url + '/@@export_localroles'">Export local roles
-                </a>
-
-                <a class="btn btn-primary submit-widget button-field context"
-                   tal:attributes="href python: portal_url + '/@@export_defaultpages'">Export default pages
-                </a>
-
-                <a class="btn btn-primary submit-widget button-field context"
-                   tal:attributes="href python: portal_url + '/@@export_ordering'">Export object positions in Parent
-                </a>
-
-            </div>
-        </form>
+        <div metal:use-macro="context/@@exportimport_links/links">
+          Links to all exports and imports
+        </div>
 
     </tal:main-macro>
 </div>

@@ -4,14 +4,12 @@ from DateTime import DateTime
 from plone import api
 from plone.api.exc import InvalidParameterError
 from plone.i18n.normalizer.interfaces import IIDNormalizer
-from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.interfaces import IDeserializeFromJson
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from six.moves.urllib.parse import unquote
 from zope.component import getMultiAdapter
 from zope.component import getUtility
-from zope.interface import alsoProvides
 from ZPublisher.HTTPRequest import FileUpload
 
 import ijson
@@ -476,8 +474,11 @@ def fix_portal_type(portal_type):
 
 class ResetModifiedDate(BrowserView):
     def __call__(self):
+        self.title = 'Reset modified date'
+        if not self.request.form.get("form.submitted", False):
+            return self.index()
+
         portal = api.portal.get()
-        alsoProvides(self.request, IDisableCSRFProtection)
 
         def fix_modified(obj, path):
             modified = getattr(obj, "modification_date_migrated", None)
@@ -491,4 +492,4 @@ class ResetModifiedDate(BrowserView):
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=fix_modified)
         msg = "Finished resetting modification date."
         api.portal.show_message(msg, self.request)
-        return self.request.response.redirect(self.context.absolute_url())
+        return self.index()

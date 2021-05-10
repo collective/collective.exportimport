@@ -1,0 +1,67 @@
+<tal:main-macro metal:define-macro="links">
+
+  <div class="formControls" class="form-group">
+      <h3>Exports</h3>
+      <ul>
+         <li><a class=""
+            tal:attributes="href python: portal_url + '/@@export_content'">Export content
+         </a></li>
+
+         <li><a class=""
+            tal:attributes="href python: portal_url + '/@@export_relations'">Export relations
+         </a></li>
+
+         <li><a class=""
+            tal:attributes="href python: portal_url + '/@@export_translations'">Export translations
+         </a></li>
+
+         <li><a class=""
+            tal:attributes="href python: portal_url + '/@@export_members'">Export members
+         </a></li>
+
+         <li><a class=""
+            tal:attributes="href python: portal_url + '/@@export_localroles'">Export local roles
+         </a></li>
+
+         <li><a class=""
+            tal:attributes="href python: portal_url + '/@@export_defaultpages'">Export default pages
+         </a></li>
+
+         <li><a class=""
+            tal:attributes="href python: portal_url + '/@@export_ordering'">Export object positions in parent
+         </a></li>
+      </ul>
+
+      <h3>Imports</h3>
+      <ul>
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@import_relations'">Import relations
+      </a></li>
+
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@import_translations'">Import translations
+      </a></li>
+
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@import_members'">Import members
+      </a></li>
+
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@import_localroles'">Import local roles
+      </a></li>
+
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@import_defaultpages'">Import default pages
+      </a></li>
+
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@import_ordering'">Import object positions in parent
+      </a></li>
+
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@reset_modified_date'">Reset modified date
+      </a></li>
+   </ul>
+   </div>
+
+</tal:main-macro>

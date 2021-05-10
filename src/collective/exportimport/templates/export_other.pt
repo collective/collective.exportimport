@@ -1,0 +1,30 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="plone.z3cform"
+      metal:use-macro="context/main_template/macros/master">
+
+<div metal:fill-slot="main">
+    <tal:main-macro metal:define-macro="main">
+
+       <h1 class="documentFirstHeading" tal:content="python: view.title" i18n:translate="">
+           Export other
+       </h1>
+
+        <form action="@@export_other" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
+            <div class="formControls" class="form-group">
+                <button class="btn btn-primary submit-widget button-field context"
+                        type="submit" name="form.submitted" value="Export" tal:content="python: view.title" i18n:translate="">Export
+                </button>
+            </div>
+        </form>
+
+        <div metal:use-macro="context/@@exportimport_links/links">
+          Links to all exports and imports
+        </div>
+
+    </tal:main-macro>
+</div>
+
+</html>
