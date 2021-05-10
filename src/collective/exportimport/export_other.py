@@ -3,11 +3,14 @@ from Acquisition import aq_base
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
-from plone.app.uuid.utils import uuidToObject
+from plone.app.discussion.interfaces import IConversation
+from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
+from plone.app.uuid.utils import uuidToObject
 from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
+from zope.component import getMultiAdapter
 from zope.component import queryUtility
 
 import json
@@ -417,6 +420,35 @@ class ExportDefaultPages(BrowserView):
 
         portal = api.portal.get()
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_default_page)
+        return results
+
+
+class ExportDiscussion(BrowserView):
+    def __call__(self):
+        all_discussions = self.all_discussions()
+        data = json.dumps(all_discussions, indent=4)
+        filename = "discussions.json"
+        self.request.response.setHeader("Content-type", "application/json")
+        self.request.response.setHeader("content-length", len(data))
+        self.request.response.setHeader(
+            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+        )
+        return self.request.response.write(safe_bytes(data))
+
+    def all_discussions(self):
+        results = []
+        def get_discussion(obj, path):
+            conversation = IConversation(obj, None)
+            if not conversation:
+                return
+            serializer = getMultiAdapter((conversation, self.request), ISerializeToJson)
+            output = serializer()
+            if output:
+                results.append({"uuid": IUUID(obj), "conversation": output})
+            return
+
+        portal = api.portal.get()
+        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_discussion)
         return results
 
 
