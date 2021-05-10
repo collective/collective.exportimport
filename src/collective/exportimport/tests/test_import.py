@@ -3,12 +3,13 @@ from App.config import getConfiguration
 from collective.exportimport.testing import (
     COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,  # noqa: E501,,
 )
+from OFS.interfaces import IOrderedContainer
 from plone import api
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
-from plone.testing import z2
+from plone.testing import zope
 
 import json
 import os
@@ -47,7 +48,7 @@ class TestImport(unittest.TestCase):
 
     def open_page(self, page):
         """Create a testbrowser, open a page, return the browser."""
-        browser = z2.Browser(self.layer["app"])
+        browser = zope.Browser(self.layer["app"])
         browser.handleErrors = False
         browser.addHeader(
             "Authorization",
@@ -147,3 +148,91 @@ class TestImport(unittest.TestCase):
         new_doc = portal["doc1"]
         self.assertEqual(new_doc.Title(), "Document 1")
         self.assertEqual(new_doc.portal_type, "Document")
+
+    def test_import_defaultpages(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        doc1 = api.content.create(
+            container=folder1, type="Document", id="doc1", title="Document 1"
+        )
+        folder1._setProperty("default_page", "doc1")
+        transaction.commit()
+
+        # Export it.
+        browser = self.open_page("@@export_defaultpages")
+        raw_data = browser.contents
+
+        # Now remove the default page setting.
+        folder1._delProperty("default_page")
+        transaction.commit()
+        self.assertFalse(folder1.getProperty("default_page"))
+
+        # Now import it.
+        browser = self.open_page("@@import_defaultpages")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "defaultpages.json")
+        browser.getForm(action="@@import_defaultpages").submit()
+        self.assertIn("Changed 1 default page", browser.contents)
+
+        # The default page should be back.
+        self.assertEqual(folder1.getProperty("default_page"), "doc1")
+
+        # Set a different default page.
+        doc2 = api.content.create(
+            container=folder1, type="Document", id="doc2", title="Document 2"
+        )
+        folder1._updateProperty("default_page", "doc2")
+        transaction.commit()
+
+        # Import again.
+        browser = self.open_page("@@import_defaultpages")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "defaultpages.json")
+        browser.getForm(action="@@import_defaultpages").submit()
+
+        # The default page should be back.
+        self.assertEqual(folder1.getProperty("default_page"), "doc1")
+
+    def test_import_ordering(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        doc1 = api.content.create(
+            container=folder1, type="Document", id="doc1", title="Document 1"
+        )
+        doc2 = api.content.create(
+            container=folder1, type="Document", id="doc2", title="Document 2"
+        )
+        doc3 = api.content.create(
+            container=folder1, type="Document", id="doc3", title="Document 3"
+        )
+        transaction.commit()
+
+        # Export.
+        browser = self.open_page("@@export_ordering")
+        raw_data = browser.contents
+
+        # Reorder the documents.
+        ordered = IOrderedContainer(folder1)
+        ordered.moveObjectsToTop(["doc3"])
+        transaction.commit()
+
+        # Import and check.
+        browser = self.open_page("@@import_ordering")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "ordering.json")
+        browser.getForm(action="@@import_ordering").submit()
+        self.assertIn("Imported 4 orders", browser.contents)
+        # The documents have the original order again.
+        self.assertEqual(ordered.getObjectPosition("doc1"), 0)
+        self.assertEqual(ordered.getObjectPosition("doc2"), 1)
+        self.assertEqual(ordered.getObjectPosition("doc3"), 2)
