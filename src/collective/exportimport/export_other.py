@@ -425,6 +425,10 @@ class ExportDefaultPages(BrowserView):
 
 class ExportDiscussion(BrowserView):
     def __call__(self):
+        self.title = 'Export comments'
+        if not self.request.form.get("form.submitted", False):
+            return self.index()
+
         all_discussions = self.all_discussions()
         data = json.dumps(all_discussions, indent=4)
         filename = "discussions.json"

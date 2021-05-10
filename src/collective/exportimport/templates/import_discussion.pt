@@ -18,46 +18,13 @@
             </div>
             <div class="formControls" class="form-group">
                 <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="submit" value="Upload">Upload
+                        type="submit" name="form.submitted" value="Import">Import
                 </button>
             </div>
         </form>
 
-        <div class="formControls" class="form-group">
-
-            <h2>Additional imports</h2>
-            <a class="btn btn-primary submit-widget button-field context"
-               tal:attributes="href python: portal_url + '/@@import_relations'">Import relations
-            </a>
-
-            <a class="btn btn-primary submit-widget button-field context"
-               tal:attributes="href python: portal_url + '/@@import_translations'">Import translations
-            </a>
-
-            <a class="btn btn-primary submit-widget button-field context"
-               tal:attributes="href python: portal_url + '/@@import_members'">Import members
-            </a>
-
-            <a class="btn btn-primary submit-widget button-field context"
-               tal:attributes="href python: portal_url + '/@@import_localroles'">Import local roles
-            </a>
-
-            <a class="btn btn-primary submit-widget button-field context"
-               tal:attributes="href python: portal_url + '/@@import_defaultpages'">Import default pages
-            </a>
-
-            <a class="btn btn-primary submit-widget button-field context"
-               tal:attributes="href python: portal_url + '/@@import_discussion'">Import Discussion
-            </a>
-
-            <a class="btn btn-primary submit-widget button-field context"
-               tal:attributes="href python: portal_url + '/@@import_ordering'">Import Object Positions in Parent
-            </a>
-
-            <a class="btn btn-primary submit-widget button-field context"
-               tal:attributes="href python: portal_url + '/@@reset_modified_date'">Reset modified date
-            </a>
-
+        <div metal:use-macro="context/@@exportimport_links/links">
+          Links to all exports and imports
         </div>
 
         <div>

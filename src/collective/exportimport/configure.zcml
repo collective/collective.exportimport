@@ -71,6 +71,7 @@
       name="export_discussion"
       for="zope.interface.Interface"
       class=".export_other.ExportDiscussion"
+      template="templates/export_other.pt"
       permission="cmf.ManagePortal"
       />
 
