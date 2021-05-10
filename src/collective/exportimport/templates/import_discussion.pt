@@ -1,0 +1,120 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="plone.z3cform"
+      metal:use-macro="context/main_template/macros/master">
+
+<div metal:fill-slot="main">
+    <tal:main-macro metal:define-macro="main">
+
+      <h1 class="documentFirstHeading">Import Discussion</h1>
+
+      <p class="documentDescription">Here you can upload a json-file.</p>
+
+        <form action="@@import_discussion" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <input type="file" name="jsonfile"/><br/>
+            </div>
+            <div class="formControls" class="form-group">
+                <button class="btn btn-primary submit-widget button-field context"
+                        type="submit" name="submit" value="Upload">Upload
+                </button>
+            </div>
+        </form>
+
+        <div class="formControls" class="form-group">
+
+            <h2>Additional imports</h2>
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_relations'">Import relations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_translations'">Import translations
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_members'">Import members
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_localroles'">Import local roles
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_defaultpages'">Import default pages
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_discussion'">Import Discussion
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@import_ordering'">Import Object Positions in Parent
+            </a>
+
+            <a class="btn btn-primary submit-widget button-field context"
+               tal:attributes="href python: portal_url + '/@@reset_modified_date'">Reset modified date
+            </a>
+
+        </div>
+
+        <div>
+          <h3>Help</h3>
+          <p>Here is a example for the expected format. This is the format created by collective.exportimport when used for export.</p>
+          <pre>
+[
+    {
+        "conversation": {
+            "items_total": 2,
+            "items": [
+                {
+                    "is_deletable": true,
+                    "author_username": "testuser",
+                    "@parent": null,
+                    "user_notification": null,
+                    "text": {
+                        "mime-type": "text/html",
+                        "data": "Donec sed odio dui."
+                    },
+                    "comment_id": "1399014418583606",
+                    "author_name": "",
+                    "creation_date": "2009-05-28T07:28:59",
+                    "is_editable": false,
+                    "in_reply_to": null,
+                    "@id": "http://localhost:8080/Plone/foo/bar/baz/@comments/1399014418583606",
+                    "modification_date": "2009-05-28T07:28:59",
+                    "@type": "Discussion Item"
+                },
+                {
+                    "is_deletable": true,
+                    "author_username": "user2",
+                    "@parent": null,
+                    "user_notification": null,
+                    "text": {
+                        "mime-type": "text/html",
+                        "data": "Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum."
+                    },
+                    "comment_id": "1399014418614368",
+                    "author_name": "",
+                    "creation_date": "2009-05-28T12:27:26",
+                    "is_editable": false,
+                    "in_reply_to": null,
+                    "@id": "http://localhost:8080/Plone/foo/bar/baz/@comments/@comments/1399014418614368",
+                    "modification_date": "2009-05-28T12:27:26",
+                    "@type": "Discussion Item"
+                }
+            ],
+            "@id": "http://localhost:9180/site_dpf/export_discussion"
+        },
+        "uuid": "481e56c14df91ed0a291c9646898a03f"
+    }
+]
+          </pre>
+        </div>
+
+    </tal:main-macro>
+</div>
+
+</html>
