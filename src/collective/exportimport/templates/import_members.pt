@@ -18,7 +18,7 @@
             </div>
             <div class="formControls" class="form-group">
                 <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="submit" value="Hochladen">Hochladen
+                        type="submit" name="form.submitted" value="Import">Import
                 </button>
             </div>
         </form>

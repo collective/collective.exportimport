@@ -76,6 +76,7 @@ class TestExport(unittest.TestCase):
 
     def test_export_members(self):
         browser = self.open_page("@@export_members")
+        browser.getForm(action='@@export_members').submit(name='form.submitted')
         data = json.loads(browser.contents)
         self.assertIn("groups", data.keys())
         self.assertIn("members", data.keys())
@@ -97,6 +98,7 @@ class TestExport(unittest.TestCase):
 
     def test_export_defaultpages_empty(self):
         browser = self.open_page("@@export_defaultpages")
+        browser.getForm(action='@@export_defaultpages').submit(name='form.submitted')
         data = json.loads(browser.contents)
         self.assertListEqual(data, [])
 
@@ -104,6 +106,7 @@ class TestExport(unittest.TestCase):
         # First create some content.
         app = self.layer["app"]
         portal = self.layer["portal"]
+        request = self.layer["request"]
         login(app, SITE_OWNER_NAME)
         folder1 = api.content.create(
             container=portal, type="Folder", id="folder1", title="Folder 1"
@@ -115,6 +118,7 @@ class TestExport(unittest.TestCase):
         transaction.commit()
 
         browser = self.open_page("@@export_defaultpages")
+        browser.getForm(action='@@export_defaultpages').submit(name='form.submitted')
         data = json.loads(browser.contents)
         self.assertListEqual(
             data,
@@ -142,6 +146,7 @@ class TestExport(unittest.TestCase):
 
         # Export.
         browser = self.open_page("@@export_ordering")
+        browser.getForm(action='@@export_ordering').submit(name='form.submitted')
         data = json.loads(browser.contents)
 
         # Turn the list into a dict for easier searching and comparing.
@@ -166,6 +171,7 @@ class TestExport(unittest.TestCase):
 
         # Export and check.
         browser = self.open_page("@@export_ordering")
+        browser.getForm(action='@@export_ordering').submit(name='form.submitted')
         data = json.loads(browser.contents)
         data_uuid2order = {}
         for item in data:

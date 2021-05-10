@@ -165,6 +165,7 @@ class TestImport(unittest.TestCase):
 
         # Export it.
         browser = self.open_page("@@export_defaultpages")
+        browser.getForm(action="@@export_defaultpages").submit(name='form.submitted')
         raw_data = browser.contents
 
         # Now remove the default page setting.
@@ -176,7 +177,7 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@import_defaultpages")
         upload = browser.getControl(name="jsonfile")
         upload.add_file(raw_data, "application/json", "defaultpages.json")
-        browser.getForm(action="@@import_defaultpages").submit()
+        browser.getForm(action="@@import_defaultpages").submit(name='form.submitted')
         self.assertIn("Changed 1 default page", browser.contents)
 
         # The default page should be back.
@@ -219,6 +220,7 @@ class TestImport(unittest.TestCase):
 
         # Export.
         browser = self.open_page("@@export_ordering")
+        browser.getForm(action="@@export_ordering").submit(name='form.submitted')
         raw_data = browser.contents
 
         # Reorder the documents.
