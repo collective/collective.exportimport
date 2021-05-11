@@ -10,6 +10,7 @@ from plone.app.discussion.comment import Comment
 from plone.app.discussion.interfaces import IConversation
 from plone.restapi.deserializer import json_body
 from Products.Five import BrowserView
+from zope.annotation.interfaces import IAnnotations
 from ZPublisher.HTTPRequest import FileUpload
 
 import dateutil
@@ -32,6 +33,8 @@ except ImportError:
     HAS_PAM = False
 
 logger = logging.getLogger(__name__)
+
+DISCUSSION_ANNOTATION_KEY = "plone.app.discussion:conversation"
 
 
 if HAS_PAM:
@@ -451,9 +454,6 @@ class ImportDefaultPages(BrowserView):
         return results
 
 
-from Products.CMFPlone import DISCUSSION_ANNOTATION_KEY as ANNOTATION_KEY
-from zope.annotation.interfaces import IAnnotations
-
 class ImportDiscussion(BrowserView):
     """Import default pages"""
 
@@ -536,8 +536,8 @@ class ImportDiscussion(BrowserView):
 
                 # Add the annotation if not already done
                 annotions = IAnnotations(obj)
-                if ANNOTATION_KEY not in annotions:
-                    annotions[ANNOTATION_KEY] = aq_base(conversation)
+                if DISCUSSION_ANNOTATION_KEY not in annotions:
+                    annotions[DISCUSSION_ANNOTATION_KEY] = aq_base(conversation)
                 added += 1
             logger.info('Added {} comments to {}'.format(added, obj.absolute_url()))
             results += added
