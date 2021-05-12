@@ -135,32 +135,38 @@ Importing content is a elaborate wrapper for the deserializers of plone.restapi:
     new = deserializer(validate_all=False, data=item)
 
 
-Use for migrations from Archetypes to Dexterity
------------------------------------------------
+Use for migrations
+------------------
 
-Exporting Archetypes content and importing that as Dexterity content works fine but due to changes in field-names some settings would get lost.
-For example the setting to exclude content from the navigation was renamed from ``excludeFromNav`` to ``exclude_from_nav``.
+A main use-case of this package is migration from one Plone-Version to another.
 
-To fix this you can modify the data during import like the following example.
+Exporting Archetypes content and importing that as Dexterity content works fine but due to changes in field-names some settings would get lost. For example the setting to exclude content from the navigation was renamed from ``excludeFromNav`` to ``exclude_from_nav``.
 
-.. code-block:: python
+To fix this you can check the checkbox "Modify exported data for migrations". This will modify the data during export:
 
-    from collective.exportimport.import_content import ImportContent
+* Drop unused data (e.g. `next_item` and `components`)
+* Remove all relationfields
+* Change some fieldnames that changed between AT and DX
 
-    class CustomImportContent(ImportContent):
+  * ``excludeFromNav`` → ``exclude_from_nav``
+  * ``allowDiscussion`` → ``allow_discussion``
+  * ``subject`` → ``subjects``
+  * ``expirationDate`` → ``expires``
+  * ``effectiveDate`` → ``effective``
+  * ``creation_date`` → ``created``
+  * ``modification_date`` → ``modified``
+  * ``startDate`` → ``start``
+  * ``endDate`` → ``end``
+  * ``openEnd`` → ``open_end``
+  * ``wholeDay`` → ``whole_day``
+  * ``contactEmail`` → ``contact_email``
+  * ``contactName`` → ``contact_name``
+  * ``contactPhone`` → ``contact_phone``
 
-        def global_dict_hook(self, item):
-            if item.get("expirationDate"):
-                item["expires"] = item["expirationDate"]
-            if item.get("effectiveDate"):
-                item["effective"] = item["effectiveDate"]
-            if item.get("excludeFromNav"):
-                item["exclude_from_nav"] = item["excludeFromNav"]
-            return item
-
-
-Obviously you can use the same approach to handle any changes that you made to your custom content-types.
-For more details on customizing see below.
+* Update view names on Folders and Collection
+* Export ATTopic and their criteria to Collections with querystrings
+* Update Collection-criteria (TODO)
+* Fix image links and scales (TODO)
 
 
 Control creating imported content
@@ -174,7 +180,7 @@ Like this you can set values on the imported object that are expected to be ther
 Customize export and import
 ===========================
 
-This addon is meant to be adapted to your requirements and has multiple hooks to do so.
+This addon is designed to be adapted to your requirements and has multiple hooks to make that easy.
 
 
 Export Example
@@ -329,6 +335,10 @@ It is possible to import data in a setuphandler or upgrade-step:
         import_ordering = api.content.get_view('import_ordering', portal, request)
         path = Path(os.path.dirname(__file__)) / 'ordering.json'
         import_ordering(jsonfile=path.read_text())
+
+        import_defaultpages = api.content.get_view('import_defaultpages', portal, request)
+        path = Path(os.path.dirname(__file__)) / 'defaultpages.json'
+        import_defaultpages(jsonfile=path.read_text())
 
         reset_modified = api.content.get_view('reset_modified_date', portal, request)
         reset_modified()
