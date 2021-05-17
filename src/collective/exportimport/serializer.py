@@ -301,5 +301,5 @@ if HAS_AT and HAS_PAC:
                 except Exception as e:
                     logger.info(e)
 
-            topic_metadata['criteria'] = json_compatible(formquery)
+            topic_metadata['query'] = json_compatible(formquery)
             return result
