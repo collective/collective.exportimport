@@ -82,6 +82,8 @@
 
             </div>
 
+        </form>
+
         <div metal:use-macro="context/@@exportimport_links/links">
           Links to all exports and imports
         </div>

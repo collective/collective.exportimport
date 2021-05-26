@@ -8,6 +8,9 @@ Changelog
 - Add option to import file from server.
   [maurits]
 
+- Missing ``</form>`` closing tag in ``export_content.pt``
+  [petschki]
+
 
 1.0 (2021-04-27)
 ----------------
