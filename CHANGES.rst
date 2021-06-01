@@ -11,6 +11,9 @@ Changelog
 - Missing ``</form>`` closing tag in ``export_content.pt``
   [petschki]
 
+- Support disabled aquisition of local roles during export/import of local roles.
+  [pbauer]
+
 
 1.0 (2021-04-27)
 ----------------

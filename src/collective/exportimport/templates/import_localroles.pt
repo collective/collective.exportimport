@@ -52,6 +52,7 @@
         }
     },
     {
+        "block": 1,
         "uuid": "8d077efd4733b08f411208006539128d",
         "localroles": {
             "admin": [

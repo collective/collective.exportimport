@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from Acquisition import aq_base
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
@@ -315,9 +316,20 @@ class ExportLocalRoles(BrowserView):
             uid = IUUID(obj, None)
             if not uid:
                 return
-            if not base_hasattr(obj, "__ac_local_roles__"):
-                return
-            results.append({"uuid": uid, "localroles": obj.__ac_local_roles__})
+            localroles = None
+            block = None
+            obj = aq_base(obj)
+            if getattr(obj, "__ac_local_roles__", None) is not None:
+                localroles = obj.__ac_local_roles__
+            if getattr(obj, "__ac_local_roles_block__", False):
+                block = obj.__ac_local_roles_block__
+            if localroles or block:
+                item = {"uuid": uid}
+                if localroles:
+                    item["localroles"] = localroles
+                if block:
+                    item["block"] = 1
+                results.append(item)
 
         portal = api.portal.get()
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_localroles)
