@@ -56,8 +56,8 @@ setup(
     python_requires="==2.7, >=3.6",
     install_requires=[
         "setuptools",
-        "plone.api>=1.8.4",
-        "plone.restapi",
+        "plone.api >= 1.8.4",
+        "plone.restapi < 8.0.0 ; python_version<'3'",
         "hurry.filesize",
         "ijson",
         "six",

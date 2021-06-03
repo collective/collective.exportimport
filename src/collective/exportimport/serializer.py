@@ -12,6 +12,7 @@ from plone.restapi.serializer.converters import json_compatible
 from plone.restapi.serializer.dxfields import DefaultFieldSerializer
 from Products.CMFCore.utils import getToolByName
 from zope.component import adapter
+from zope.component import getUtility
 from zope.interface import implementer
 
 import base64
@@ -32,6 +33,14 @@ except pkg_resources.DistributionNotFound:
     HAS_BLOB = False
 else:
     HAS_BLOB = True
+
+try:
+    pkg_resources.get_distribution("plone.app.contenttypes")
+except pkg_resources.DistributionNotFound:
+    HAS_PAC = False
+else:
+    HAS_PAC = True
+
 
 FILE_SIZE_WARNING = 10000000
 IMAGE_SIZE_WARNING = 5000000
@@ -107,22 +116,14 @@ if HAS_AT:
     from OFS.Image import Pdata
     from plone.app.blob.interfaces import IBlobField
     from plone.app.blob.interfaces import IBlobImageField
-    from plone.app.contenttypes.migration.topics import CONVERTERS
-    from plone.app.querystring.interfaces import IQuerystringRegistryReader
-    from plone.registry.interfaces import IRegistry
-    from plone.restapi.interfaces import ISerializeToJson
     from plone.restapi.serializer.atfields import (
         DefaultFieldSerializer as ATDefaultFieldSerializer,
     )
-    from plone.restapi.serializer.atcontent import SerializeToJson
     from Products.Archetypes.atapi import RichWidget
     from Products.Archetypes.interfaces import IBaseObject
     from Products.Archetypes.interfaces.field import IFileField
     from Products.Archetypes.interfaces.field import IImageField
-    from Products.Archetypes.interfaces.field import IReferenceField
     from Products.Archetypes.interfaces.field import ITextField
-    from Products.ATContentTypes.interfaces.topic import IATTopic
-    from zope.component import getUtility
 
 
     @adapter(IImageField, IBaseObject, IBase64BlobsMarker)
@@ -247,6 +248,16 @@ if HAS_AT:
                 }
             else:
                 return json_compatible(data)
+
+
+if HAS_AT and HAS_PAC:
+    # This only works when Topics and plone.app.contenttypes is available
+    from plone.app.contenttypes.migration.topics import CONVERTERS
+    from plone.app.querystring.interfaces import IQuerystringRegistryReader
+    from plone.registry.interfaces import IRegistry
+    from plone.restapi.interfaces import ISerializeToJson
+    from plone.restapi.serializer.atcontent import SerializeToJson
+    from Products.ATContentTypes.interfaces.topic import IATTopic
 
 
     @implementer(ISerializeToJson)

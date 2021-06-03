@@ -6,18 +6,12 @@ from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
 from operator import itemgetter
 from plone import api
-from plone.dexterity.interfaces import IDexterityContent
-from plone.dexterity.interfaces import IDexterityFTI
-from plone.dexterity.utils import iterSchemata
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import IJsonCompatible
 from plone.restapi.interfaces import ISerializeToJson
 from Products.CMFDynamicViewFTI.interfaces import IDynamicViewTypeInformation
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from z3c.relationfield.interfaces import IRelationChoice
-from z3c.relationfield.interfaces import IRelationList
-from z3c.relationfield.interfaces import IRelationValue
 from zope.component import adapter
 from zope.component import getMultiAdapter
 from zope.component import getUtility
@@ -44,6 +38,28 @@ else:
     from Products.Archetypes.atapi import ReferenceField
     from Products.Archetypes.interfaces import IBaseObject
     HAS_AT = True
+
+
+try:
+    pkg_resources.get_distribution("plone.dexterity")
+    pkg_resources.get_distribution("z3c.relationfield")
+except pkg_resources.DistributionNotFound:
+    IDexterityContent = None
+    IDexterityFTI = None
+    iterSchemata = None
+    IRelationChoice = None
+    IRelationList = None
+    IRelationValue = None
+    HAS_DX = False
+else:
+    from plone.dexterity.interfaces import IDexterityContent
+    from plone.dexterity.interfaces import IDexterityFTI
+    from plone.dexterity.utils import iterSchemata
+    from z3c.relationfield.interfaces import IRelationChoice
+    from z3c.relationfield.interfaces import IRelationList
+    from z3c.relationfield.interfaces import IRelationValue
+    HAS_DX = True
+
 
 logger = logging.getLogger(__name__)
 
@@ -269,7 +285,7 @@ class ExportContent(BrowserView):
             for field in obj.schema.fields():
                 if isinstance(field, ReferenceField):
                     item.pop(field.__name__, None)
-        elif IDexterityContent.providedBy(obj):
+        elif HAS_DX and IDexterityContent.providedBy(obj):
             for schema in iterSchemata(obj):
                 for name, field in getFields(schema).items():
                     if IRelationChoice.providedBy(field) or IRelationList.providedBy(field):
@@ -324,12 +340,13 @@ def migrate_field(item, old, new):
     return item
 
 
-@adapter(IRelationValue)
-@implementer(IJsonCompatible)
-def relationvalue_converter_uuid(value):
-    """Save uuid instead of summary"""
-    if value.to_object:
-        return value.to_object.UID()
+if HAS_DX:
+    @adapter(IRelationValue)
+    @implementer(IJsonCompatible)
+    def relationvalue_converter_uuid(value):
+        """Save uuid instead of summary"""
+        if value.to_object:
+            return value.to_object.UID()
 
 
 def safe_bytes(value, encoding="utf-8"):
