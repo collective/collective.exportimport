@@ -8,6 +8,7 @@ from plone.restapi.interfaces import IDeserializeFromJson
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from six.moves.urllib.parse import unquote
+from six.moves.urllib.parse import urlparse
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from ZPublisher.HTTPRequest import FileUpload
@@ -413,9 +414,8 @@ class ImportContent(BrowserView):
 
     def get_parent_as_container(self, item):
         """The default is to generate a folder-structure exactly as the original"""
-        parent_url = item["parent"]["@id"]
-        parent_path = "/".join(parent_url.split("/")[4:])
-        parent_path = "/" + parent_path
+        parent_url = unquote(item["parent"]["@id"])
+        parent_path = urlparse(parent_url).path
         parent = api.content.get(path=parent_path)
         if parent:
             return parent
@@ -424,8 +424,8 @@ class ImportContent(BrowserView):
 
     def create_container(self, item):
         folder = self.context
-        parent_url = item["parent"]["@id"]
-        parent_path = "/".join(parent_url.split("/")[5:])
+        parent_url = unquote(item["parent"]["@id"])
+        parent_path = urlparse(parent_url).path
 
         # create original structure for imported content
         for element in parent_path.split("/"):
@@ -436,7 +436,7 @@ class ImportContent(BrowserView):
                     id=element,
                     title=element,
                 )
-                logger.debug(
+                logger.info(
                     u"Created container {} to hold {}".format(
                         folder.absolute_url(), item["@id"]
                     )

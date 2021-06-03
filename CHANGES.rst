@@ -20,6 +20,9 @@ Changelog
 - Add commit message after importing one type.
   [pbauer]
 
+- Fix getting container for some cases.
+  [pbauer]
+
 
 1.0 (2021-04-27)
 ----------------
