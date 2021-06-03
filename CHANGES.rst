@@ -14,6 +14,9 @@ Changelog
 - Support disabled aquisition of local roles during export/import of local roles.
   [pbauer]
 
+- Use unrestrictedSearchResults to actually export all content.
+  [pbauer]
+
 
 1.0 (2021-04-27)
 ----------------

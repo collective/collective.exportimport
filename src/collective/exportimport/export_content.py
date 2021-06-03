@@ -130,7 +130,8 @@ class ExportContent(BrowserView):
     def export_content(self, include_blobs=False):
         data = []
         query = self.build_query()
-        brains = api.content.find(**query)
+        catalog = api.portal.get_tool("portal_catalog")
+        brains = catalog.unrestrictedSearchResults(**query)
         logger.info(u"Exporting {} {}".format(len(brains), self.portal_type))
         self.safe_portal_type = fix_portal_type(self.portal_type)
 
@@ -204,7 +205,7 @@ class ExportContent(BrowserView):
                 # Ignore non-DX and non-AT types
                 continue
             query["portal_type"] = fti.id
-            number = len(catalog(**query))
+            number = len(catalog.unrestrictedSearchResults(**query))
             if number >= 1:
                 results.append(
                     {
