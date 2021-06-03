@@ -165,14 +165,12 @@ class ImportContent(BrowserView):
     def do_import(self, data):
         start = datetime.now()
         added = self.import_new_content(data)
-        transaction.commit()
         end = datetime.now()
         delta = end - start
-        msg = u"Imported {} {} in {} seconds".format(
-            len(added),
-            self.portal_type,
-            delta.seconds,
-        )
+        msg = u"Imported {} {}".format(len(added), self.portal_type)
+        transaction.get().note(msg)
+        transaction.commit()
+        msg = u"{} in {} seconds".format(msg, delta.seconds)
         logger.info(msg)
         return msg
 

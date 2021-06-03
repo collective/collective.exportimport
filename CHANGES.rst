@@ -17,6 +17,9 @@ Changelog
 - Use unrestrictedSearchResults to actually export all content.
   [pbauer]
 
+- Add commit message after importing one type.
+  [pbauer]
+
 
 1.0 (2021-04-27)
 ----------------
