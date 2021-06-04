@@ -8,7 +8,6 @@ from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
 from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
-from zc.relation.interfaces import ICatalog
 from zope.component import queryUtility
 
 import json
@@ -22,6 +21,15 @@ except pkg_resources.DistributionNotFound:
     HAS_AT = False
 else:
     HAS_AT = True
+
+
+try:
+    pkg_resources.get_distribution("zc.relation")
+except pkg_resources.DistributionNotFound:
+    HAS_DX = False
+else:
+    HAS_DX = True
+
 
 logger = logging.getLogger(__name__)
 
@@ -72,25 +80,28 @@ class ExportRelations(BrowserView):
                         item["to_path"] = target.absolute_url_path()
                     results.append(item)
 
-        # Dexterity
-        # Get all data from zc.relation (relation_catalog)
-        relation_catalog = queryUtility(ICatalog)
-        if relation_catalog:
-            portal_catalog = getToolByName(self.context, "portal_catalog")
-            for rel in relation_catalog.findRelations():
-                if rel.from_path and rel.to_path:
-                    from_brain = portal_catalog(path=dict(query=rel.from_path, depth=0))
-                    to_brain = portal_catalog(path=dict(query=rel.to_path, depth=0))
-                    if len(from_brain) > 0 and len(to_brain) > 0:
-                        item = {
-                            "from_uuid": from_brain[0].UID,
-                            "to_uuid": to_brain[0].UID,
-                            "relationship": rel.from_attribute,
-                        }
-                        if self.debug:
-                            item["from_path"] = from_brain[0].getPath()
-                            item["to_path"] = to_brain[0].getPath()
-                        results.append(item)
+        if HAS_DX:
+            from zc.relation.interfaces import ICatalog
+
+            # Dexterity
+            # Get all data from zc.relation (relation_catalog)
+            relation_catalog = queryUtility(ICatalog)
+            if relation_catalog:
+                portal_catalog = getToolByName(self.context, "portal_catalog")
+                for rel in relation_catalog.findRelations():
+                    if rel.from_path and rel.to_path:
+                        from_brain = portal_catalog(path=dict(query=rel.from_path, depth=0))
+                        to_brain = portal_catalog(path=dict(query=rel.to_path, depth=0))
+                        if len(from_brain) > 0 and len(to_brain) > 0:
+                            item = {
+                                "from_uuid": from_brain[0].UID,
+                                "to_uuid": to_brain[0].UID,
+                                "relationship": rel.from_attribute,
+                            }
+                            if self.debug:
+                                item["from_path"] = from_brain[0].getPath()
+                                item["to_path"] = to_brain[0].getPath()
+                            results.append(item)
 
         return results
 
