@@ -26,6 +26,10 @@ Changelog
 - Fix use in Plone 4.3 without dexterity, zc.relation or plone.app.contenttypes.
   [pbauer]
 
+- Fix use in Plone 4.3 with dexterity but without z3c.relationfield.
+  [maurits]
+
+
 1.0 (2021-04-27)
 ----------------
 
