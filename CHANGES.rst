@@ -29,6 +29,10 @@ Changelog
 - Fix @id of collections and parents of subcollections. Fix #30
   [pbauer]
 
+- Fix use in Plone 4.3 with dexterity but without z3c.relationfield.
+  [maurits]
+
+
 1.0 (2021-04-27)
 ----------------
 
