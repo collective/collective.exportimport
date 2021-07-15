@@ -32,6 +32,9 @@ Changelog
 - Fix use in Plone 4.3 with dexterity but without z3c.relationfield.
   [maurits]
 
+- Add export and import for discussions/comments.
+  [pbauer]
+
 
 1.0 (2021-04-27)
 ----------------
