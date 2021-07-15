@@ -30,6 +30,10 @@
          <li><a class=""
             tal:attributes="href python: portal_url + '/@@export_ordering'">Export object positions in parent
          </a></li>
+
+         <li><a class=""
+            tal:attributes="href python: portal_url + '/@@export_discussion'">Export comments
+         </a></li>
       </ul>
 
       <h3>Imports</h3>
@@ -56,6 +60,10 @@
 
       <li><a class=""
          tal:attributes="href python: portal_url + '/@@import_ordering'">Import object positions in parent
+      </a></li>
+
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@import_discussion'">Import comments
       </a></li>
 
       <li><a class=""

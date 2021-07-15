@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
+from Acquisition import aq_base
+from BTrees.LLBTree import LLSet
 from datetime import datetime
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
+from plone.app.discussion.browser.comments import CommentForm
+from plone.app.discussion.comment import Comment
+from plone.app.discussion.interfaces import IConversation
+from plone.restapi.deserializer import json_body
 from Products.Five import BrowserView
+from zope.annotation.interfaces import IAnnotations
 from ZPublisher.HTTPRequest import FileUpload
 
+import dateutil
 import json
 import logging
 import transaction
@@ -25,6 +33,8 @@ except ImportError:
     HAS_PAM = False
 
 logger = logging.getLogger(__name__)
+
+DISCUSSION_ANNOTATION_KEY = "plone.app.discussion:conversation"
 
 
 if HAS_PAM:
@@ -441,4 +451,95 @@ class ImportDefaultPages(BrowserView):
             obj.setDefaultPage(item["default_page"])
             if old != obj.getDefaultPage():
                 results += 1
+        return results
+
+
+class ImportDiscussion(BrowserView):
+    """Import default pages"""
+
+    def __call__(self, jsonfile=None, return_json=False):
+        if jsonfile:
+            self.portal = api.portal.get()
+            status = "success"
+            try:
+                if isinstance(jsonfile, str):
+                    return_json = True
+                    data = json.loads(jsonfile)
+                elif isinstance(jsonfile, FileUpload):
+                    data = json.loads(jsonfile.read())
+                else:
+                    raise ("Data is neither text nor upload.")
+            except Exception as e:
+                status = "error"
+                logger.error(e)
+                api.portal.show_message(
+                    u"Failure while uploading: {}".format(e),
+                    request=self.request,
+                )
+            else:
+                results = self.import_data(data)
+                msg = u"Imported {} comments".format(results)
+                api.portal.show_message(msg, self.request)
+            if return_json:
+                msg = {"state": status, "msg": msg}
+                return json.dumps(msg)
+
+        return self.index()
+
+    def import_data(self, data):
+        results = 0
+        for conversation_data in data:
+            obj = api.content.get(UID=conversation_data["uuid"])
+            if not obj:
+                continue
+            if not obj.restrictedTraverse('@@conversation_view').enabled():
+                continue
+            added = 0
+            conversation = IConversation(obj)
+
+            for item in conversation_data['conversation']['items']:
+
+                if isinstance(item['text'], dict) and item['text'].get('data'):
+                    item['text'] = item['text']['data']
+
+                comment = Comment()
+                comment_id = int(item['comment_id'])
+                comment.comment_id = comment_id
+                comment.creation_date = dateutil.parser.parse(item['creation_date'])
+                comment.modification_date = dateutil.parser.parse(item['modification_date'])
+                comment.author_name = item['author_name']
+                comment.author_username = item['author_username']
+                comment.creator = item['author_username']
+                comment.text = item['text']
+
+                if item['user_notification']:
+                    comment.user_notification = True
+                if item.get('in_reply_to'):
+                    comment.in_reply_to = int(item['in_reply_to'])
+
+                conversation._comments[comment_id] = comment
+                comment.__parent__ = aq_base(conversation)
+                commentator = comment.author_username
+                if commentator:
+                    if commentator not in conversation._commentators:
+                        conversation._commentators[commentator] = 0
+                    conversation._commentators[commentator] += 1
+
+                reply_to = comment.in_reply_to
+                if not reply_to:
+                    # top level comments are in reply to the faux id 0
+                    comment.in_reply_to = reply_to = 0
+
+                if reply_to not in conversation._children:
+                    conversation._children[reply_to] = LLSet()
+                conversation._children[reply_to].insert(comment_id)
+
+                # Add the annotation if not already done
+                annotions = IAnnotations(obj)
+                if DISCUSSION_ANNOTATION_KEY not in annotions:
+                    annotions[DISCUSSION_ANNOTATION_KEY] = aq_base(conversation)
+                added += 1
+            logger.info('Added {} comments to {}'.format(added, obj.absolute_url()))
+            results += added
+
         return results

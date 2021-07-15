@@ -32,6 +32,7 @@ Features
 * Export & Import translations
 * Export & Import local roles
 * Export & Import order (position in parent)
+* Export & Import discussions/comments
 
 Export supports:
 
@@ -56,7 +57,7 @@ Use the form with the URL ``/@@export_content``, and select which content type y
 
 The downloaded json-file will have the name of the selected type, e.g. ``Folder.json``.
 
-The exports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@export_members``, ``/@@export_relations``, ``/@@export_localroles``, ``/@@export_translations``, ``/@@export_ordering``.
+The exports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@export_members``, ``/@@export_relations``, ``/@@export_localroles``, ``/@@export_translations``, ``/@@export_ordering``, ``/@@export_discussion``.
 
 
 Import
@@ -67,7 +68,7 @@ Use the form with the URL ``/@@import_content``, and upload a json-file that you
 .. image:: ./docs/import.png
 
 
-The imports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@import_members``, ``/@@import_relations``, ``/@@import_localroles``, ``/@@import_translations``, ``/@@import_ordering``..
+The imports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@import_members``, ``/@@import_relations``, ``/@@import_localroles``, ``/@@import_translations``, ``/@@import_ordering``, ``/@@import_discussion``.
 
 As a last step in a migration there is another view ``@@reset_modified_date`` that resets the modified date on imported content to the date initially contained in the imported json-file. This is necessary since varous changes during a migration will likely result in a updated modified-date. During import the original is stored as ``obj.modification_date_migrated`` on each new object and this view sets this date.
 
