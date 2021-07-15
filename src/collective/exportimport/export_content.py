@@ -39,26 +39,31 @@ else:
     from Products.Archetypes.interfaces import IBaseObject
     HAS_AT = True
 
-
 try:
     pkg_resources.get_distribution("plone.dexterity")
-    pkg_resources.get_distribution("z3c.relationfield")
 except pkg_resources.DistributionNotFound:
     IDexterityContent = None
     IDexterityFTI = None
     iterSchemata = None
-    IRelationChoice = None
-    IRelationList = None
-    IRelationValue = None
     HAS_DX = False
 else:
     from plone.dexterity.interfaces import IDexterityContent
     from plone.dexterity.interfaces import IDexterityFTI
     from plone.dexterity.utils import iterSchemata
+    HAS_DX = True
+
+try:
+    pkg_resources.get_distribution("z3c.relationfield")
+except pkg_resources.DistributionNotFound:
+    IRelationChoice = None
+    IRelationList = None
+    IRelationValue = None
+    HAS_RELATIONS = False
+else:
     from z3c.relationfield.interfaces import IRelationChoice
     from z3c.relationfield.interfaces import IRelationList
     from z3c.relationfield.interfaces import IRelationValue
-    HAS_DX = True
+    HAS_RELATIONS = True
 
 
 logger = logging.getLogger(__name__)
@@ -81,6 +86,19 @@ LISTING_VIEW_MAPPING = {  # OLD (AT and old DX) : NEW
     'thumbnail_view': 'album_view',
     'view': 'listing_view',
 }
+
+
+def is_dx_or_at_fti(fti):
+    """Return True if the FTI is a Dexterity or Archetypes type.
+
+    This is a small helper function to avoid having too many
+    nots/ands/ors in a condition.
+    """
+    if IDynamicViewTypeInformation.providedBy(fti):
+        return True
+    if not HAS_DX:
+        return False
+    return IDexterityFTI.providedBy(fti)
 
 
 class ExportContent(BrowserView):
@@ -215,10 +233,9 @@ class ExportContent(BrowserView):
         results = []
         query = self.build_query()
         for fti in portal_types.listTypeInfo():
-            if not IDexterityFTI.providedBy(
-                fti
-            ) and not IDynamicViewTypeInformation.providedBy(fti):
-                # Ignore non-DX and non-AT types
+            if not is_dx_or_at_fti(fti):
+                # Ignore non-DX and non-AT types,
+                # for example ATBooleanCriterion and TempFolder.
                 continue
             query["portal_type"] = fti.id
             number = len(catalog.unrestrictedSearchResults(**query))
@@ -285,7 +302,7 @@ class ExportContent(BrowserView):
             for field in obj.schema.fields():
                 if isinstance(field, ReferenceField):
                     item.pop(field.__name__, None)
-        elif HAS_DX and IDexterityContent.providedBy(obj):
+        elif HAS_DX and HAS_RELATIONS and IDexterityContent.providedBy(obj):
             for schema in iterSchemata(obj):
                 for name, field in getFields(schema).items():
                     if IRelationChoice.providedBy(field) or IRelationList.providedBy(field):
@@ -340,7 +357,7 @@ def migrate_field(item, old, new):
     return item
 
 
-if HAS_DX:
+if HAS_RELATIONS:
     @adapter(IRelationValue)
     @implementer(IJsonCompatible)
     def relationvalue_converter_uuid(value):
