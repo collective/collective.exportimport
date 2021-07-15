@@ -26,6 +26,9 @@ Changelog
 - Fix use in Plone 4.3 without dexterity, zc.relation or plone.app.contenttypes.
   [pbauer]
 
+- Fix @id of collections and parents of subcollections. Fix #30
+  [pbauer]
+
 - Fix use in Plone 4.3 with dexterity but without z3c.relationfield.
   [maurits]
 

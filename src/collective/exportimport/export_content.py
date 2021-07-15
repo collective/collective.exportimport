@@ -204,6 +204,7 @@ class ExportContent(BrowserView):
                     item = serializer(include_items=False)
                 else:
                     item = serializer()
+                item = self.fix_url(item, obj)
                 if self.migration:
                     item = self.update_data_for_migration(item, obj)
                 item = self.global_dict_hook(item, obj)
@@ -343,6 +344,18 @@ class ExportContent(BrowserView):
             if old_layout in LISTING_VIEW_MAPPING:
                 item['layout'] = LISTING_VIEW_MAPPING[old_layout]
 
+        return item
+
+    def fix_url(self, item, obj):
+        """Fix the id. Mostly relevant for collections, where the id is set to “@@export-content”
+        because of the HypermediaBatch in plone.restapi
+        """
+        obj_url = obj.absolute_url()
+        parent_url = obj.__parent__.absolute_url()
+        if item['@id'] != obj_url:
+            item['@id'] = obj_url
+        if item['parent']['@id'] != parent_url:
+            item['parent']['@id'] = parent_url
         return item
 
 
