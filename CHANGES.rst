@@ -35,6 +35,8 @@ Changelog
 - Add export and import for discussions/comments.
   [pbauer]
 
+- Add option to fix collection queries after import.
+  [thomasmassmann]
 
 1.0 (2021-04-27)
 ----------------

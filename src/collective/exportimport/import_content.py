@@ -20,6 +20,12 @@ import os
 import random
 import transaction
 
+try:
+    from plone.app.querystring.upgrades import fix_select_all_existing_collections
+    HAS_COLLECTION_FIX = True
+except ImportError:
+    HAS_COLLECTION_FIX = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -489,5 +495,25 @@ class ResetModifiedDate(BrowserView):
 
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=fix_modified)
         msg = "Finished resetting modification date."
+        api.portal.show_message(msg, self.request)
+        return self.index()
+
+
+class FixCollectionQueries(BrowserView):
+    def __call__(self):
+        self.title = 'Fix collection queries'
+
+        if not HAS_COLLECTION_FIX:
+            api.portal.show_message(
+                "plone.app.querystring.upgrades.fix_select_all_existing_collections is not available", self.request
+            )
+            return self.index()
+
+        if not self.request.form.get("form.submitted", False):
+            return self.index()
+
+        portal = api.portal.get()
+        fix_select_all_existing_collections(portal)
+        msg = "Finished fixing collection queries."
         api.portal.show_message(msg, self.request)
         return self.index()

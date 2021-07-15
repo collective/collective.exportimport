@@ -69,6 +69,10 @@
       <li><a class=""
          tal:attributes="href python: portal_url + '/@@reset_modified_date'">Reset modified date
       </a></li>
+
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@fix_collection_queries'">Fix collection queries
+      </a></li>
    </ul>
    </div>
 
