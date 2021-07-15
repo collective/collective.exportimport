@@ -74,6 +74,35 @@ class TestExport(unittest.TestCase):
         self.assertEqual(info["@type"], "Document")
         self.assertEqual(info["title"], doc.Title())
 
+    def test_export_collection(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        doc = api.content.create(
+            container=portal, type="Collection", id="collection1", title="Collection 1"
+        )
+        transaction.commit()
+
+        # Now export content.
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        self.assertEqual(portal_type.value, [""])
+        self.assertIn("Collection", portal_type.options)
+        self.assertNotIn("Folder", portal_type.options)
+        portal_type.value = ["Collection"]
+        browser.getControl("Export selected type").click()
+
+        # We should have gotten json.
+        data = json.loads(browser.contents)
+        self.assertEqual(len(data), 1)
+
+        # Check a few important keys.
+        info = data[0]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/collection1")
+        self.assertEqual(info["@type"], "Collection")
+        self.assertEqual(info["title"], doc.Title())
+
     def test_export_members(self):
         browser = self.open_page("@@export_members")
         browser.getForm(action='@@export_members').submit(name='form.submitted')
