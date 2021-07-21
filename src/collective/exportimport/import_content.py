@@ -141,10 +141,16 @@ class ImportContent(BrowserView):
 
         if close_file:
             jsonfile.close()
+
+        self.finish()
+
         if return_json:
             msg = {"state": status, "msg": msg}
             return json.dumps(msg)
         return self.template()
+
+    def finish(self):
+        """Hook to do something after importing one file."""
 
     @property
     def import_paths(self):
