@@ -275,14 +275,20 @@ class ImportContent(BrowserView):
                 except InvalidParameterError as e:
                     logger.info(e)
 
-            # set modified-date as a custom attribute as last step
+            # set modification and creation-date as a custom attribute as last step
+            # this is reused in ResetModifiedDate
             modified = item.get("modified", item.get("modification_date", None))
             if modified:
                 modified_data = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%S%z")
                 modification_date = DateTime(modified_data)
                 new.modification_date = modification_date
                 new.modification_date_migrated = modification_date
-                # new.reindexObject(idxs=['modified'])
+            created = item.get("created", item.get("creation_date", None))
+            if created:
+                created_data = datetime.strptime(created, "%Y-%m-%dT%H:%M:%S%z")
+                creation_date = DateTime(created_data)
+                new.creation_date = creation_date
+                new.creation_date_migrated = creation_date
             logger.info("Created {} {}".format(new.absolute_url(), item["@type"]))
             added.append(new.absolute_url())
         return added
@@ -476,25 +482,31 @@ def fix_portal_type(portal_type):
     return normalizer.normalize(portal_type).replace("-", "")
 
 
-class ResetModifiedDate(BrowserView):
+class ResetModifiedAndCreatedDate(BrowserView):
     def __call__(self):
-        self.title = 'Reset modified date'
+        self.title = 'Reset creation and modification date'
+        self.help_text = """<p>Creation- and modification-dates are changed during import.
+        This resets them to the original dates of the imported content.</p>"""
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         portal = api.portal.get()
 
-        def fix_modified(obj, path):
+        def reset_dates(obj, path):
             modified = getattr(obj, "modification_date_migrated", None)
-            if not modified:
-                return
-            if modified != obj.modification_date:
+            if modified and modified != obj.modification_date:
                 obj.modification_date = modified
                 del obj.modification_date_migrated
                 obj.reindexObject(idxs=["modified"])
 
-        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=fix_modified)
-        msg = "Finished resetting modification date."
+            created = getattr(obj, "creation_date_migrated", None)
+            if created and created != obj.creation_date:
+                obj.creation_date = created
+                del obj.creation_date_migrated
+                obj.reindexObject(idxs=["created"])
+
+        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=reset_dates)
+        msg = "Finished resetting creation and modification date."
         api.portal.show_message(msg, self.request)
         return self.index()
 

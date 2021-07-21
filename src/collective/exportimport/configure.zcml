@@ -115,9 +115,9 @@
       />
 
   <browser:page
-      name="reset_modified_date"
+      name="reset_dates"
       for="zope.interface.Interface"
-      class=".import_content.ResetModifiedDate"
+      class=".import_content.ResetModifiedAndCreatedDate"
       template="templates/export_other.pt"
       permission="cmf.ManagePortal"
       />
