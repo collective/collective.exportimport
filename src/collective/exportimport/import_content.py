@@ -184,16 +184,7 @@ class ImportContent(BrowserView):
     def import_new_content(self, data):
         self.safe_portal_type = fix_portal_type(self.portal_type)
         added = []
-        container = None
-        container_path = self.CONTAINER.get(self.portal_type, None)
-        if container_path:
-            container = api.content.get(path=container_path)
-            if not container:
-                raise RuntimeError(
-                    u"Target folder {} for type {} is missing".format(
-                        container_path, self.portal_type
-                    )
-                )
+
         if getattr(data, 'len', None):
             logger.info(u"Importing {} {}".format(len(data), self.portal_type))
         else:
@@ -238,7 +229,8 @@ class ImportContent(BrowserView):
             if not item:
                 continue
 
-            container = self.handle_container(item) or container
+            container = self.handle_container(item)
+
             if not container:
                 logger.info(u"No container found for {}".format(item["@id"]))
                 continue
@@ -415,6 +407,17 @@ class ImportContent(BrowserView):
         """
         if self.request.get("import_to_current_folder", None):
             return self.context
+
+        container_path = self.CONTAINER.get(self.portal_type, None)
+        if container_path:
+            container = api.content.get(path=container_path)
+            if not container:
+                raise RuntimeError(
+                    u"Target folder {} for type {} is missing".format(
+                        container_path, self.portal_type
+                    )
+                )
+
         method = getattr(
             self, "handle_{}_container".format(self.safe_portal_type), None
         )
