@@ -270,9 +270,9 @@ if HAS_AT and HAS_PAC:
             topic_metadata = super(SerializeTopicToJson, self).__call__(
                 version=version
             )
-            result = topic_metadata
-            formquery = []
 
+            # migrate criteria
+            formquery = []
             reg = getUtility(IRegistry)
             reader = IQuerystringRegistryReader(reg)
             self.registry = reader.parseRegistry()
@@ -302,4 +302,9 @@ if HAS_AT and HAS_PAC:
                     logger.info(e)
 
             topic_metadata['query'] = json_compatible(formquery)
-            return result
+
+            # migrate batch size
+            if self.context.itemCount:
+                topic_metadata['b_size'] = self.context.itemCount
+
+            return topic_metadata
