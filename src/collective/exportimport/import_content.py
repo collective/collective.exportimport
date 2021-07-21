@@ -63,21 +63,6 @@ class ImportContent(BrowserView):
         if not self.request.form.get("form.submitted", False):
             return self.template()
 
-        if self.request.form.get("import_relations", False):
-            return response.redirect("@@import_relations")
-
-        if self.request.form.get("import_translations", False):
-            return response.redirect("@@import_translations")
-
-        if self.request.form.get("import_members", False):
-            return response.redirect("@@import_members")
-
-        if self.request.form.get("import_localroles", False):
-            return response.redirect("@@import_localroles")
-
-        if self.request.form.get("reset_modified_date", False):
-            return response.redirect("@@reset_modified_date")
-
         # If we open a server file, we should close it at the end.
         close_file = False
         if server_file and jsonfile:
