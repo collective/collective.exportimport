@@ -514,6 +514,7 @@ class ResetModifiedAndCreatedDate(BrowserView):
 class FixCollectionQueries(BrowserView):
     def __call__(self):
         self.title = 'Fix collection queries'
+        self.help_text = """<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>"""
 
         if not HAS_COLLECTION_FIX:
             api.portal.show_message(

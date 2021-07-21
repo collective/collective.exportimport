@@ -24,6 +24,12 @@
           Links to all exports and imports
         </div>
 
+        <div tal:define="help_text python: getattr(view, 'help_text', None)"
+             tal:condition="python: help_text">
+          <h3>Help</h3>
+          <div tal:replace="structure python: help_text"></div>
+        </div>
+
     </tal:main-macro>
 </div>
 
