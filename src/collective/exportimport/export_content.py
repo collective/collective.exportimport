@@ -7,7 +7,6 @@ from collective.exportimport.interfaces import IRawRichTextMarker
 from operator import itemgetter
 from plone import api
 from plone.i18n.normalizer.interfaces import IIDNormalizer
-from plone.restapi.interfaces import IJsonCompatible
 from plone.restapi.interfaces import ISerializeToJson
 from Products.CMFDynamicViewFTI.interfaces import IDynamicViewTypeInformation
 from Products.Five import BrowserView
@@ -57,12 +56,10 @@ try:
 except pkg_resources.DistributionNotFound:
     IRelationChoice = None
     IRelationList = None
-    IRelationValue = None
     HAS_RELATIONS = False
 else:
     from z3c.relationfield.interfaces import IRelationChoice
     from z3c.relationfield.interfaces import IRelationList
-    from z3c.relationfield.interfaces import IRelationValue
     HAS_RELATIONS = True
 
 
