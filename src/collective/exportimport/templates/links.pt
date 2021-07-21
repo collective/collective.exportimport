@@ -67,7 +67,7 @@
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@reset_modified_date'">Reset modified date
+         tal:attributes="href python: portal_url + '/@@reset_dates'">Reset created and modified dates
       </a></li>
 
       <li><a class=""
