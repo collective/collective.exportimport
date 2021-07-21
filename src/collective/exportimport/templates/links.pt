@@ -39,6 +39,10 @@
       <h3>Imports</h3>
       <ul>
       <li><a class=""
+         tal:attributes="href python: portal_url + '/@@import_content'">Import content
+      </a></li>
+
+      <li><a class=""
          tal:attributes="href python: portal_url + '/@@import_relations'">Import relations
       </a></li>
 
