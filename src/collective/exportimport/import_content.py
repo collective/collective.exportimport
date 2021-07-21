@@ -258,8 +258,8 @@ class ImportContent(BrowserView):
                 except InvalidParameterError as e:
                     logger.info(e)
 
-            # set modification and creation-date as a custom attribute as last step
-            # this is reused in ResetModifiedDate
+            # Set modification and creation-date as a custom attribute as last step.
+            # These are reused and dropped in ResetModifiedAndCreatedDate
             modified = item.get("modified", item.get("modification_date", None))
             if modified:
                 modified_data = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%S%z")
@@ -272,7 +272,7 @@ class ImportContent(BrowserView):
                 creation_date = DateTime(created_data)
                 new.creation_date = creation_date
                 new.creation_date_migrated = creation_date
-            logger.info("Created {} {}".format(new.absolute_url(), item["@type"]))
+            logger.info("Created {} {}".format(item["@type"], new.absolute_url()))
             added.append(new.absolute_url())
         return added
 
