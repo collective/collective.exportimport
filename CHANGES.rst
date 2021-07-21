@@ -38,6 +38,23 @@ Changelog
 - Add option to fix collection queries after import.
   [thomasmassmann]
 
+- Reset Creation Date. Fix #29
+  [pbauer]
+
+- Remove custom serializer for relations beacuse of ConfigurationConflictError with restapi.
+  Relations are dropped anyway in update_data_for_migration when using the default setting.
+  [pbauer]
+
+- Migrate batch size for topics.
+  [pbauer]
+
+- Fix issue of reusing the previous container when no container for a item could be found.
+  [pbauer]
+
+- Add hook self.finsh() to do things after importing one file.
+  [pbauer]
+
+
 1.0 (2021-04-27)
 ----------------
 
