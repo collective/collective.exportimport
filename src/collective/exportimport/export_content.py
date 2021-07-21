@@ -370,15 +370,6 @@ def migrate_field(item, old, new):
     return item
 
 
-if HAS_RELATIONS:
-    @adapter(IRelationValue)
-    @implementer(IJsonCompatible)
-    def relationvalue_converter_uuid(value):
-        """Save uuid instead of summary"""
-        if value.to_object:
-            return value.to_object.UID()
-
-
 def safe_bytes(value, encoding="utf-8"):
     """Convert text to bytes of the specified encoding."""
     if isinstance(value, six.text_type):

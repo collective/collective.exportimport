@@ -95,8 +95,6 @@
   <adapter factory=".serializer.FileFieldSerializerWithBlobs" />
   <adapter factory=".serializer.ImageFieldSerializerWithBlobs" />
   <adapter factory=".serializer.RichttextFieldSerializerWithRawText" />
-  <adapter zcml:condition="installed z3c.relationfield"
-      factory=".export_content.relationvalue_converter_uuid" />
 
   <browser:page
       name="exportimport_links"
