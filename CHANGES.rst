@@ -51,7 +51,10 @@ Changelog
 - Fix issue of reusing the previous container when no container for a item could be found.
   [pbauer]
 
-- Add hook self.finsh() to do things after importing one file.
+- Add hook self.finish() to do things after importing one file.
+  [pbauer]
+
+- Fix installation with older versions of setuptools (#35)
   [pbauer]
 
 
