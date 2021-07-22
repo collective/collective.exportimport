@@ -3,6 +3,7 @@
 
 from setuptools import find_packages
 from setuptools import setup
+import sys
 
 
 long_description = "\n\n".join(
@@ -12,6 +13,20 @@ long_description = "\n\n".join(
         open("CHANGES.rst").read(),
     ]
 )
+
+install_requires = [
+    "setuptools",
+    "plone.api >= 1.8.4",
+    "plone.restapi < 8.0.0 ; python_version<'3'",
+    "hurry.filesize",
+    "ijson",
+    "six",
+]
+
+if sys.version_info[0] < 3:
+    install_requires.append("plone.restapi < 8.0.0")
+else:
+    install_requires.append("plone.restapi")
 
 
 setup(
@@ -54,14 +69,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     python_requires="==2.7, >=3.6",
-    install_requires=[
-        "setuptools",
-        "plone.api >= 1.8.4",
-        "plone.restapi < 8.0.0 ; python_version<'3'",
-        "hurry.filesize",
-        "ijson",
-        "six",
-    ],
+    install_requires=install_requires,
     extras_require={
         "test": [
             "plone.app.testing",
