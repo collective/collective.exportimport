@@ -178,6 +178,18 @@ You can set additional values by specifying a dict ``factory_kwargs`` that will 
 Like this you can set values on the imported object that are expected to be there by subscribers to IObjectAddedEvent.
 
 
+Notes on speed and large migrations
+===================================
+
+Exporting and importing large amounts of content can take a while. Export is pretty fast but import is constrained by some features of Plone, most importantly versioning:
+
+* Importing 5000 Folders takes ~5 minutes
+* Importing 5000 Documents takes >25 minutes because of versioning.
+* Importing 5000 Documents without versioning takes ~7 minutes.
+
+When exporting large numbers of binary files you will get huge json-files and may run out of memory. Options to export the blob-filepath instead are discussed in https://github.com/collective/collective.exportimport/issues/17.
+
+
 Customize export and import
 ===========================
 
