@@ -57,6 +57,9 @@ Changelog
 - Fix installation with older versions of setuptools (#35)
   [pbauer]
 
+- Fix installation using pip (#36)
+  [ericof]
+
 
 1.0 (2021-04-27)
 ----------------
