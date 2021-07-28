@@ -121,6 +121,7 @@ class ImportContent(BrowserView):
                     request=self.request,
                 )
             else:
+                self.start()
                 msg = self.do_import(data)
                 api.portal.show_message(msg, self.request)
 
@@ -133,6 +134,9 @@ class ImportContent(BrowserView):
             msg = {"state": status, "msg": msg}
             return json.dumps(msg)
         return self.template()
+
+    def start(self):
+        """Hook to do something before importing one file."""
 
     def finish(self):
         """Hook to do something after importing one file."""
