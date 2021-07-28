@@ -8,7 +8,6 @@ from operator import itemgetter
 from plone import api
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import ISerializeToJson
-from Products.CMFDynamicViewFTI.interfaces import IDynamicViewTypeInformation
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.component import adapter
@@ -42,12 +41,10 @@ try:
     pkg_resources.get_distribution("plone.dexterity")
 except pkg_resources.DistributionNotFound:
     IDexterityContent = None
-    IDexterityFTI = None
     iterSchemata = None
     HAS_DX = False
 else:
     from plone.dexterity.interfaces import IDexterityContent
-    from plone.dexterity.interfaces import IDexterityFTI
     from plone.dexterity.utils import iterSchemata
     HAS_DX = True
 
@@ -83,19 +80,6 @@ LISTING_VIEW_MAPPING = {  # OLD (AT and old DX) : NEW
     'thumbnail_view': 'album_view',
     'view': 'listing_view',
 }
-
-
-def is_dx_or_at_fti(fti):
-    """Return True if the FTI is a Dexterity or Archetypes type.
-
-    This is a small helper function to avoid having too many
-    nots/ands/ors in a condition.
-    """
-    if IDynamicViewTypeInformation.providedBy(fti):
-        return True
-    if not HAS_DX:
-        return False
-    return IDexterityFTI.providedBy(fti)
 
 
 class ExportContent(BrowserView):
@@ -231,10 +215,6 @@ class ExportContent(BrowserView):
         results = []
         query = self.build_query()
         for fti in portal_types.listTypeInfo():
-            if not is_dx_or_at_fti(fti):
-                # Ignore non-DX and non-AT types,
-                # for example ATBooleanCriterion and TempFolder.
-                continue
             query["portal_type"] = fti.id
             number = len(catalog.unrestrictedSearchResults(**query))
             if number >= 1:
