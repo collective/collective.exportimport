@@ -216,7 +216,7 @@ class ExportContent(BrowserView):
 
                 data.append(item)
             except Exception as e:
-                logger.info(e)
+                logger.info(u"Error exporting {}: {}".format(obj.absolute_url(), e))
 
         if include_blobs:
             # remove marker interface
