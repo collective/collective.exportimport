@@ -60,6 +60,12 @@ Changelog
 - Fix installation using pip (#36)
   [ericof]
 
+- Do not constrain exportable FTIs to allow export of types as CalendarXFolder or ATTopic Criteria.
+  [pbauer]
+
+- Add hook self.start() to do things after importing one file.
+  [pbauer]
+
 
 1.0 (2021-04-27)
 ----------------
