@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.1 (unreleased)
+1.1 (2021-08-02)
 ----------------
 
 - Add option to import file from server.
