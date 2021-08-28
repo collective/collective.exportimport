@@ -75,6 +75,14 @@
       permission="cmf.ManagePortal"
       />
 
+  <browser:page
+      name="export_portlets"
+      for="zope.interface.Interface"
+      class=".export_other.ExportPortlets"
+      template="templates/export_other.pt"
+      permission="cmf.ManagePortal"
+      />
+
   <!-- Serializers -->
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATFileFieldSerializer" />

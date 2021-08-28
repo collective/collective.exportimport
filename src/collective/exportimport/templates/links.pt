@@ -34,6 +34,10 @@
          <li><a class=""
             tal:attributes="href python: portal_url + '/@@export_discussion'">Export comments
          </a></li>
+
+         <li><a class=""
+            tal:attributes="href python: portal_url + '/@@export_portlets'">Export portlets
+         </a></li>
       </ul>
 
       <h3>Imports</h3>

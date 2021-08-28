@@ -5,7 +5,8 @@ Changelog
 1.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Export portlets.
+  [pbauer]
 
 
 1.1 (2021-08-02)
