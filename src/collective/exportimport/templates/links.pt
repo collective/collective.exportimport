@@ -75,6 +75,10 @@
       </a></li>
 
       <li><a class=""
+         tal:attributes="href python: portal_url + '/@@import_portlets'">Import portlets
+      </a></li>
+
+      <li><a class=""
          tal:attributes="href python: portal_url + '/@@reset_dates'">Reset created and modified dates
       </a></li>
 

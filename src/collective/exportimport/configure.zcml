@@ -193,4 +193,12 @@
       permission="cmf.ManagePortal"
       />
 
+  <browser:page
+      name="import_portlets"
+      for="zope.interface.Interface"
+      class=".import_other.ImportPortlets"
+      template="templates/import_portlets.pt"
+      permission="cmf.ManagePortal"
+      />
+
 </configure>

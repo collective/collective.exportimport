@@ -49,7 +49,19 @@
                     }
                 }
             ]
-        }
+        },
+        "blacklist_status": [
+            {
+                "status": "block",
+                "category": "context",
+                "manager": "plone.leftcolumn"
+            },
+            {
+                "status": "block",
+                "category": "context",
+                "manager": "plone.rightcolumn"
+            }
+        ]
     },
     {
         "uuid": "4325c8659659c2cff272abf30f64768e",

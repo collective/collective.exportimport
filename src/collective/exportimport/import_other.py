@@ -8,9 +8,18 @@ from plone import api
 from plone.app.discussion.browser.comments import CommentForm
 from plone.app.discussion.comment import Comment
 from plone.app.discussion.interfaces import IConversation
+from plone.app.portlets.interfaces import IPortletTypeInterface
+from plone.portlets.interfaces import IPortletAssignmentMapping
+from plone.portlets.interfaces import IPortletAssignmentSettings
+from plone.portlets.interfaces import ILocalPortletAssignmentManager
+from plone.portlets.interfaces import IPortletManager
 from plone.restapi.deserializer import json_body
 from Products.Five import BrowserView
 from zope.annotation.interfaces import IAnnotations
+from zope.component import getUtility
+from zope.component import queryMultiAdapter
+from zope.component.interfaces import IFactory
+from zope.container.interfaces import INameChooser
 from ZPublisher.HTTPRequest import FileUpload
 
 import dateutil
@@ -593,30 +602,21 @@ def register_portlets(obj, item):
     Code adapted from plone.app.portlets.exportimport.portlets.PortletsXMLAdapter
     Work in progress...
     """
-    from plone.portlets.interfaces import IPortletManager
-    from plone.portlets.interfaces import IPortletAssignmentMapping
-    from zope.component.interfaces import IFactory
-    from zope.container.interfaces import INameChooser
-    from plone.portlets.interfaces import IPortletAssignmentSettings
-    from plone.app.portlets.interfaces import IPortletTypeInterface
-    from zope.component import queryMultiAdapter
-    from zope.component import getUtility
-
+    site = api.portal.get()
     results = 0
-    for manager_name, portlets in item["portlets"].items():
+    for manager_name, portlets in item.get("portlets", {}).items():
         manager = getUtility(IPortletManager, manager_name)
         mapping = queryMultiAdapter((obj, manager), IPortletAssignmentMapping)
+        namechooser = INameChooser(mapping)
 
         for portlet_data in portlets:
             # 1. Create the assignment
             assignment_data = portlet_data['assignment']
-            type_ = assignment_data['type']
-            portlet_factory = getUtility(IFactory, name=type_)
+            portlet_type = portlet_data['type']
+            portlet_factory = getUtility(IFactory, name=portlet_type)
             assignment = portlet_factory()
 
-            if not name:
-                chooser = INameChooser(mapping)
-                name = chooser.chooseName(None, assignment)
+            name = namechooser.chooseName(None, assignment)
             mapping[name] = assignment
 
             # aq-wrap it so that complex fields will work
@@ -629,13 +629,25 @@ def register_portlets(obj, item):
                 settings['visible'] = visible
 
             # 2. Apply portlet settings
-            portlet_interface = getUtility(IPortletTypeInterface, name=type_)
+            portlet_interface = getUtility(IPortletTypeInterface, name=portlet_type)
             for property_name, value in assignment_data.items():
-                field = interface.get(property_name, None)
+                field = portlet_interface.get(property_name, None)
                 if field is None:
                     continue
                 field = field.bind(assignment)
                 field.set(assignment, value)
 
             results += 1
-        return results
+
+    for blacklist_status in item.get("blacklist_status", []):
+        status = blacklist_status["status"]
+        manager_name = blacklist_status["manager"]
+        category = blacklist_status["category"]
+        manager = getUtility(IPortletManager, manager_name)
+        assignable = queryMultiAdapter((obj, manager), ILocalPortletAssignmentManager)
+        if status.lower() == 'block':
+            assignable.setBlacklistStatus(category, True)
+        elif status.lower() == 'show':
+            assignable.setBlacklistStatus(category, False)
+
+    return results
