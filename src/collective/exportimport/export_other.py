@@ -13,6 +13,16 @@ from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
 from zope.component import getMultiAdapter
 from zope.component import queryUtility
+from plone.app.portlets.interfaces import IPortletTypeInterface
+from plone.portlets.interfaces import IPortletAssignmentMapping
+from plone.portlets.interfaces import ILocalPortletAssignable
+from plone.portlets.interfaces import ILocalPortletAssignmentManager
+from plone.portlets.interfaces import IPortletAssignmentSettings
+from plone.portlets.interfaces import IPortletManager
+from plone.portlets.constants import USER_CATEGORY, GROUP_CATEGORY, CONTENT_TYPE_CATEGORY, CONTEXT_CATEGORY
+from zope.component import getUtilitiesFor
+from zope.component import queryMultiAdapter
+from zope.interface import providedBy
 
 import json
 import pkg_resources
@@ -480,9 +490,16 @@ class ExportPortlets(BrowserView):
             uid = IUUID(obj, None)
             if not uid:
                 return
-            portlets = export_portlets(obj)
+            portlets = export_local_portlets(obj)
+            blacklist = export_portlets_blacklist(obj)
+            obj_results = {}
             if portlets:
-                results.append({"uuid": uid, "portlets": portlets})
+                obj_results["portlets"] = portlets
+            if blacklist:
+                obj_results["blacklist_status"] = blacklist
+            if obj_results:
+                obj_results["uuid"] = uid
+                results.append(obj_results)
             return
 
         portal = api.portal.get()
@@ -490,18 +507,10 @@ class ExportPortlets(BrowserView):
         return results
 
 
-def export_portlets(obj):
+def export_local_portlets(obj):
     """Serialize portlets for one content object
     Code mostly taken from https://github.com/plone/plone.restapi/pull/669
     """
-    from plone.app.portlets.interfaces import IPortletTypeInterface
-    from plone.portlets.interfaces import IPortletAssignmentMapping
-    from plone.portlets.interfaces import IPortletAssignmentSettings
-    from plone.portlets.interfaces import IPortletManager
-    from zope.component import getUtilitiesFor
-    from zope.component import queryMultiAdapter
-    from zope.interface import providedBy
-
     portlets_schemata = {
         iface: name
         for name, iface in getUtilitiesFor(IPortletTypeInterface)
@@ -514,20 +523,20 @@ def export_portlets(obj):
             continue
         mapping = mapping.__of__(obj)
         for name, assignment in mapping.items():
-            type_ = None
+            portlet_type = None
             schema = None
             for schema in providedBy(assignment).flattened():
-                type_ = portlets_schemata.get(schema, None)
-                if type_ is not None:
+                portlet_type = portlets_schemata.get(schema, None)
+                if portlet_type is not None:
                     break
-            if type_ is None:
+            if portlet_type is None:
                 continue
             assignment = assignment.__of__(mapping)
             settings = IPortletAssignmentSettings(assignment)
             if manager_name not in items:
                 items[manager_name] = []
             items[manager_name].append({
-                'type': type_,
+                'type': portlet_type,
                 'visible': settings.get('visible', True),
                 'assignment': {
                     name: getattr(assignment, name, None)
@@ -535,6 +544,31 @@ def export_portlets(obj):
                 },
             })
     return items
+
+def export_portlets_blacklist(obj):
+    results = {}
+    for manager_name, manager in getUtilitiesFor(IPortletManager):
+        assignable = queryMultiAdapter((obj, manager), ILocalPortletAssignmentManager)
+        if assignable is None:
+            continue
+        for category in (USER_CATEGORY, GROUP_CATEGORY, CONTENT_TYPE_CATEGORY, CONTEXT_CATEGORY,):
+            obj_results = {}
+            status = assignable.getBlacklistStatus(category)
+            if status == True:
+                obj_results['status'] = u'block'
+            elif status == False:
+                obj_results['status'] = u'show'
+            else:
+                obj_results['status'] = u'acquire'
+
+            if obj_results:
+                obj_results['manager'] = manager_name
+                obj_results['category'] = category
+
+            results.append(obj_results)
+    import pdb; pdb.set_trace()
+    return results
+
 
 
 def safe_bytes(value, encoding="utf-8"):
