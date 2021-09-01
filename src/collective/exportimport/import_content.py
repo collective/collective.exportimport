@@ -93,22 +93,12 @@ class ImportContent(BrowserView):
                 server_file = None
         if jsonfile:
             self.portal = api.portal.get()
-            self.portal_type = portal_type
             status = "success"
             try:
                 if isinstance(jsonfile, str):
-                    if not self.portal_type:
-                        raise RuntimeError(
-                            "portal_types required when passing a string"
-                        )
                     return_json = True
                     data = ijson.items(jsonfile, 'item')
                 elif isinstance(jsonfile, FileUpload) or hasattr(jsonfile, 'read'):
-                    if not self.portal_type:
-                        if hasattr(jsonfile, 'filename'):
-                            self.portal_type = jsonfile.filename.split(".json")[0]
-                        elif hasattr(jsonfile, 'name'):
-                            self.portal_type = jsonfile.name.split("/")[-1].split(".json")[0]
                     data = ijson.items(jsonfile, 'item')
                 else:
                     raise RuntimeError("Data is neither text, file nor upload.")
@@ -169,7 +159,7 @@ class ImportContent(BrowserView):
         added = self.import_new_content(data)
         end = datetime.now()
         delta = end - start
-        msg = u"Imported {} {}".format(len(added), self.portal_type)
+        msg = u"Imported {} items".format(len(added))
         transaction.get().note(msg)
         transaction.commit()
         msg = u"{} in {} seconds".format(msg, delta.seconds)
@@ -177,14 +167,13 @@ class ImportContent(BrowserView):
         return msg
 
     def import_new_content(self, data):
-        self.safe_portal_type = fix_portal_type(self.portal_type)
         portal_workflow = api.portal.get_tool('portal_workflow')
         added = []
 
         if getattr(data, 'len', None):
-            logger.info(u"Importing {} {}".format(len(data), self.portal_type))
+            logger.info(u"Importing {} items".format(len(data)))
         else:
-            logger.info(u"Importing {}".format(self.portal_type))
+            logger.info(u"Importing data")
         for index, item in enumerate(data, start=1):
             if self.limit and len(added) >= self.limit:
                 break
@@ -212,6 +201,7 @@ class ImportContent(BrowserView):
                 )
                 item["id"] = new_id
 
+            self.safe_portal_type = fix_portal_type(item["@type"])
             item = self.handle_broken(item)
             if not item:
                 continue
@@ -351,11 +341,11 @@ class ImportContent(BrowserView):
 
         def handle_document_container(self, item):
             lang = item['language']['token'] if item['language'] else ''
-            base_path = self.CONTAINER[self.portal_type][item['language']['token']]
+            base_path = self.CONTAINER[item["@type"]][item['language']['token']]
             folder = api.content.get(path=base_path)
             if not folder:
                 raise RuntimeError(
-                    f'Target folder {base_path} for type {self.portal_type} is missing'
+                    f'Target folder {base_path} for type {item["@type"]} is missing'
                 )
             parent_url = item['parent']['@id']
             parent_path = '/'.join(parent_url.split('/')[5:])
@@ -405,13 +395,13 @@ class ImportContent(BrowserView):
         if self.request.get("import_to_current_folder", None):
             return self.context
 
-        container_path = self.CONTAINER.get(self.portal_type, None)
+        container_path = self.CONTAINER.get(item["@type"], None)
         if container_path:
             container = api.content.get(path=container_path)
             if not container:
                 raise RuntimeError(
                     u"Target folder {} for type {} is missing".format(
-                        container_path, self.portal_type
+                        container_path, item["@type"]
                     )
                 )
 
