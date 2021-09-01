@@ -96,6 +96,7 @@ class ExportContent(BrowserView):
     def __call__(self, portal_type=None, include_blobs=False, download_to_server=False, migration=True):
         self.portal_type = portal_type
         self.migration = migration
+        self.update()
 
         self.fixup_request()
 
@@ -159,6 +160,9 @@ class ExportContent(BrowserView):
                     noLongerProvides(self.request, IBase64BlobsMarker)
                 f.seek(0)
                 return response.write(safe_bytes(f.read()))
+
+    def update(self):
+        """Hook to do something before export."""
 
     def build_query(self):
         query = {"portal_type": self.portal_type, "sort_on": "path"}
@@ -348,6 +352,41 @@ class ExportContent(BrowserView):
         if item['parent']['@id'] != parent_url:
             item['parent']['@id'] = parent_url
         return item
+
+
+class ExportContentTree(ExportContent):
+
+    template = ViewPageTemplateFile('templates/export_contenttree.pt')
+
+    def update(self):
+        # import pdb; pdb.set_trace()
+        self.portal_type = self.context.id
+        current_path = '/'.join(self.context.getPhysicalPath())
+        self.path = self.request.form.get("path", current_path)
+        self.depth = int(self.request.form.get("depth", -1))
+        self.portal_types_to_export = self.request.form.get('portal_types_to_export', [])
+        self.depth_options = (
+            ("-1", "unlimited"),
+            ("0", "0"),
+            ("1", "1"),
+            ("2", "2"),
+            ("3", "3"),
+            ("4", "4"),
+            ("5", "5"),
+            ("6", "6"),
+            ("7", "7"),
+            ("8", "8"),
+            ("9", "9"),
+            ("10", "10"),
+        )
+
+    def update_query(self, query):
+        query = {
+            'portal_type': self.portal_types_to_export,
+            'path': {'query': self.path, 'depth': self.depth},
+            'sort_on': 'path',
+        }
+        return query
 
 
 def fix_portal_type(portal_type):
