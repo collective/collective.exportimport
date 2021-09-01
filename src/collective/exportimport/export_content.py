@@ -107,13 +107,17 @@ class ExportContent(BrowserView):
         data = self.export_content(include_blobs=include_blobs)
         number = len(data)
         filename = '{}.json'.format(self.portal_type)
-        data = json.dumps(data, sort_keys=True, indent=4)
+        content_generator = self.export_content(include_blobs=include_blobs)
 
         if download_to_server:
             cfg = getConfiguration()
             filepath = os.path.join(cfg.clienthome, filename)
             with open(filepath, 'w') as f:
-                f.write(data)
+                with open(filepath, 'w') as f:
+                    f.write('[')
+                    for datum in content_generator:
+                        f.write(json.dumps(datum, sort_keys=True, indent=4))
+                    f.write(']')
             msg = u"Exported {} {} as {} to {}".format(number, self.portal_type, filename, filepath)
             logger.info(msg)
             api.portal.show_message(msg, self.request)
@@ -143,7 +147,6 @@ class ExportContent(BrowserView):
         return query
 
     def export_content(self, include_blobs=False):
-        data = []
         query = self.build_query()
         catalog = api.portal.get_tool("portal_catalog")
         brains = catalog.unrestrictedSearchResults(**query)
@@ -198,7 +201,7 @@ class ExportContent(BrowserView):
                     logger.info(u"Skipping {}".format(brain.getURL()))
                     continue
 
-                data.append(item)
+                yield item
             except Exception as e:
                 logger.info(u"Error exporting {}: {}".format(obj.absolute_url(), e))
 
