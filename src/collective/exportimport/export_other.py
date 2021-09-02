@@ -546,7 +546,7 @@ def export_local_portlets(obj):
     return items
 
 def export_portlets_blacklist(obj):
-    results = {}
+    results = []
     for manager_name, manager in getUtilitiesFor(IPortletManager):
         assignable = queryMultiAdapter((obj, manager), ILocalPortletAssignmentManager)
         if assignable is None:
@@ -558,15 +558,11 @@ def export_portlets_blacklist(obj):
                 obj_results['status'] = u'block'
             elif status == False:
                 obj_results['status'] = u'show'
-            else:
-                obj_results['status'] = u'acquire'
 
             if obj_results:
                 obj_results['manager'] = manager_name
                 obj_results['category'] = category
-
-            results.append(obj_results)
-    import pdb; pdb.set_trace()
+                results.append(obj_results)
     return results
 
 
