@@ -25,6 +25,7 @@ import logging
 import os
 import pkg_resources
 import six
+import tempfile
 
 try:
     pkg_resources.get_distribution("Products.Archetypes")
@@ -119,15 +120,14 @@ class ExportContent(BrowserView):
             cfg = getConfiguration()
             filepath = os.path.join(cfg.clienthome, filename)
             with open(filepath, 'w') as f:
-                with open(filepath, 'w') as f:
-                    f.write('[')
-                    for number, datum in enumerate(content_generator, start=1):
-                        f.write(json.dumps(datum, sort_keys=True, indent=4))
-                        f.write(',')
-                    # remove last comma to create valid json
-                    f.seek(-1, os.SEEK_END)
-                    f.truncate()
-                    f.write(']')
+                f.write('[')
+                for number, datum in enumerate(content_generator, start=1):
+                    json.dump(datum, f, sort_keys=True, indent=4)
+                    f.write(',')
+                # remove last comma to create valid json
+                f.seek(-1, os.SEEK_END)
+                f.truncate()
+                f.write(']')
             msg = u"Exported {} {} as {} to {}".format(number, self.portal_type, filename, filepath)
             logger.info(msg)
             api.portal.show_message(msg, self.request)
@@ -137,20 +137,30 @@ class ExportContent(BrowserView):
                 noLongerProvides(self.request, IBase64BlobsMarker)
             self.request.response.redirect(self.request['ACTUAL_URL'])
         else:
-            msg = u"Exported {} {}".format(number, self.portal_type)
-            logger.info(msg)
-            api.portal.show_message(msg, self.request)
-            response = self.request.response
-            response.setHeader("content-type", "application/json")
-            response.setHeader("content-length", len(data))
-            response.setHeader(
-                "content-disposition",
-                'attachment; filename="{0}"'.format(filename),
-            )
-            if include_blobs:
-                # remove marker interface
-                noLongerProvides(self.request, IBase64BlobsMarker)
-            return response.write(safe_bytes(data))
+            with tempfile.TemporaryFile() as f:
+                f.write('[')
+                for number, datum in enumerate(content_generator, start=1):
+                    json.dump(datum, f, sort_keys=True, indent=4)
+                    f.write(',')
+                # remove last comma to create valid json
+                f.seek(-1, os.SEEK_END)
+                f.truncate()
+                f.write(']')
+                msg = u"Exported {} {}".format(number, self.portal_type)
+                logger.info(msg)
+                api.portal.show_message(msg, self.request)
+                response = self.request.response
+                response.setHeader("content-type", "application/json")
+                response.setHeader("content-length", f.tell())
+                response.setHeader(
+                    "content-disposition",
+                    'attachment; filename="{0}"'.format(filename),
+                )
+                if include_blobs:
+                    # remove marker interface
+                    noLongerProvides(self.request, IBase64BlobsMarker)
+                f.seek(0)
+                return response.write(f.read())
 
     def build_query(self):
         query = {"portal_type": self.portal_type, "sort_on": "path"}
