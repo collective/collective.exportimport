@@ -618,6 +618,7 @@ def register_portlets(obj, item):
 
             name = namechooser.chooseName(None, assignment)
             mapping[name] = assignment
+            logger.info('Added portlet {} to {}'.format(name, obj.absolute_url()))
 
             # aq-wrap it so that complex fields will work
             assignment = assignment.__of__(site)
