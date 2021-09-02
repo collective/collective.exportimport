@@ -180,7 +180,6 @@ class ExportContent(BrowserView):
         catalog = api.portal.get_tool("portal_catalog")
         brains = catalog.unrestrictedSearchResults(**query)
         logger.info(u"Exporting {} {}".format(len(brains), self.portal_type))
-        self.safe_portal_type = fix_portal_type(self.portal_type)
 
         # Override richtext serializer to export links using resolveuid/xxx
         alsoProvides(self.request, IRawRichTextMarker)
@@ -204,6 +203,7 @@ class ExportContent(BrowserView):
             if not obj:
                 continue
             try:
+                self.safe_portal_type = fix_portal_type(obj.portal_type)
                 serializer = getMultiAdapter((obj, self.request), ISerializeToJson)
                 if getattr(aq_base(obj), 'isPrincipiaFolderish', False):
                     item = serializer(include_items=False)
@@ -359,10 +359,10 @@ class ExportContentTree(ExportContent):
     template = ViewPageTemplateFile('templates/export_contenttree.pt')
 
     def update(self):
-        # import pdb; pdb.set_trace()
-        self.portal_type = self.context.id
         current_path = '/'.join(self.context.getPhysicalPath())
         self.path = self.request.form.get("path", current_path)
+        # to get a useful filename...
+        self.portal_type = self.path.split("/")[-1]
         self.depth = int(self.request.form.get("depth", -1))
         self.portal_types_to_export = self.request.form.get('portal_types_to_export', [])
         self.depth_options = (
