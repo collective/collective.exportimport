@@ -104,8 +104,14 @@ class ExportContent(BrowserView):
         if not self.portal_type:
             return self.template()
 
-        data = self.export_content(include_blobs=include_blobs)
-        number = len(data)
+        if include_blobs:
+            # Add marker-interface to request to use our custom serializers
+            alsoProvides(self.request, IBase64BlobsMarker)
+
+        if self.migration:
+            # Add marker-interface to request to use custom serializers
+            alsoProvides(self.request, IMigrationMarker)
+
         filename = '{}.json'.format(self.portal_type)
         content_generator = self.export_content(include_blobs=include_blobs)
 
@@ -115,12 +121,20 @@ class ExportContent(BrowserView):
             with open(filepath, 'w') as f:
                 with open(filepath, 'w') as f:
                     f.write('[')
-                    for datum in content_generator:
+                    for number, datum in enumerate(content_generator, start=1):
                         f.write(json.dumps(datum, sort_keys=True, indent=4))
+                        f.write(',')
+                    # remove last comma to create valid json
+                    f.seek(-1, os.SEEK_END)
+                    f.truncate()
                     f.write(']')
             msg = u"Exported {} {} as {} to {}".format(number, self.portal_type, filename, filepath)
             logger.info(msg)
             api.portal.show_message(msg, self.request)
+
+            if include_blobs:
+                # remove marker interface
+                noLongerProvides(self.request, IBase64BlobsMarker)
             self.request.response.redirect(self.request['ACTUAL_URL'])
         else:
             msg = u"Exported {} {}".format(number, self.portal_type)
@@ -133,6 +147,9 @@ class ExportContent(BrowserView):
                 "content-disposition",
                 'attachment; filename="{0}"'.format(filename),
             )
+            if include_blobs:
+                # remove marker interface
+                noLongerProvides(self.request, IBase64BlobsMarker)
             return response.write(safe_bytes(data))
 
     def build_query(self):
@@ -152,14 +169,6 @@ class ExportContent(BrowserView):
         brains = catalog.unrestrictedSearchResults(**query)
         logger.info(u"Exporting {} {}".format(len(brains), self.portal_type))
         self.safe_portal_type = fix_portal_type(self.portal_type)
-
-        if include_blobs:
-            # Add marker-interface to request to use our custom serializers
-            alsoProvides(self.request, IBase64BlobsMarker)
-
-        if self.migration:
-            # Add marker-interface to request to use custom serializers
-            alsoProvides(self.request, IMigrationMarker)
 
         # Override richtext serializer to export links using resolveuid/xxx
         alsoProvides(self.request, IRawRichTextMarker)
@@ -204,12 +213,6 @@ class ExportContent(BrowserView):
                 yield item
             except Exception as e:
                 logger.info(u"Error exporting {}: {}".format(obj.absolute_url(), e))
-
-        if include_blobs:
-            # remove marker interface
-            noLongerProvides(self.request, IBase64BlobsMarker)
-
-        return data
 
     def portal_types(self):
         """A list with info on all content types with existing items."""
