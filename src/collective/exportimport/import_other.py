@@ -10,6 +10,7 @@ from plone.app.discussion.comment import Comment
 from plone.app.discussion.interfaces import IConversation
 from plone.restapi.deserializer import json_body
 from Products.Five import BrowserView
+from six.moves.html_parser import HTMLParser
 from zope.annotation.interfaces import IAnnotations
 from ZPublisher.HTTPRequest import FileUpload
 
@@ -488,6 +489,7 @@ class ImportDiscussion(BrowserView):
 
     def import_data(self, data):
         results = 0
+        html = HTMLParser()
         for conversation_data in data:
             obj = api.content.get(UID=conversation_data["uuid"])
             if not obj:
@@ -510,7 +512,7 @@ class ImportDiscussion(BrowserView):
                 comment.author_name = item['author_name']
                 comment.author_username = item['author_username']
                 comment.creator = item['author_username']
-                comment.text = item['text']
+                comment.text = html.unescape(item['text'].replace(u'\r<br />', u'\r\n'))
 
                 if item['user_notification']:
                     comment.user_notification = True
