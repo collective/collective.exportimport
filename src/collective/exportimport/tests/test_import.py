@@ -9,7 +9,9 @@ from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
+from plone.namedfile.file import NamedImage
 from plone.testing import zope
+from Products.CMFPlone.tests import dummy
 
 import json
 import os
@@ -30,6 +32,97 @@ class TestImport(unittest.TestCase):
     """Test that we can export."""
 
     layer = COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
+
+    def create_demo_content(self):
+        """Create a portal structure which we can test against.
+        Plone (portal root)
+        |-- image
+        |-- blog
+        |-- about
+        |   |-- team
+        |   `-- contact
+        `-- events
+            |-- training
+            |-- conference
+            `-- sprint
+        """
+        portal = self.layer['portal']
+
+        self.blog = api.content.create(
+            container=portal,
+            type='Link',
+            id='blog',
+            title=u'Blog',
+        )
+        self.about = api.content.create(
+            container=portal,
+            type='Folder',
+            id='about',
+            title=u'About',
+        )
+        self.events = api.content.create(
+            container=portal,
+            type='Folder',
+            id='events',
+            title=u'Events',
+        )
+        self.team = api.content.create(
+            container=self.about,
+            type='Document',
+            id='team',
+            title=u'Team',
+        )
+        self.contact = api.content.create(
+            container=self.about,
+            type='Document',
+            id='contact',
+            title=u'Contact',
+        )
+        self.training = api.content.create(
+            container=self.events,
+            type='Event',
+            id='training',
+            title=u'Training',
+        )
+        self.conference = api.content.create(
+            container=self.events,
+            type='Event',
+            id='conference',
+            title=u'Conference',
+        )
+        self.sprint = api.content.create(
+            container=self.events,
+            type='Event',
+            id='sprint',
+            title=u'Sprint',
+        )
+        self.image = api.content.create(
+            container=portal,
+            type='Image',
+            title=u'Image',
+            id='image',
+            image=NamedImage(dummy.Image(), 'image/gif', u'test.gif'),
+        )
+
+    def remove_demo_content(self):
+        """remove what was create in create_demo_content
+        Plone (portal root)
+        |-- image
+        |-- blog
+        |-- about
+        |   |-- team
+        |   `-- contact
+        `-- events
+            |-- training
+            |-- conference
+            `-- sprint
+
+        """
+        portal = self.layer['portal']
+        api.content.delete(portal['image'])
+        api.content.delete(portal['blog'])
+        api.content.delete(portal['about'])
+        api.content.delete(portal['events'])
 
     def setUp(self):
         # Set a client home for our import directory.
@@ -148,6 +241,41 @@ class TestImport(unittest.TestCase):
         new_doc = portal["doc1"]
         self.assertEqual(new_doc.Title(), "Document 1")
         self.assertEqual(new_doc.portal_type, "Document")
+
+    def test_import_contenttree(self):
+        # First create some content to export.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        self.create_demo_content()
+        self.assertIn("events", portal.contentIds())
+        self.assertIn("image", portal.contentIds())
+        transaction.commit()
+
+        # Now export the complete portal.
+        browser = self.open_page("@@export_contenttree")
+        browser.getControl(name="portal_types_to_export:list").value = ['Event', 'Folder', 'Image', 'Link', 'Document']
+        browser.getControl("Export tree").click()
+        raw_data = browser.contents
+        data = json.loads(raw_data)
+        self.assertEqual(len(data), 9)
+
+        # Remove the added content.
+        self.remove_demo_content()
+        transaction.commit()
+        self.assertNotIn("events", portal.contentIds())
+
+        # Now import it.
+        browser = self.open_page("@@import_content")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "Document.json")
+        browser.getForm(action="@@import_content").submit()
+        self.assertIn("Imported 9 items", browser.contents)
+
+        # The content should be back.
+        self.assertIn("events", portal.contentIds())
+        self.assertEqual(portal["events"]["sprint"].portal_type, "Event")
+        self.assertEqual(portal["image"].image.data, dummy.Image().data)
 
     def test_import_defaultpages(self):
         # First create some content.
