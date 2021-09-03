@@ -152,6 +152,90 @@ class TestExport(unittest.TestCase):
         self.assertEqual(info["@type"], "Collection")
         self.assertEqual(info["title"], doc.Title())
 
+    def test_export_tree(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        doc1 = api.content.create(
+            container=folder1, type="Document", id="doc1", title="Document 1"
+        )
+        doc2 = api.content.create(
+            container=folder1, type="Document", id="doc2", title="Document 2"
+        )
+        doc3 = api.content.create(
+            container=folder1, type="Document", id="doc3", title="Document 3"
+        )
+        folder2 = api.content.create(
+            container=portal, type="Folder", id="folder2", title="Folder 2"
+        )
+        collection = api.content.create(
+            container=folder2, type="Collection", id="collection1", title="Collection 1"
+        )
+        transaction.commit()
+
+        # Now export complete portal.
+        browser = self.open_page("@@export_contenttree")
+        portal_types_to_export = browser.getControl(name="portal_types_to_export:list")
+        self.assertEqual(portal_types_to_export.value, [])
+        self.assertIn("Collection", portal_types_to_export.options)
+        self.assertNotIn("News Item", portal_types_to_export.options)
+        portal_types_to_export.value = ["Folder", "Document", "Collection"]
+
+        path = browser.getControl(label="Path")
+        self.assertEqual(path.value, "/plone")
+
+        depth = browser.getControl(name="depth")
+        self.assertEqual(depth.value, ["-1"])
+
+        browser.getControl("Export tree").click()
+
+        # We should have gotten json.
+        data = json.loads(browser.contents)
+        self.assertEqual(len(data), 6)
+
+        # Check a few important keys.
+        info = data[0]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/folder1")
+        self.assertEqual(info["@type"], "Folder")
+        self.assertEqual(info["title"], folder1.Title())
+
+        # Export one tree.
+        browser = self.open_page("@@export_contenttree")
+        portal_types_to_export = browser.getControl(name="portal_types_to_export:list")
+        portal_types_to_export.value = ["Folder", "Document", "Collection"]
+        path = browser.getControl(label="Path")
+        path.value = "/plone/folder1"
+        browser.getControl("Export tree").click()
+
+        # We should have gotten json.
+        data = json.loads(browser.contents)
+        self.assertEqual(len(data), 4)
+        info = data[3]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/folder1/doc3")
+        self.assertEqual(info["@type"], "Document")
+        self.assertEqual(info["title"], doc3.Title())
+
+        # Only one direct children.
+        browser = self.open_page("@@export_contenttree")
+        portal_types_to_export = browser.getControl(name="portal_types_to_export:list")
+        portal_types_to_export.value = ["Folder", "Document", "Collection"]
+        path = browser.getControl(label="Path")
+        path.value = "/plone"
+        depth = browser.getControl(name="depth")
+        depth.value = ["1"]
+        browser.getControl("Export tree").click()
+
+        data = json.loads(browser.contents)
+        self.assertEqual(len(data), 2)
+        info = data[1]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/folder2")
+        self.assertEqual(info["@type"], "Folder")
+        self.assertEqual(info["title"], folder2.Title())
+
+
     def test_export_members(self):
         browser = self.open_page("@@export_members")
         browser.getForm(action='@@export_members').submit(name='form.submitted')
