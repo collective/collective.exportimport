@@ -5,7 +5,7 @@ Changelog
 1.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Export content and write to file using a generator/yield. This avoids memory ballooning to the size of the exported file. [fredvd]
 
 
 1.1 (2021-08-02)
