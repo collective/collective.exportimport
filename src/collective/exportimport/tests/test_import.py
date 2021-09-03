@@ -97,7 +97,7 @@ class TestImport(unittest.TestCase):
         upload = browser.getControl(name="jsonfile")
         upload.add_file(raw_data, "application/json", "Document.json")
         browser.getForm(action="@@import_content").submit()
-        self.assertIn("Imported 1 Document", browser.contents)
+        self.assertIn("Imported 1 items", browser.contents)
 
         # The document should be back.
         self.assertIn("doc1", portal.contentIds())
@@ -141,7 +141,7 @@ class TestImport(unittest.TestCase):
         server_file = browser.getControl(name="server_file")
         server_file.value = ["Document.json"]
         browser.getForm(action="@@import_content").submit()
-        self.assertIn("Imported 1 Document", browser.contents)
+        self.assertIn("Imported 1 items", browser.contents)
 
         # The document should be back.
         self.assertIn("doc1", portal.contentIds())
