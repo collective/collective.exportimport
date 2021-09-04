@@ -69,7 +69,7 @@ class TestExport(unittest.TestCase):
     def test_export_content_page(self):
         # Simply test that some text is on the page.
         browser = self.open_page("@@export_content")
-        self.assertIn("Export content using plone.restapi", browser.contents)
+        self.assertIn("Export content", browser.contents)
         self.assertIn("Export relations", browser.contents)
         self.assertIn("Export translations", browser.contents)
         self.assertIn("Export members", browser.contents)
@@ -77,7 +77,8 @@ class TestExport(unittest.TestCase):
         self.assertIn("Export default pages", browser.contents)
         self.assertIn("Export object positions", browser.contents)
         # We cannot choose a portal_type, because there is no content to export.
-        self.assertEqual(browser.getControl(name="portal_type").options, [""])
+        with self.assertRaises(LookupError):
+            browser.getControl(name="portal_type")
 
     def test_export_content_document(self):
         # First create some content.
@@ -92,13 +93,13 @@ class TestExport(unittest.TestCase):
         # Now export Documents.
         browser = self.open_page("@@export_content")
         portal_type = browser.getControl(name="portal_type")
-        self.assertEqual(portal_type.value, [""])
+        self.assertEqual(portal_type.value, [])
         self.assertIn("Document", portal_type.options)
         self.assertNotIn("Folder", portal_type.options)
         portal_type.value = ["Document"]
         try:
             # Plone 5.2
-            browser.getControl("Export selected type").click()
+            browser.getControl("Export").click()
             contents = browser.contents
         except LookupError:
             # Plone 5.1 and lower
@@ -129,12 +130,12 @@ class TestExport(unittest.TestCase):
         # Now export content.
         browser = self.open_page("@@export_content")
         portal_type = browser.getControl(name="portal_type")
-        self.assertEqual(portal_type.value, [""])
+        self.assertEqual(portal_type.value, [])
         self.assertIn("Collection", portal_type.options)
         self.assertNotIn("Folder", portal_type.options)
         portal_type.value = ["Collection"]
         try:
-            browser.getControl("Export selected type").click()
+            browser.getControl("Export").click()
             contents = browser.contents
         except LookupError:
             # Plone 5.1 and lower
@@ -177,12 +178,12 @@ class TestExport(unittest.TestCase):
         transaction.commit()
 
         # Now export complete portal.
-        browser = self.open_page("@@export_contenttree")
-        portal_types_to_export = browser.getControl(name="portal_types_to_export:list")
-        self.assertEqual(portal_types_to_export.value, [])
-        self.assertIn("Collection", portal_types_to_export.options)
-        self.assertNotIn("News Item", portal_types_to_export.options)
-        portal_types_to_export.value = ["Folder", "Document", "Collection"]
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        self.assertEqual(portal_type.value, [])
+        self.assertIn("Collection", portal_type.options)
+        self.assertNotIn("News Item", portal_type.options)
+        portal_type.value = ["Folder", "Document", "Collection"]
 
         path = browser.getControl(label="Path")
         self.assertEqual(path.value, "/plone")
@@ -190,7 +191,7 @@ class TestExport(unittest.TestCase):
         depth = browser.getControl(name="depth")
         self.assertEqual(depth.value, ["-1"])
 
-        browser.getControl("Export tree").click()
+        browser.getControl("Export").click()
 
         # We should have gotten json.
         data = json.loads(browser.contents)
@@ -203,12 +204,12 @@ class TestExport(unittest.TestCase):
         self.assertEqual(info["title"], folder1.Title())
 
         # Export one tree.
-        browser = self.open_page("@@export_contenttree")
-        portal_types_to_export = browser.getControl(name="portal_types_to_export:list")
-        portal_types_to_export.value = ["Folder", "Document", "Collection"]
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        portal_type.value = ["Folder", "Document", "Collection"]
         path = browser.getControl(label="Path")
         path.value = "/plone/folder1"
-        browser.getControl("Export tree").click()
+        browser.getControl("Export").click()
 
         # We should have gotten json.
         data = json.loads(browser.contents)
@@ -219,14 +220,14 @@ class TestExport(unittest.TestCase):
         self.assertEqual(info["title"], doc3.Title())
 
         # Only one direct children.
-        browser = self.open_page("@@export_contenttree")
-        portal_types_to_export = browser.getControl(name="portal_types_to_export:list")
-        portal_types_to_export.value = ["Folder", "Document", "Collection"]
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        portal_type.value = ["Folder", "Document", "Collection"]
         path = browser.getControl(label="Path")
         path.value = "/plone"
         depth = browser.getControl(name="depth")
         depth.value = ["1"]
-        browser.getControl("Export tree").click()
+        browser.getControl("Export").click()
 
         data = json.loads(browser.contents)
         self.assertEqual(len(data), 2)
