@@ -177,7 +177,7 @@ class TestImport(unittest.TestCase):
         # Now export it.
         browser = self.open_page("@@export_content")
         browser.getControl(name="portal_type").value = ["Document"]
-        browser.getControl("Export selected type").click()
+        browser.getControl("Export").click()
         raw_data = browser.contents
 
         # Remove the added content.
@@ -212,13 +212,13 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@export_content")
         browser.getControl(name="portal_type").value = ["Document"]
         browser.getControl("Save to file on server").click()
-        browser.getControl("Export selected type").click()
-        self.assertIn("Exported 1 Document as Document.json", browser.contents)
+        browser.getControl("Export").click()
+        self.assertIn("Exported 1 Document as plone.json", browser.contents)
         self.assertIn(self.new_clienthome, browser.contents)
 
         # Move the exported file to the import directory.
-        export_path = os.path.join(self.new_clienthome, "Document.json")
-        import_path = os.path.join(self.new_clienthome, "import", "Document.json")
+        export_path = os.path.join(self.new_clienthome, "plone.json")
+        import_path = os.path.join(self.new_clienthome, "import", "plone.json")
         self.assertTrue(os.path.isfile(export_path))
         self.assertFalse(os.path.exists(import_path))
         shutil.move(export_path, import_path)
@@ -232,7 +232,7 @@ class TestImport(unittest.TestCase):
         # Now import it.
         browser = self.open_page("@@import_content")
         server_file = browser.getControl(name="server_file")
-        server_file.value = ["Document.json"]
+        server_file.value = ["plone.json"]
         browser.getForm(action="@@import_content").submit()
         self.assertIn("Imported 1 items", browser.contents)
 
@@ -253,9 +253,9 @@ class TestImport(unittest.TestCase):
         transaction.commit()
 
         # Now export the complete portal.
-        browser = self.open_page("@@export_contenttree")
-        browser.getControl(name="portal_types_to_export:list").value = ['Event', 'Folder', 'Image', 'Link', 'Document']
-        browser.getControl("Export tree").click()
+        browser = self.open_page("@@export_content")
+        browser.getControl(name="portal_type").value = ['Event', 'Folder', 'Image', 'Link', 'Document']
+        browser.getControl("Export").click()
         raw_data = browser.contents
         data = json.loads(raw_data)
         self.assertEqual(len(data), 9)
