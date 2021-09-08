@@ -56,7 +56,7 @@ class ImportContent(BrowserView):
     # Example: {'which_price': 'normal'}
     DEFAULTS = {}
 
-    def __call__(self, jsonfile=None, portal_type=None, return_json=False, limit=None, server_file=None):
+    def __call__(self, jsonfile=None, return_json=False, limit=None, server_file=None):
         self.limit = limit
         response = self.request.response
 

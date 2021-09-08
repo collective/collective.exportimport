@@ -51,11 +51,13 @@ Usage
 Export
 ------
 
-Use the form with the URL ``/@@export_content``, and select which content type you want to export:
+Use the form with the URL ``/@@export_content``, and select what you want to export:
 
 .. image:: ./docs/export.png
 
-The downloaded json-file will have the name of the selected type, e.g. ``Folder.json``.
+You can export one or more types and a whole site or only a specific path in a site. Since items are exported ordered by path importing them will create the same structure as you had originally.
+
+The downloaded json-file will have the name of the path you exported from, e.g. ``Plone.json``.
 
 The exports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@export_members``, ``/@@export_relations``, ``/@@export_localroles``, ``/@@export_translations``, ``/@@export_ordering``, ``/@@export_discussion``.
 
@@ -218,7 +220,7 @@ Export Example
             '71e3e0a6f06942fea36536fbed0f6c42',
         ]
 
-        def fixup_request(self):
+        def update(self):
             """Use this to override stuff befor ethe export starts
             (e.g. force a specific language in the request)."""
             return
@@ -279,6 +281,12 @@ Import Example
         # Default values for some fields
         DEFAULTS = {'which_price': 'normal'}
 
+        def start(self):
+            """Hook to do something before importing one file."""
+
+        def finish(self):
+            """Hook to do something after importing one file."""
+
         def global_dict_hook(self, item):
             if isinstance(item.get('description', None), dict):
                 item['description'] = item['description']['data']
@@ -327,11 +335,8 @@ It is possible to import data in a setuphandler or upgrade-step:
         request = aq_get(portal, 'REQUEST')
 
         import_content = api.content.get_view('import_content', portal, request)
-        path = Path(os.path.dirname(__file__)) / 'Document.json'
-        import_content(jsonfile=path.read_text(), portal_type=item.stem, return_json=True)
-
-        path = Path(os.path.dirname(__file__)) / 'Event.json'
-        import_content(jsonfile=path.read_text(), portal_type=item.stem, return_json=True)
+        path = Path(os.path.dirname(__file__)) / 'mydata.json'
+        import_content(jsonfile=path.read_text(), return_json=True)
 
         import_translations = api.content.get_view('import_translations', portal, request)
         path = Path(os.path.dirname(__file__)) / 'translations.json'
@@ -367,11 +372,9 @@ Save all content to ``var/instance/``:
     class ExportAll(BrowserView):
 
         def __call__(self):
-            portal_types = api.portal.get_tool('portal_types').keys()
             export_content = api.content.get_view('export_content', self.context, self.request)
             self.request.form['form.submitted'] = True
-            for portal_type in portal_types:
-                export_content(portal_type=portal_type, include_blobs=True, download_to_server=True)
+            export_content(portal_type=['Folder', 'Document', 'Event'], include_blobs=True, download_to_server=True)
 
 Import all content from ``var/instance/import/``:
 
@@ -390,23 +393,11 @@ Import all content from ``var/instance/import/``:
 
         def __call__(self):
             alsoProvides(self.request, IDisableCSRFProtection)
-            # Start with folderish content!
-            portal_types = [
-                'Folder',
-                'File',
-                'Image',
-                'Document',
-                'News Item',
-                'Event',
-                'Collection',
-                'Link',
-            ]
             instance_path = getConfiguration().clienthome
             import_content = api.content.get_view('import_content', self.context, self.request)
             self.request.form['form.submitted'] = True
-            for portal_type in portal_types:
-                path = Path(instance_path) / 'import' / f'{portal_type}.json'
-                import_content(jsonfile=path.read_text(), portal_type=portal_type, return_json=True)
+            path = Path(instance_path) / 'import/my_data.json'
+            import_content(jsonfile=path.read_text(), return_json=True)
 
 
 Written by
