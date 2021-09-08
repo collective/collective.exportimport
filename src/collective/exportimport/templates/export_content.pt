@@ -10,7 +10,7 @@
 
       <h1 class="documentFirstHeading">Export content</h1>
 
-      <p class="documentDescription">Export content in a specific path as one json-file. Call this form (/@@export_content) on any url in your site to export that path.</p>
+      <p class="documentDescription">Select which content to export as a json-file.</p>
 
         <form action="@@export_content" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
 
