@@ -512,7 +512,7 @@ class ImportDiscussion(BrowserView):
                 comment.author_name = item['author_name']
                 comment.author_username = item['author_username']
                 comment.creator = item['author_username']
-                comment.text = html.unescape(item['text'].replace(u'\r<br />', u'\r\n'))
+                comment.text = html.unescape(item['text'].replace(u'\r<br />', u'\r\n').replace(u'<br />', u'\r\n'))
 
                 if item['user_notification']:
                     comment.user_notification = True
