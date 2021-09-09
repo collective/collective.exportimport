@@ -142,6 +142,7 @@ class ExportContent(BrowserView):
 
         content_generator = self.export_content(include_blobs=include_blobs)
 
+        number = 0
         if download_to_server:
             cfg = getConfiguration()
             filepath = os.path.join(cfg.clienthome, filename)
@@ -152,7 +153,8 @@ class ExportContent(BrowserView):
                     else:
                         f.write(',')
                     json.dump(datum, f, sort_keys=True, indent=4)
-                f.write(']')
+                if number:
+                    f.write(']')
             msg = u"Exported {} {} as {} to {}".format(number, self.portal_type, filename, filepath)
             logger.info(msg)
             api.portal.show_message(msg, self.request)
@@ -169,7 +171,8 @@ class ExportContent(BrowserView):
                     else:
                         f.write(',')
                     json.dump(datum, f, sort_keys=True, indent=4)
-                f.write(']')
+                if number:
+                    f.write(']')
                 msg = u"Exported {} {}".format(number, self.portal_type)
                 logger.info(msg)
                 api.portal.show_message(msg, self.request)
