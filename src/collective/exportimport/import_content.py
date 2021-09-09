@@ -211,10 +211,14 @@ class ImportContent(BrowserView):
             item = self.global_dict_hook(item)
             if not item:
                 continue
+
+            # portal_type might change during a hook
+            self.safe_portal_type = fix_portal_type(item["@type"])
             item = self.custom_dict_hook(item)
             if not item:
                 continue
 
+            self.safe_portal_type = fix_portal_type(item["@type"])
             container = self.handle_container(item)
 
             if not container:
