@@ -261,12 +261,12 @@ class TestImport(unittest.TestCase):
         browser.getControl(name="portal_type").value = ["Document"]
         browser.getControl("Save to file on server").click()
         browser.getControl("Export").click()
-        self.assertIn("Exported 1 Document as plone.json", browser.contents)
+        self.assertIn("Exported 1 ['Document'] as Document.json", browser.contents)
         self.assertIn(self.new_clienthome, browser.contents)
 
         # Move the exported file to the import directory.
-        export_path = os.path.join(self.new_clienthome, "plone.json")
-        import_path = os.path.join(self.new_clienthome, "import", "plone.json")
+        export_path = os.path.join(self.new_clienthome, "Document.json")
+        import_path = os.path.join(self.new_clienthome, "import", "Document.json")
         self.assertTrue(os.path.isfile(export_path))
         self.assertFalse(os.path.exists(import_path))
         shutil.move(export_path, import_path)
@@ -280,7 +280,7 @@ class TestImport(unittest.TestCase):
         # Now import it.
         browser = self.open_page("@@import_content")
         server_file = browser.getControl(name="server_file")
-        server_file.value = ["plone.json"]
+        server_file.value = ["Document.json"]
         browser.getForm(action="@@import_content").submit()
         self.assertIn("Imported 1 items", browser.contents)
 
