@@ -95,8 +95,8 @@ class ExportContent(BrowserView):
 
     def __call__(self, portal_type=None, path=None, depth=-1, include_blobs=False, download_to_server=False, migration=True):
         self.portal_type = portal_type or []
-        if isinstance(portal_type, str):
-            portal_type = [portal_type]
+        if isinstance(self.portal_type, str):
+            self.portal_type = [self.portal_type]
         self.migration = migration
         self.path = path or '/'.join(self.context.getPhysicalPath())
 
