@@ -75,6 +75,14 @@
       permission="cmf.ManagePortal"
       />
 
+  <browser:page
+      name="export_portlets"
+      for="zope.interface.Interface"
+      class=".export_other.ExportPortlets"
+      template="templates/export_other.pt"
+      permission="cmf.ManagePortal"
+      />
+
   <!-- Serializers -->
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATFileFieldSerializer" />
@@ -182,6 +190,14 @@
       for="zope.interface.Interface"
       class=".import_other.ImportDiscussion"
       template="templates/import_discussion.pt"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="import_portlets"
+      for="zope.interface.Interface"
+      class=".import_other.ImportPortlets"
+      template="templates/import_portlets.pt"
       permission="cmf.ManagePortal"
       />
 

@@ -8,10 +8,19 @@ from plone import api
 from plone.app.discussion.browser.comments import CommentForm
 from plone.app.discussion.comment import Comment
 from plone.app.discussion.interfaces import IConversation
+from plone.app.portlets.interfaces import IPortletTypeInterface
+from plone.portlets.interfaces import IPortletAssignmentMapping
+from plone.portlets.interfaces import IPortletAssignmentSettings
+from plone.portlets.interfaces import ILocalPortletAssignmentManager
+from plone.portlets.interfaces import IPortletManager
 from plone.restapi.deserializer import json_body
 from Products.Five import BrowserView
 from six.moves.html_parser import HTMLParser
 from zope.annotation.interfaces import IAnnotations
+from zope.component import getUtility
+from zope.component import queryMultiAdapter
+from zope.component.interfaces import IFactory
+from zope.container.interfaces import INameChooser
 from ZPublisher.HTTPRequest import FileUpload
 
 import dateutil
@@ -545,3 +554,103 @@ class ImportDiscussion(BrowserView):
             results += added
 
         return results
+
+
+class ImportPortlets(BrowserView):
+    """Import portlets"""
+
+    def __call__(self, jsonfile=None, return_json=False):
+        if jsonfile:
+            self.portal = api.portal.get()
+            status = "success"
+            try:
+                if isinstance(jsonfile, str):
+                    return_json = True
+                    data = json.loads(jsonfile)
+                elif isinstance(jsonfile, FileUpload):
+                    data = json.loads(jsonfile.read())
+                else:
+                    raise ("Data is neither text nor upload.")
+            except Exception as e:
+                status = "error"
+                logger.error(e)
+                api.portal.show_message(
+                    u"Failure while uploading: {}".format(e),
+                    request=self.request,
+                )
+            else:
+                portlets = self.import_portlets(data)
+                msg = u"Created {} portlets".format(portlets)
+                api.portal.show_message(msg, self.request)
+            if return_json:
+                msg = {"state": status, "msg": msg}
+                return json.dumps(msg)
+
+        return self.index()
+
+    def import_portlets(self, data):
+        results = 0
+        for item in data:
+            obj = api.content.get(UID=item["uuid"])
+            if not obj:
+                continue
+            registered_portlets = register_portlets(obj, item)
+            results += registered_portlets
+        return results
+
+
+def register_portlets(obj, item):
+    """Register portlets fror one object
+    Code adapted from plone.app.portlets.exportimport.portlets.PortletsXMLAdapter
+    Work in progress...
+    """
+    site = api.portal.get()
+    results = 0
+    for manager_name, portlets in item.get("portlets", {}).items():
+        manager = getUtility(IPortletManager, manager_name)
+        mapping = queryMultiAdapter((obj, manager), IPortletAssignmentMapping)
+        namechooser = INameChooser(mapping)
+
+        for portlet_data in portlets:
+            # 1. Create the assignment
+            assignment_data = portlet_data['assignment']
+            portlet_type = portlet_data['type']
+            portlet_factory = getUtility(IFactory, name=portlet_type)
+            assignment = portlet_factory()
+
+            name = namechooser.chooseName(None, assignment)
+            mapping[name] = assignment
+            logger.info('Added portlet {} to {}'.format(name, obj.absolute_url()))
+
+            # aq-wrap it so that complex fields will work
+            assignment = assignment.__of__(site)
+
+            # set visibility setting
+            visible = portlet_data.get('visible')
+            if visible:
+                settings = IPortletAssignmentSettings(assignment)
+                settings['visible'] = visible
+
+            # 2. Apply portlet settings
+            portlet_interface = getUtility(IPortletTypeInterface, name=portlet_type)
+            for property_name, value in assignment_data.items():
+                field = portlet_interface.get(property_name, None)
+                if field is None:
+                    continue
+                field = field.bind(assignment)
+                field.set(assignment, value)
+
+            results += 1
+
+    for blacklist_status in item.get("blacklist_status", []):
+        status = blacklist_status["status"]
+        manager_name = blacklist_status["manager"]
+        category = blacklist_status["category"]
+        manager = getUtility(IPortletManager, manager_name)
+        assignable = queryMultiAdapter((obj, manager), ILocalPortletAssignmentManager)
+        if status.lower() == 'block':
+            assignable.setBlacklistStatus(category, True)
+        elif status.lower() == 'show':
+            assignable.setBlacklistStatus(category, False)
+
+    return results

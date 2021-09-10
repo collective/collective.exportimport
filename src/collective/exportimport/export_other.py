@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
+from collections import defaultdict
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
@@ -12,6 +13,16 @@ from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
 from zope.component import getMultiAdapter
 from zope.component import queryUtility
+from plone.app.portlets.interfaces import IPortletTypeInterface
+from plone.portlets.interfaces import IPortletAssignmentMapping
+from plone.portlets.interfaces import ILocalPortletAssignable
+from plone.portlets.interfaces import ILocalPortletAssignmentManager
+from plone.portlets.interfaces import IPortletAssignmentSettings
+from plone.portlets.interfaces import IPortletManager
+from plone.portlets.constants import USER_CATEGORY, GROUP_CATEGORY, CONTENT_TYPE_CATEGORY, CONTEXT_CATEGORY
+from zope.component import getUtilitiesFor
+from zope.component import queryMultiAdapter
+from zope.interface import providedBy
 
 import json
 import pkg_resources
@@ -454,6 +465,106 @@ class ExportDiscussion(BrowserView):
         portal = api.portal.get()
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_discussion)
         return results
+
+
+class ExportPortlets(BrowserView):
+    def __call__(self):
+        self.title = 'Export portlets'
+        if not self.request.form.get("form.submitted", False):
+            return self.index()
+
+        all_portlets = self.all_portlets()
+        data = json.dumps(all_portlets, indent=4)
+        filename = "portlets.json"
+        self.request.response.setHeader("Content-type", "application/json")
+        self.request.response.setHeader("content-length", len(data))
+        self.request.response.setHeader(
+            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+        )
+        return self.request.response.write(safe_bytes(data))
+
+    def all_portlets(context=None):
+        results = []
+
+        def get_portlets(obj, path):
+            uid = IUUID(obj, None)
+            if not uid:
+                return
+            portlets = export_local_portlets(obj)
+            blacklist = export_portlets_blacklist(obj)
+            obj_results = {}
+            if portlets:
+                obj_results["portlets"] = portlets
+            if blacklist:
+                obj_results["blacklist_status"] = blacklist
+            if obj_results:
+                obj_results["uuid"] = uid
+                results.append(obj_results)
+            return
+
+        portal = api.portal.get()
+        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_portlets)
+        return results
+
+
+def export_local_portlets(obj):
+    """Serialize portlets for one content object
+    Code mostly taken from https://github.com/plone/plone.restapi/pull/669
+    """
+    portlets_schemata = {
+        iface: name
+        for name, iface in getUtilitiesFor(IPortletTypeInterface)
+    }
+    items = {}
+    for manager_name, manager in getUtilitiesFor(IPortletManager):
+        mapping = queryMultiAdapter((obj, manager),
+                                    IPortletAssignmentMapping)
+        if mapping is None:
+            continue
+        mapping = mapping.__of__(obj)
+        for name, assignment in mapping.items():
+            portlet_type = None
+            schema = None
+            for schema in providedBy(assignment).flattened():
+                portlet_type = portlets_schemata.get(schema, None)
+                if portlet_type is not None:
+                    break
+            if portlet_type is None:
+                continue
+            assignment = assignment.__of__(mapping)
+            settings = IPortletAssignmentSettings(assignment)
+            if manager_name not in items:
+                items[manager_name] = []
+            items[manager_name].append({
+                'type': portlet_type,
+                'visible': settings.get('visible', True),
+                'assignment': {
+                    name: getattr(assignment, name, None)
+                    for name in schema.names()
+                },
+            })
+    return items
+
+def export_portlets_blacklist(obj):
+    results = []
+    for manager_name, manager in getUtilitiesFor(IPortletManager):
+        assignable = queryMultiAdapter((obj, manager), ILocalPortletAssignmentManager)
+        if assignable is None:
+            continue
+        for category in (USER_CATEGORY, GROUP_CATEGORY, CONTENT_TYPE_CATEGORY, CONTEXT_CATEGORY,):
+            obj_results = {}
+            status = assignable.getBlacklistStatus(category)
+            if status == True:
+                obj_results['status'] = u'block'
+            elif status == False:
+                obj_results['status'] = u'show'
+
+            if obj_results:
+                obj_results['manager'] = manager_name
+                obj_results['category'] = category
+                results.append(obj_results)
+    return results
+
 
 
 def safe_bytes(value, encoding="utf-8"):

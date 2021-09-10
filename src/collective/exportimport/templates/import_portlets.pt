@@ -1,0 +1,100 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="plone.z3cform"
+      metal:use-macro="context/main_template/macros/master">
+
+<div metal:fill-slot="main">
+    <tal:main-macro metal:define-macro="main">
+
+      <h1 class="documentFirstHeading">Import portlets</h1>
+
+      <p class="documentDescription">Here you can upload a json-file.</p>
+
+        <form action="@@import_portlets" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <input type="file" name="jsonfile"/><br/>
+            </div>
+            <div class="formControls" class="form-group">
+                <button class="btn btn-primary submit-widget button-field context"
+                        type="submit" name="form.submitted" value="Import">Import
+                </button>
+            </div>
+        </form>
+
+        <div metal:use-macro="context/@@exportimport_links/links">
+          Links to all exports and imports
+        </div>
+
+        <div>
+          <h3>Help</h3>
+          <p>Here is a example for the expected format. This is the format created by collective.exportimport when used for export.</p>
+          <pre>
+[
+    {
+        "uuid": "6287ebd5464547dea8e3d5b845677912",
+        "portlets": {
+            "plone.leftcolumn": [
+                {
+                    "visible": true,
+                    "type": "portlets.Navigation",
+                    "assignment": {
+                        "name": null,
+                        "bottomLevel": 3,
+                        "topLevel": 0,
+                        "currentFolderOnly": false,
+                        "includeTop": true,
+                        "root": "/folder/foo/bar"
+                    }
+                }
+            ]
+        },
+        "blacklist_status": [
+            {
+                "status": "block",
+                "category": "context",
+                "manager": "plone.leftcolumn"
+            },
+            {
+                "status": "block",
+                "category": "context",
+                "manager": "plone.rightcolumn"
+            }
+        ]
+    },
+    {
+        "uuid": "4325c8659659c2cff272abf30f64768e",
+        "portlets": {
+            "plone.rightcolumn": [
+                {
+                    "visible": true,
+                    "type": "portlets.Calendar",
+                    "assignment": {
+                        "state": null,
+                        "search_base": null
+                    }
+                }
+            ],
+            "plone.leftcolumn": [
+                {
+                    "visible": true,
+                    "type": "portlets.rss",
+                    "assignment": {
+                        "count": 5,
+                        "url": "/foo/bar/rss.xml",
+                        "portlet_title": "System Status",
+                        "timeout": 100
+                    }
+                }
+            ]
+        }
+    }
+]
+          </pre>
+        </div>
+
+    </tal:main-macro>
+</div>
+
+</html>
