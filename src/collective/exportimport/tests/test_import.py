@@ -9,7 +9,11 @@ from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
-from plone.testing import zope
+try:
+    from plone.testing import zope
+except ImportError:
+    # BBB for plone.testing 4
+    from plone.testing import z2 as zope
 
 import json
 import os

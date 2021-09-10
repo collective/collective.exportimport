@@ -76,6 +76,7 @@ setup(
             "plone.app.testing",
             # needed as test dependency of plone.app.event:
             "plone.app.robotframework",
+            "plone.app.contenttypes",
         ],
     },
     entry_points="""

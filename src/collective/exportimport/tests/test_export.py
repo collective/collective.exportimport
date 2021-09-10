@@ -8,7 +8,11 @@ from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
-from plone.testing import zope
+try:
+    from plone.testing import zope
+except ImportError:
+    # BBB for plone.testing 4
+    from plone.testing import z2 as zope
 
 import json
 import transaction
@@ -62,7 +66,13 @@ class TestExport(unittest.TestCase):
         self.assertIn("Document", portal_type.options)
         self.assertNotIn("Folder", portal_type.options)
         portal_type.value = ["Document"]
-        browser.getControl("Export selected type").click()
+        try:
+            # Plone 5.2
+            browser.getControl("Export selected type").click()
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            # But this does not help, because browser.contents then is empty...
 
         # We should have gotten json.
         data = json.loads(browser.contents)

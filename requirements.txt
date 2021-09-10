@@ -1,3 +1,5 @@
--c constraints.txt
-setuptools
-zc.buildout
+# For Buildout related packages, it is easiest to keep them at the same version for all environments.
+# Keep these in sync with base.cfg please:
+setuptools==42.0.2
+zc.buildout==2.13.4
+wheel==0.36.2
