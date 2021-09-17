@@ -5,10 +5,12 @@ Changelog
 1.2 (unreleased)
 ----------------
 
+- Fixed creating missing folder structure.  [maurits]
+
 - Export portlets.
   [pbauer]
 
-- Export content and write to file using a generator/yield. This avoids memory ballooning to the size of the exported file. 
+- Export content and write to file using a generator/yield. This avoids memory ballooning to the size of the exported file.
   [fredvd]
 
 
