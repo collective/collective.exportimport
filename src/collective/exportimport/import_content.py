@@ -242,7 +242,15 @@ class ImportContent(BrowserView):
 
             # import using plone.restapi deserializers
             deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
-            new = deserializer(validate_all=False, data=item)
+            try:
+                new = deserializer(validate_all=False, data=item)
+            except Exception as e:
+                logger.error(
+                    u"Deserializer failed on item with UID '{}' and URL '{}': exception: {}".format(
+                        item["UID"], new.absolute_url(), e
+                    )
+                )
+                raise
 
             self.global_obj_hook(new, item)
             self.custom_obj_hook(new, item)
