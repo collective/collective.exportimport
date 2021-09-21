@@ -18,6 +18,7 @@ from zope.interface import implementer
 
 import base64
 import logging
+import os
 import pkg_resources
 
 try:
@@ -230,7 +231,8 @@ if HAS_AT:
         db = obj._p_jar.db()
         fshelper = db._storage.fshelper
         blobfilepath = fshelper.layout.getBlobFilePath(oid, tid)
-        return blobfilepath
+        if os.path.exists(blobfilepath):
+            return blobfilepath
 
 
     @adapter(IBlobImageField, IBaseObject, IPathBlobsMarker)
@@ -241,6 +243,12 @@ if HAS_AT:
             if not file_obj:
                 return None
             blobfilepath = get_at_blob_path(file_obj)
+            if not blobfilepath:
+                logger.warning(
+                    "Blob file path of %s does not exist",
+                    self.context.absolute_url(),
+                )
+                return
             result = {
                 "filename": self.field.getFilename(self.context),
                 "content-type": self.field.getContentType(self.context),
@@ -258,6 +266,12 @@ if HAS_AT:
                 return None
 
             blobfilepath = get_at_blob_path(file_obj)
+            if not blobfilepath:
+                logger.warning(
+                    "Blob file path of %s does not exist",
+                    self.context.absolute_url(),
+                )
+                return
             result = {
                 "filename": self.field.getFilename(self.context),
                 "content-type": self.field.getContentType(self.context),
@@ -351,7 +365,9 @@ def get_dx_blob_path(obj):
     db = obj._p_jar.db()
     fshelper = db._storage.fshelper
     blobfilepath = fshelper.layout.getBlobFilePath(oid, tid)
-    return blobfilepath
+    full_path = os.path.join(fshelper.base_dir, blobfilepath)
+    if os.path.exists(full_path):
+        return blobfilepath
 
 
 @adapter(INamedFileField, IDexterityContent, IPathBlobsMarker)
@@ -364,6 +380,12 @@ class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
             return None
 
         blobfilepath = get_dx_blob_path(namedfile)
+        if not blobfilepath:
+            logger.warning(
+                "Blob file path of %s does not exist",
+                self.context.absolute_url(),
+            )
+            return
         result = {
             "filename": namedfile.filename,
             "content-type": namedfile.contentType,
@@ -384,6 +406,12 @@ class ImageFieldSerializerWithBlobPaths(DefaultFieldSerializer):
             return None
 
         blobfilepath = get_dx_blob_path(image)
+        if not blobfilepath:
+            logger.warning(
+                "Blob file path of %s does not exist",
+                self.context.absolute_url(),
+            )
+            return
         width, height = image.getImageSize()
         result = {
             "filename": image.filename,
