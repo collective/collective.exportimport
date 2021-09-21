@@ -437,10 +437,22 @@ class ImportContent(BrowserView):
     def create_container(self, item):
         folder = self.context
         parent_url = unquote(item["parent"]["@id"])
-        parent_path = urlparse(parent_url).path
-
+        parent_path = urlparse(parent_url).path.split("/")
+        context_path = self.context.getPhysicalPath()
+        # We could be importing /Plone/doc into /Plone.
+        # parent_path is then: ["", "Plone"].
+        # We should recognize this, and not try to create
+        # /Plone/random-id/Plone/doc,
+        # which would fail with BadRequest at the reserved id 'Plone'.
+        same = True
+        for i, path_item in enumerate(context_path):
+            if path_item != parent_path[i]:
+                same = False
+                break
+        if same:
+            parent_path = parent_path[len(context_path):]
         # create original structure for imported content
-        for element in parent_path.split("/"):
+        for element in parent_path:
             if element not in folder:
                 folder = api.content.create(
                     container=folder,
