@@ -93,16 +93,36 @@ class ExportContent(BrowserView):
 
     DROP_PATHS = []
 
-    def __call__(self, portal_type=None, include_blobs=False, download_to_server=False, migration=True):
-        self.portal_type = portal_type
+    def __call__(self, portal_type=None, path=None, depth=-1, include_blobs=False, download_to_server=False, migration=True):
+        self.portal_type = portal_type or []
+        if isinstance(self.portal_type, str):
+            self.portal_type = [self.portal_type]
         self.migration = migration
+        self.path = path or '/'.join(self.context.getPhysicalPath())
 
-        self.fixup_request()
+        self.depth = int(depth)
+        self.depth_options = (
+            ("-1", "unlimited"),
+            ("0", "0"),
+            ("1", "1"),
+            ("2", "2"),
+            ("3", "3"),
+            ("4", "4"),
+            ("5", "5"),
+            ("6", "6"),
+            ("7", "7"),
+            ("8", "8"),
+            ("9", "9"),
+            ("10", "10"),
+        )
+
+        self.update()
 
         if not self.request.form.get("form.submitted", False):
             return self.template()
 
         if not self.portal_type:
+            api.portal.show_message(u"Select at least one type to export", self.request)
             return self.template()
 
         if include_blobs:
@@ -113,9 +133,16 @@ class ExportContent(BrowserView):
             # Add marker-interface to request to use custom serializers
             alsoProvides(self.request, IMigrationMarker)
 
-        filename = '{}.json'.format(self.portal_type)
+        # to get a useful filename...
+        if self.portal_type and len(self.portal_type) == 1:
+            filename = self.portal_type[0]
+        else:
+            filename = self.path.split("/")[-1]
+        filename = '{}.json'.format(filename)
+
         content_generator = self.export_content(include_blobs=include_blobs)
 
+        number = 0
         if download_to_server:
             cfg = getConfiguration()
             filepath = os.path.join(cfg.clienthome, filename)
@@ -126,8 +153,9 @@ class ExportContent(BrowserView):
                     else:
                         f.write(',')
                     json.dump(datum, f, sort_keys=True, indent=4)
-                f.write(']')
-            msg = u"Exported {} {} as {} to {}".format(number, self.portal_type, filename, filepath)
+                if number:
+                    f.write(']')
+            msg = u"Exported {} items ({}) as {} to {}".format(number, ", ".join(self.portal_type), filename, filepath)
             logger.info(msg)
             api.portal.show_message(msg, self.request)
 
@@ -143,7 +171,8 @@ class ExportContent(BrowserView):
                     else:
                         f.write(',')
                     json.dump(datum, f, sort_keys=True, indent=4)
-                f.write(']')
+                if number:
+                    f.write(']')
                 msg = u"Exported {} {}".format(number, self.portal_type)
                 logger.info(msg)
                 api.portal.show_message(msg, self.request)
@@ -160,10 +189,18 @@ class ExportContent(BrowserView):
                 f.seek(0)
                 return response.write(safe_bytes(f.read()))
 
+    def update(self):
+        """Hook to do something before export."""
+
     def build_query(self):
-        query = {"portal_type": self.portal_type, "sort_on": "path"}
+        query = {
+            "portal_type": self.portal_type,
+            "sort_on": "path",
+            'path': {'query': self.path, 'depth': self.depth},
+        }
         # custom setting per type
-        query.update(self.QUERY.get(self.portal_type, {}))
+        for portal_type in self.portal_type:
+            query.update(self.QUERY.get(portal_type, {}))
         query = self.update_query(query)
         return query
 
@@ -176,7 +213,6 @@ class ExportContent(BrowserView):
         catalog = api.portal.get_tool("portal_catalog")
         brains = catalog.unrestrictedSearchResults(**query)
         logger.info(u"Exporting {} {}".format(len(brains), self.portal_type))
-        self.safe_portal_type = fix_portal_type(self.portal_type)
 
         # Override richtext serializer to export links using resolveuid/xxx
         alsoProvides(self.request, IRawRichTextMarker)
@@ -200,6 +236,7 @@ class ExportContent(BrowserView):
             if not obj:
                 continue
             try:
+                self.safe_portal_type = fix_portal_type(obj.portal_type)
                 serializer = getMultiAdapter((obj, self.request), ISerializeToJson)
                 if getattr(aq_base(obj), 'isPrincipiaFolderish', False):
                     item = serializer(include_items=False)
@@ -242,10 +279,6 @@ class ExportContent(BrowserView):
                     }
                 )
         return sorted(results, key=itemgetter("title"))
-
-    def fixup_request(self):
-        """Use this to override stuff (e.g. force a specific language in request)."""
-        return
 
     def global_obj_hook(self, obj):
         """Inspect the content item before serialisation data.

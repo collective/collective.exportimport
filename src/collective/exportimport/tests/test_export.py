@@ -69,7 +69,7 @@ class TestExport(unittest.TestCase):
     def test_export_content_page(self):
         # Simply test that some text is on the page.
         browser = self.open_page("@@export_content")
-        self.assertIn("Export content using plone.restapi", browser.contents)
+        self.assertIn("Export content", browser.contents)
         self.assertIn("Export relations", browser.contents)
         self.assertIn("Export translations", browser.contents)
         self.assertIn("Export members", browser.contents)
@@ -77,7 +77,8 @@ class TestExport(unittest.TestCase):
         self.assertIn("Export default pages", browser.contents)
         self.assertIn("Export object positions", browser.contents)
         # We cannot choose a portal_type, because there is no content to export.
-        self.assertEqual(browser.getControl(name="portal_type").options, [""])
+        with self.assertRaises(LookupError):
+            browser.getControl(name="portal_type")
 
     def test_export_content_document(self):
         # First create some content.
@@ -92,13 +93,13 @@ class TestExport(unittest.TestCase):
         # Now export Documents.
         browser = self.open_page("@@export_content")
         portal_type = browser.getControl(name="portal_type")
-        self.assertEqual(portal_type.value, [""])
+        self.assertEqual(portal_type.value, [])
         self.assertIn("Document", portal_type.options)
         self.assertNotIn("Folder", portal_type.options)
         portal_type.value = ["Document"]
         try:
             # Plone 5.2
-            browser.getControl("Export selected type").click()
+            browser.getControl("Export").click()
             contents = browser.contents
         except LookupError:
             # Plone 5.1 and lower
@@ -129,12 +130,12 @@ class TestExport(unittest.TestCase):
         # Now export content.
         browser = self.open_page("@@export_content")
         portal_type = browser.getControl(name="portal_type")
-        self.assertEqual(portal_type.value, [""])
+        self.assertEqual(portal_type.value, [])
         self.assertIn("Collection", portal_type.options)
         self.assertNotIn("Folder", portal_type.options)
         portal_type.value = ["Collection"]
         try:
-            browser.getControl("Export selected type").click()
+            browser.getControl("Export").click()
             contents = browser.contents
         except LookupError:
             # Plone 5.1 and lower
@@ -151,6 +152,114 @@ class TestExport(unittest.TestCase):
         self.assertEqual(info["@id"], portal.absolute_url() + "/collection1")
         self.assertEqual(info["@type"], "Collection")
         self.assertEqual(info["title"], doc.Title())
+
+    def test_export_tree(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        doc1 = api.content.create(
+            container=folder1, type="Document", id="doc1", title="Document 1"
+        )
+        doc2 = api.content.create(
+            container=folder1, type="Document", id="doc2", title="Document 2"
+        )
+        doc3 = api.content.create(
+            container=folder1, type="Document", id="doc3", title="Document 3"
+        )
+        folder2 = api.content.create(
+            container=portal, type="Folder", id="folder2", title="Folder 2"
+        )
+        collection = api.content.create(
+            container=folder2, type="Collection", id="collection1", title="Collection 1"
+        )
+        transaction.commit()
+
+        # Now export complete portal.
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        self.assertEqual(portal_type.value, [])
+        self.assertIn("Collection", portal_type.options)
+        self.assertNotIn("News Item", portal_type.options)
+        portal_type.value = ["Folder", "Document", "Collection"]
+
+        path = browser.getControl(label="Path")
+        self.assertEqual(path.value, "/plone")
+
+        depth = browser.getControl(name="depth")
+        self.assertEqual(depth.value, ["-1"])
+
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
+
+        # We should have gotten json.
+        data = json.loads(contents)
+        self.assertEqual(len(data), 6)
+
+        # Check a few important keys.
+        info = data[0]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/folder1")
+        self.assertEqual(info["@type"], "Folder")
+        self.assertEqual(info["title"], folder1.Title())
+
+        # Export one tree.
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        portal_type.value = ["Folder", "Document", "Collection"]
+        path = browser.getControl(label="Path")
+        path.value = "/plone/folder1"
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
+
+        # We should have gotten json.
+        data = json.loads(contents)
+        self.assertEqual(len(data), 4)
+        info = data[3]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/folder1/doc3")
+        self.assertEqual(info["@type"], "Document")
+        self.assertEqual(info["title"], doc3.Title())
+
+        # Only one direct children.
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        portal_type.value = ["Folder", "Document", "Collection"]
+        path = browser.getControl(label="Path")
+        path.value = "/plone"
+        depth = browser.getControl(name="depth")
+        depth.value = ["1"]
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
+
+        data = json.loads(contents)
+        self.assertEqual(len(data), 2)
+        info = data[1]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/folder2")
+        self.assertEqual(info["@type"], "Folder")
+        self.assertEqual(info["title"], folder2.Title())
+
 
     def test_export_members(self):
         browser = self.open_page("@@export_members")
