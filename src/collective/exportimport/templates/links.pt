@@ -8,10 +8,6 @@
          </a></li>
 
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_contenttree'">Export content tree
-         </a></li>
-
-         <li><a class=""
             tal:attributes="href python: portal_url + '/@@export_relations'">Export relations
          </a></li>
 

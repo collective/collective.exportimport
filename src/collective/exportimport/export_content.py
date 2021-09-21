@@ -155,7 +155,7 @@ class ExportContent(BrowserView):
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
                     f.write(']')
-            msg = u"Exported {} {} as {} to {}".format(number, self.portal_type, filename, filepath)
+            msg = u"Exported {} items ({}) as {} to {}".format(number, ", ".join(self.portal_type), filename, filepath)
             logger.info(msg)
             api.portal.show_message(msg, self.request)
 
