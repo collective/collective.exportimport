@@ -191,10 +191,18 @@ class TestExport(unittest.TestCase):
         depth = browser.getControl(name="depth")
         self.assertEqual(depth.value, ["-1"])
 
-        browser.getControl("Export").click()
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
 
         # We should have gotten json.
-        data = json.loads(browser.contents)
+        data = json.loads(contents)
         self.assertEqual(len(data), 6)
 
         # Check a few important keys.
@@ -209,10 +217,18 @@ class TestExport(unittest.TestCase):
         portal_type.value = ["Folder", "Document", "Collection"]
         path = browser.getControl(label="Path")
         path.value = "/plone/folder1"
-        browser.getControl("Export").click()
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
 
         # We should have gotten json.
-        data = json.loads(browser.contents)
+        data = json.loads(contents)
         self.assertEqual(len(data), 4)
         info = data[3]
         self.assertEqual(info["@id"], portal.absolute_url() + "/folder1/doc3")
@@ -227,9 +243,17 @@ class TestExport(unittest.TestCase):
         path.value = "/plone"
         depth = browser.getControl(name="depth")
         depth.value = ["1"]
-        browser.getControl("Export").click()
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
 
-        data = json.loads(browser.contents)
+        data = json.loads(contents)
         self.assertEqual(len(data), 2)
         info = data[1]
         self.assertEqual(info["@id"], portal.absolute_url() + "/folder2")
