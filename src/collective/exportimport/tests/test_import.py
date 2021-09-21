@@ -219,7 +219,7 @@ class TestImport(unittest.TestCase):
         # Now export the document.
         browser = self.open_page("@@export_content")
         browser.getControl(name="portal_type").value = ["Document"]
-        browser.getControl("Export selected type").click()
+        browser.getControl("Export").click()
         raw_data = browser.contents
 
         # Remove both the folder and document.
@@ -233,7 +233,7 @@ class TestImport(unittest.TestCase):
         upload = browser.getControl(name="jsonfile")
         upload.add_file(raw_data, "application/json", "Document.json")
         browser.getForm(action="@@import_content").submit()
-        self.assertIn("Imported 1 Document", browser.contents)
+        self.assertIn("Imported 1 items", browser.contents)
 
         # The folder should be back.
         self.assertIn("folder1", portal.contentIds())
@@ -261,7 +261,7 @@ class TestImport(unittest.TestCase):
         browser.getControl(name="portal_type").value = ["Document"]
         browser.getControl("Save to file on server").click()
         browser.getControl("Export").click()
-        self.assertIn("Exported 1 ['Document'] as Document.json", browser.contents)
+        self.assertIn("Exported 1 items (Document) as Document.json", browser.contents)
         self.assertIn(self.new_clienthome, browser.contents)
 
         # Move the exported file to the import directory.
