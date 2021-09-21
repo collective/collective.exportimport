@@ -99,9 +99,15 @@
       factory=".serializer.ATFileFieldSerializerWithBlobs" />
   <adapter zcml:condition="installed plone.app.blob"
       factory=".serializer.ATImageFieldSerializerWithBlobs" />
+  <adapter zcml:condition="installed plone.app.blob"
+      factory=".serializer.ATFileFieldSerializerWithBlobPaths" />
+  <adapter zcml:condition="installed plone.app.blob"
+      factory=".serializer.ATImageFieldSerializerWithBlobPaths" />
 
   <adapter factory=".serializer.FileFieldSerializerWithBlobs" />
+  <adapter factory=".serializer.FileFieldSerializerWithBlobPaths" />
   <adapter factory=".serializer.ImageFieldSerializerWithBlobs" />
+  <adapter factory=".serializer.ImageFieldSerializerWithBlobPaths" />
   <adapter factory=".serializer.RichttextFieldSerializerWithRawText" />
 
   <browser:page

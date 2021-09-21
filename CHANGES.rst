@@ -13,6 +13,13 @@ Changelog
 
 - Fixed creating missing folder structure (#45).
   [maurits]
+- Added option to export blobs as blob paths.
+  [pbauer, maurits]
+
+- Added option to export all content in a tree.
+  [pbauer]
+
+- Fixed creating missing folder structure.  [maurits]
 
 - Export and import portlets (#39).
   [pbauer]
