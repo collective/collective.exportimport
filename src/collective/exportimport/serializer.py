@@ -226,13 +226,9 @@ if HAS_AT:
 
 
     def get_at_blob_path(obj):
-        oid = obj.getBlob()._p_oid
-        tid = obj._p_serial
-        db = obj._p_jar.db()
-        fshelper = db._storage.fshelper
-        blobfilepath = fshelper.layout.getBlobFilePath(oid, tid)
-        if os.path.exists(blobfilepath):
-            return blobfilepath
+        full_path = obj.getBlob().committed()
+        if os.path.exists(full_path):
+            return full_path
 
 
     @adapter(IBlobImageField, IBaseObject, IPathBlobsMarker)
@@ -360,14 +356,9 @@ if HAS_AT and HAS_PAC:
 
 
 def get_dx_blob_path(obj):
-    oid = obj._blob._p_oid
-    tid = obj._p_serial
-    db = obj._p_jar.db()
-    fshelper = db._storage.fshelper
-    blobfilepath = fshelper.layout.getBlobFilePath(oid, tid)
-    full_path = os.path.join(fshelper.base_dir, blobfilepath)
+    full_path = obj._blob.committed()
     if os.path.exists(full_path):
-        return blobfilepath
+        return full_path
 
 
 @adapter(INamedFileField, IDexterityContent, IPathBlobsMarker)
