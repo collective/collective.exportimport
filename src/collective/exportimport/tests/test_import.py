@@ -12,12 +12,6 @@ from plone.app.testing import TEST_USER_ID
 from plone.namedfile.file import NamedImage
 from Products.CMFPlone.tests import dummy
 
-try:
-    from plone.testing import zope
-except ImportError:
-    # BBB for plone.testing 4
-    from plone.testing import z2 as zope
-
 import json
 import os
 import shutil
@@ -26,13 +20,31 @@ import tempfile
 import transaction
 import unittest
 
+try:
+    from plone.testing import zope
+    OLD_ZOPE_TESTBROWSER = False
+except ImportError:
+    # BBB for plone.testing 4
+    from plone.testing import z2 as zope
+    from ZPublisher.HTTPResponse import HTTPResponse
+    OLD_ZOPE_TESTBROWSER = True
 
-# TODO: change this to skip the tests on Plone 5.1 and lower.
-# Python 2 on 5.2 should be fine, but currently it gives an error when
-# importing the modified date:
-# ValueError: 'z' is a bad directive in format '%Y-%m-%dT%H:%M:%S%z'
-# Ah, and we have the same error on Python 3.6.
-@unittest.skipIf(sys.version_info[:2] < (3, 7), "Import is only supported on Python 3.7+ for the moment")
+
+DATA = []
+
+
+def write(self, data):
+    """Override for HTTPResponse.write.
+
+    In Zope 2 (Plone 4.3-5.1) in tests, when we export content to download it,
+    the resulting browser.contents is empty, instead of containing json.
+    This is an ugly hack to capture the data that should be available.
+    I tried a few other ways, but failed.
+    """
+    self._orig_write(data)
+    DATA.append(data)
+
+
 class TestImport(unittest.TestCase):
     """Test that we can export."""
 
@@ -138,11 +150,18 @@ class TestImport(unittest.TestCase):
         self.new_clienthome = tempfile.mkdtemp(suffix=".clienthome")
         os.mkdir(os.path.join(self.new_clienthome, "import"))
         cfg.clienthome = self.new_clienthome
+        if OLD_ZOPE_TESTBROWSER:
+            # patch HTTPResponse so we can get an attachment
+            HTTPResponse._orig_write = HTTPResponse.write
+            HTTPResponse.write = write
 
     def tearDown(self):
         cfg = getConfiguration()
         cfg.clienthome = self.orig_clienthome
         shutil.rmtree(self.new_clienthome)
+        if OLD_ZOPE_TESTBROWSER:
+            # undo patch
+            HTTPResponse.write = HTTPResponse._orig_write
 
     def open_page(self, page):
         """Create a testbrowser, open a page, return the browser."""
@@ -182,8 +201,12 @@ class TestImport(unittest.TestCase):
         # Now export it.
         browser = self.open_page("@@export_content")
         browser.getControl(name="portal_type").value = ["Document"]
-        browser.getControl("Export").click()
+        browser.getForm(action='@@export_content').submit(name='submit')
+
+        # We should have gotten json.
         raw_data = browser.contents
+        if not browser.contents:
+            raw_data = DATA[-1]
 
         # Remove the added content.
         api.content.delete(doc)
@@ -219,8 +242,10 @@ class TestImport(unittest.TestCase):
         # Now export the document.
         browser = self.open_page("@@export_content")
         browser.getControl(name="portal_type").value = ["Document"]
-        browser.getControl("Export").click()
+        browser.getForm(action='@@export_content').submit(name='submit')
         raw_data = browser.contents
+        if not browser.contents:
+            raw_data = DATA[-1]
 
         # Remove both the folder and document.
         api.content.delete(folder)
@@ -260,7 +285,11 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@export_content")
         browser.getControl(name="portal_type").value = ["Document"]
         browser.getControl("Save to file on server").click()
-        browser.getControl("Export").click()
+        browser.getForm(action='@@export_content').submit(name='submit')
+        raw_data = browser.contents
+        if not browser.contents:
+            raw_data = DATA[-1]
+
         self.assertIn("Exported 1 items (Document) as Document.json", browser.contents)
         self.assertIn(self.new_clienthome, browser.contents)
 
@@ -303,9 +332,12 @@ class TestImport(unittest.TestCase):
         # Now export the complete portal.
         browser = self.open_page("@@export_content")
         browser.getControl(name="portal_type").value = ['Event', 'Folder', 'Image', 'Link', 'Document']
-        browser.getControl("Export").click()
-        raw_data = browser.contents
-        data = json.loads(raw_data)
+        browser.getForm(action='@@export_content').submit(name='submit')
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+
+        data = json.loads(contents)
         self.assertEqual(len(data), 9)
 
         # Remove the added content.
@@ -316,7 +348,7 @@ class TestImport(unittest.TestCase):
         # Now import it.
         browser = self.open_page("@@import_content")
         upload = browser.getControl(name="jsonfile")
-        upload.add_file(raw_data, "application/json", "Document.json")
+        upload.add_file(contents, "application/json", "Document.json")
         browser.getForm(action="@@import_content").submit()
         self.assertIn("Imported 9 items", browser.contents)
 
@@ -343,6 +375,8 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@export_defaultpages")
         browser.getForm(action="@@export_defaultpages").submit(name='form.submitted')
         raw_data = browser.contents
+        if not browser.contents:
+            raw_data = DATA[-1]
 
         # Now remove the default page setting.
         folder1._delProperty("default_page")
@@ -398,6 +432,8 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@export_ordering")
         browser.getForm(action="@@export_ordering").submit(name='form.submitted')
         raw_data = browser.contents
+        if not browser.contents:
+            raw_data = DATA[-1]
 
         # Reorder the documents.
         ordered = IOrderedContainer(folder1)

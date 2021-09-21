@@ -262,13 +262,21 @@ class ImportContent(BrowserView):
             # These are reused and dropped in ResetModifiedAndCreatedDate
             modified = item.get("modified", item.get("modification_date", None))
             if modified:
-                modified_data = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%S%z")
+                # Python 2 strptime does not know of %z timezone
+                try:
+                    modified_data = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%S%z")
+                except ValueError:
+                    modified_data = datetime.strptime(modified[:-6], "%Y-%m-%dT%H:%M:%S")
                 modification_date = DateTime(modified_data)
                 new.modification_date = modification_date
                 new.modification_date_migrated = modification_date
             created = item.get("created", item.get("creation_date", None))
             if created:
-                created_data = datetime.strptime(created, "%Y-%m-%dT%H:%M:%S%z")
+                # Python 2 strptime does not know of %z timezone
+                try:
+                    created_data = datetime.strptime(created, "%Y-%m-%dT%H:%M:%S%z")
+                except:
+                    created_data = datetime.strptime(created[:-6], "%Y-%m-%dT%H:%M:%S")
                 creation_date = DateTime(created_data)
                 new.creation_date = creation_date
                 new.creation_date_migrated = creation_date
@@ -422,6 +430,10 @@ class ImportContent(BrowserView):
         """The default is to generate a folder-structure exactly as the original"""
         parent_url = unquote(item["parent"]["@id"])
         parent_path = urlparse(parent_url).path
+        # physical path is bytes in Zope 2 (not in Zope 4)
+        # so we need to encode parent_path before using plone.api.content.get
+        if isinstance(self.context.getPhysicalPath()[0], bytes):
+            parent_path = parent_path.encode('utf8')
         parent = api.content.get(path=parent_path)
         if parent:
             return parent

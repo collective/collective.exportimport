@@ -99,13 +99,13 @@ class TestExport(unittest.TestCase):
         portal_type.value = ["Document"]
         try:
             # Plone 5.2
-            browser.getControl("Export").click()
-            contents = browser.contents
+            browser.getForm(action='@@export_content').submit(name='submit')
         except LookupError:
             # Plone 5.1 and lower
             browser.getForm(index=1).submit()
-            if not browser.contents:
-                contents = DATA[-1]
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
 
         # We should have gotten json.
         data = json.loads(contents)
@@ -135,13 +135,13 @@ class TestExport(unittest.TestCase):
         self.assertNotIn("Folder", portal_type.options)
         portal_type.value = ["Collection"]
         try:
-            browser.getControl("Export").click()
-            contents = browser.contents
+            browser.getForm(action='@@export_content').submit(name='submit')
         except LookupError:
             # Plone 5.1 and lower
             browser.getForm(index=1).submit()
-            if not browser.contents:
-                contents = DATA[-1]
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
 
         # We should have gotten json.
         data = json.loads(contents)
