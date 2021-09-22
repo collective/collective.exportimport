@@ -26,6 +26,7 @@ from ZPublisher.HTTPRequest import FileUpload
 import dateutil
 import json
 import logging
+import six
 import transaction
 
 try:
@@ -458,7 +459,10 @@ class ImportDefaultPages(BrowserView):
             if not obj:
                 continue
             old = obj.getDefaultPage()
-            obj.setDefaultPage(item["default_page"])
+            if six.PY2:
+                obj.setDefaultPage(item["default_page"].encode('utf-8'))
+            else:
+                obj.setDefaultPage(item["default_page"])
             if old != obj.getDefaultPage():
                 results += 1
         return results
