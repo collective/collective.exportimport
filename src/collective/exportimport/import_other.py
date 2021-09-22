@@ -364,10 +364,16 @@ class ImportLocalRoles(BrowserView):
                 localroles = item["localroles"]
                 for userid in localroles:
                     obj.manage_setLocalRoles(userid=userid, roles=localroles[userid])
-                logger.info(u"Set roles on {}: {}".format(obj.absolute_url(), localroles))
+                logger.info(
+                    u"Set roles on {}: {}".format(obj.absolute_url(), localroles)
+                )
             if item.get("block"):
                 obj.__ac_local_roles_block__ = 1
-                logger.info(u"Diable acquisition of local roles on {}".format(obj.absolute_url()))
+                logger.info(
+                    u"Diable acquisition of local roles on {}".format(
+                        obj.absolute_url()
+                    )
+                )
             results += 1
         return results
 
@@ -458,7 +464,7 @@ class ImportDefaultPages(BrowserView):
                 continue
             old = obj.getDefaultPage()
             if six.PY2:
-                obj.setDefaultPage(item["default_page"].encode('utf-8'))
+                obj.setDefaultPage(item["default_page"].encode("utf-8"))
             else:
                 obj.setDefaultPage(item["default_page"])
             if old != obj.getDefaultPage():
@@ -505,30 +511,36 @@ class ImportDiscussion(BrowserView):
             obj = api.content.get(UID=conversation_data["uuid"])
             if not obj:
                 continue
-            if not obj.restrictedTraverse('@@conversation_view').enabled():
+            if not obj.restrictedTraverse("@@conversation_view").enabled():
                 continue
             added = 0
             conversation = IConversation(obj)
 
-            for item in conversation_data['conversation']['items']:
+            for item in conversation_data["conversation"]["items"]:
 
-                if isinstance(item['text'], dict) and item['text'].get('data'):
-                    item['text'] = item['text']['data']
+                if isinstance(item["text"], dict) and item["text"].get("data"):
+                    item["text"] = item["text"]["data"]
 
                 comment = Comment()
-                comment_id = int(item['comment_id'])
+                comment_id = int(item["comment_id"])
                 comment.comment_id = comment_id
-                comment.creation_date = dateutil.parser.parse(item['creation_date'])
-                comment.modification_date = dateutil.parser.parse(item['modification_date'])
-                comment.author_name = item['author_name']
-                comment.author_username = item['author_username']
-                comment.creator = item['author_username']
-                comment.text = html.unescape(item['text'].replace(u'\r<br />', u'\r\n').replace(u'<br />', u'\r\n'))
+                comment.creation_date = dateutil.parser.parse(item["creation_date"])
+                comment.modification_date = dateutil.parser.parse(
+                    item["modification_date"]
+                )
+                comment.author_name = item["author_name"]
+                comment.author_username = item["author_username"]
+                comment.creator = item["author_username"]
+                comment.text = html.unescape(
+                    item["text"]
+                    .replace(u"\r<br />", u"\r\n")
+                    .replace(u"<br />", u"\r\n")
+                )
 
-                if item['user_notification']:
+                if item["user_notification"]:
                     comment.user_notification = True
-                if item.get('in_reply_to'):
-                    comment.in_reply_to = int(item['in_reply_to'])
+                if item.get("in_reply_to"):
+                    comment.in_reply_to = int(item["in_reply_to"])
 
                 conversation._comments[comment_id] = comment
                 comment.__parent__ = aq_base(conversation)
@@ -552,7 +564,7 @@ class ImportDiscussion(BrowserView):
                 if DISCUSSION_ANNOTATION_KEY not in annotions:
                     annotions[DISCUSSION_ANNOTATION_KEY] = aq_base(conversation)
                 added += 1
-            logger.info('Added {} comments to {}'.format(added, obj.absolute_url()))
+            logger.info("Added {} comments to {}".format(added, obj.absolute_url()))
             results += added
 
         return results
@@ -615,23 +627,23 @@ def register_portlets(obj, item):
 
         for portlet_data in portlets:
             # 1. Create the assignment
-            assignment_data = portlet_data['assignment']
-            portlet_type = portlet_data['type']
+            assignment_data = portlet_data["assignment"]
+            portlet_type = portlet_data["type"]
             portlet_factory = getUtility(IFactory, name=portlet_type)
             assignment = portlet_factory()
 
             name = namechooser.chooseName(None, assignment)
             mapping[name] = assignment
-            logger.info('Added portlet {} to {}'.format(name, obj.absolute_url()))
+            logger.info("Added portlet {} to {}".format(name, obj.absolute_url()))
 
             # aq-wrap it so that complex fields will work
             assignment = assignment.__of__(site)
 
             # set visibility setting
-            visible = portlet_data.get('visible')
+            visible = portlet_data.get("visible")
             if visible:
                 settings = IPortletAssignmentSettings(assignment)
-                settings['visible'] = visible
+                settings["visible"] = visible
 
             # 2. Apply portlet settings
             portlet_interface = getUtility(IPortletTypeInterface, name=portlet_type)
@@ -650,9 +662,9 @@ def register_portlets(obj, item):
         category = blacklist_status["category"]
         manager = getUtility(IPortletManager, manager_name)
         assignable = queryMultiAdapter((obj, manager), ILocalPortletAssignmentManager)
-        if status.lower() == 'block':
+        if status.lower() == "block":
             assignable.setBlacklistStatus(category, True)
-        elif status.lower() == 'show':
+        elif status.lower() == "show":
             assignable.setBlacklistStatus(category, False)
 
     return results

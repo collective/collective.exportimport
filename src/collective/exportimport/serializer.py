@@ -125,7 +125,6 @@ if HAS_AT:
     from Products.Archetypes.interfaces.field import IImageField
     from Products.Archetypes.interfaces.field import ITextField
 
-
     @adapter(IImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
     class ATImageFieldSerializer(ATDefaultFieldSerializer):
@@ -147,7 +146,6 @@ if HAS_AT:
                 "encoding": "base64",
             }
             return json_compatible(result)
-
 
     @adapter(IFileField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -176,7 +174,6 @@ if HAS_AT:
             }
             return json_compatible(result)
 
-
     @adapter(IBlobImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
     class ATImageFieldSerializerWithBlobs(ATDefaultFieldSerializer):
@@ -198,7 +195,6 @@ if HAS_AT:
                 "encoding": "base64",
             }
             return json_compatible(result)
-
 
     @adapter(IBlobField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -225,7 +221,6 @@ if HAS_AT:
                 "encoding": "base64",
             }
             return json_compatible(result)
-
 
     @adapter(ITextField, IBaseObject, IRawRichTextMarker)
     @implementer(IFieldSerializer)
@@ -259,17 +254,13 @@ if HAS_AT and HAS_PAC:
     from plone.restapi.serializer.atcontent import SerializeToJson
     from Products.ATContentTypes.interfaces.topic import IATTopic
 
-
     @implementer(ISerializeToJson)
     @adapter(IATTopic, IMigrationMarker)
     class SerializeTopicToJson(SerializeToJson):
-        """This uses the topic migration from p.a.contenttypes to turn Criteria into a Querystring.
-        """
+        """This uses the topic migration from p.a.contenttypes to turn Criteria into a Querystring."""
 
         def __call__(self, version=None, include_items=False):
-            topic_metadata = super(SerializeTopicToJson, self).__call__(
-                version=version
-            )
+            topic_metadata = super(SerializeTopicToJson, self).__call__(version=version)
 
             # migrate criteria
             formquery = []
@@ -280,12 +271,12 @@ if HAS_AT and HAS_PAC:
             criteria = self.context.listCriteria()
             for criterion in criteria:
                 type_ = criterion.__class__.__name__
-                if type_ == 'ATSortCriterion':
+                if type_ == "ATSortCriterion":
                     # Sort order and direction are now stored in the Collection.
                     self._collection_sort_reversed = criterion.getReversed()
                     self._collection_sort_on = criterion.Field()
                     logger.debug(
-                        'Sort on %r, reverse: %s.',
+                        "Sort on %r, reverse: %s.",
                         self._collection_sort_on,
                         self._collection_sort_reversed,
                     )
@@ -293,7 +284,7 @@ if HAS_AT and HAS_PAC:
 
                 converter = CONVERTERS.get(type_)
                 if converter is None:
-                    msg = 'Unsupported criterion {0}'.format(type_)
+                    msg = "Unsupported criterion {0}".format(type_)
                     logger.error(msg)
                     raise ValueError(msg)
                 try:
@@ -301,10 +292,10 @@ if HAS_AT and HAS_PAC:
                 except Exception as e:
                     logger.info(e)
 
-            topic_metadata['query'] = json_compatible(formquery)
+            topic_metadata["query"] = json_compatible(formquery)
 
             # migrate batch size
             if self.context.itemCount:
-                topic_metadata['b_size'] = self.context.itemCount
+                topic_metadata["b_size"] = self.context.itemCount
 
             return topic_metadata

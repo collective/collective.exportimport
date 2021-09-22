@@ -20,11 +20,13 @@ import unittest
 
 try:
     from plone.testing import zope
+
     OLD_ZOPE_TESTBROWSER = False
 except ImportError:
     # BBB for plone.testing 4
     from plone.testing import z2 as zope
     from ZPublisher.HTTPResponse import HTTPResponse
+
     OLD_ZOPE_TESTBROWSER = True
 
 
@@ -58,44 +60,44 @@ class TestImport(unittest.TestCase):
         |   `-- contact
         `-- events
         """
-        portal = self.layer['portal']
+        portal = self.layer["portal"]
 
         self.blog = api.content.create(
             container=portal,
-            type='Link',
-            id='blog',
-            title=u'Blog',
+            type="Link",
+            id="blog",
+            title=u"Blog",
         )
         self.about = api.content.create(
             container=portal,
-            type='Folder',
-            id='about',
-            title=u'About',
+            type="Folder",
+            id="about",
+            title=u"About",
         )
         self.events = api.content.create(
             container=portal,
-            type='Folder',
-            id='events',
-            title=u'Events',
+            type="Folder",
+            id="events",
+            title=u"Events",
         )
         self.team = api.content.create(
             container=self.about,
-            type='Document',
-            id='team',
-            title=u'Team',
+            type="Document",
+            id="team",
+            title=u"Team",
         )
         self.contact = api.content.create(
             container=self.about,
-            type='Document',
-            id='contact',
-            title=u'Contact',
+            type="Document",
+            id="contact",
+            title=u"Contact",
         )
         self.image = api.content.create(
             container=portal,
-            type='Image',
-            title=u'Image',
-            id='image',
-            image=NamedImage(dummy.Image(), 'image/gif', u'test.gif'),
+            type="Image",
+            title=u"Image",
+            id="image",
+            image=NamedImage(dummy.Image(), "image/gif", u"test.gif"),
         )
 
     def remove_demo_content(self):
@@ -109,11 +111,11 @@ class TestImport(unittest.TestCase):
         `-- events
 
         """
-        portal = self.layer['portal']
-        api.content.delete(portal['image'])
-        api.content.delete(portal['blog'])
-        api.content.delete(portal['about'])
-        api.content.delete(portal['events'])
+        portal = self.layer["portal"]
+        api.content.delete(portal["image"])
+        api.content.delete(portal["blog"])
+        api.content.delete(portal["about"])
+        api.content.delete(portal["events"])
 
     def setUp(self):
         # Set a client home for our import directory.
@@ -175,7 +177,7 @@ class TestImport(unittest.TestCase):
         # Now export it.
         browser = self.open_page("@@export_content")
         browser.getControl(name="portal_type").value = ["Document"]
-        browser.getForm(action='@@export_content').submit(name='submit')
+        browser.getForm(action="@@export_content").submit(name="submit")
 
         # We should have gotten json.
         raw_data = browser.contents
@@ -216,7 +218,7 @@ class TestImport(unittest.TestCase):
         # Now export the document.
         browser = self.open_page("@@export_content")
         browser.getControl(name="portal_type").value = ["Document"]
-        browser.getForm(action='@@export_content').submit(name='submit')
+        browser.getForm(action="@@export_content").submit(name="submit")
         raw_data = browser.contents
         if not browser.contents:
             raw_data = DATA[-1]
@@ -259,7 +261,7 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@export_content")
         browser.getControl(name="portal_type").value = ["Document"]
         browser.getControl("Save to file on server").click()
-        browser.getForm(action='@@export_content').submit(name='submit')
+        browser.getForm(action="@@export_content").submit(name="submit")
 
         self.assertIn("Exported 1 items (Document) as Document.json", browser.contents)
         self.assertIn(self.new_clienthome, browser.contents)
@@ -302,8 +304,13 @@ class TestImport(unittest.TestCase):
 
         # Now export the complete portal.
         browser = self.open_page("@@export_content")
-        browser.getControl(name="portal_type").value = ['Folder', 'Image', 'Link', 'Document']
-        browser.getForm(action='@@export_content').submit(name='submit')
+        browser.getControl(name="portal_type").value = [
+            "Folder",
+            "Image",
+            "Link",
+            "Document",
+        ]
+        browser.getForm(action="@@export_content").submit(name="submit")
         contents = browser.contents
         if not browser.contents:
             contents = DATA[-1]
@@ -344,7 +351,7 @@ class TestImport(unittest.TestCase):
 
         # Export it.
         browser = self.open_page("@@export_defaultpages")
-        browser.getForm(action="@@export_defaultpages").submit(name='form.submitted')
+        browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
         raw_data = browser.contents
         if not browser.contents:
             raw_data = DATA[-1]
@@ -358,7 +365,7 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@import_defaultpages")
         upload = browser.getControl(name="jsonfile")
         upload.add_file(raw_data, "application/json", "defaultpages.json")
-        browser.getForm(action="@@import_defaultpages").submit(name='form.submitted')
+        browser.getForm(action="@@import_defaultpages").submit(name="form.submitted")
         self.assertIn("Changed 1 default page", browser.contents)
 
         # The default page should be back.
@@ -401,7 +408,7 @@ class TestImport(unittest.TestCase):
 
         # Export.
         browser = self.open_page("@@export_ordering")
-        browser.getForm(action="@@export_ordering").submit(name='form.submitted')
+        browser.getForm(action="@@export_ordering").submit(name="form.submitted")
         raw_data = browser.contents
         if not browser.contents:
             raw_data = DATA[-1]

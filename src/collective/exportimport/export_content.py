@@ -33,6 +33,7 @@ except pkg_resources.DistributionNotFound:
 else:
     from Products.Archetypes.atapi import ReferenceField
     from Products.Archetypes.interfaces import IBaseObject
+
     HAS_AT = True
 
 try:
@@ -44,6 +45,7 @@ except pkg_resources.DistributionNotFound:
 else:
     from plone.dexterity.interfaces import IDexterityContent
     from plone.dexterity.utils import iterSchemata
+
     HAS_DX = True
 
 try:
@@ -55,6 +57,7 @@ except pkg_resources.DistributionNotFound:
 else:
     from z3c.relationfield.interfaces import IRelationChoice
     from z3c.relationfield.interfaces import IRelationList
+
     HAS_RELATIONS = True
 
 
@@ -64,19 +67,19 @@ _marker = object()
 
 # copied from plone.app.contenttypes inplace migration
 LISTING_VIEW_MAPPING = {  # OLD (AT and old DX) : NEW
-    'all_content': 'full_view',
-    'atct_album_view': 'album_view',
-    'atct_topic_view': 'listing_view',
-    'collection_view': 'listing_view',
-    'folder_album_view': 'album_view',
-    'folder_full_view': 'full_view',
-    'folder_listing': 'listing_view',
-    'folder_listing_view': 'listing_view',
-    'folder_summary_view': 'summary_view',
-    'folder_tabular_view': 'tabular_view',
-    'standard_view': 'listing_view',
-    'thumbnail_view': 'album_view',
-    'view': 'listing_view',
+    "all_content": "full_view",
+    "atct_album_view": "album_view",
+    "atct_topic_view": "listing_view",
+    "collection_view": "listing_view",
+    "folder_album_view": "album_view",
+    "folder_full_view": "full_view",
+    "folder_listing": "listing_view",
+    "folder_listing_view": "listing_view",
+    "folder_summary_view": "summary_view",
+    "folder_tabular_view": "tabular_view",
+    "standard_view": "listing_view",
+    "thumbnail_view": "album_view",
+    "view": "listing_view",
 }
 
 
@@ -90,12 +93,20 @@ class ExportContent(BrowserView):
 
     DROP_PATHS = []
 
-    def __call__(self, portal_type=None, path=None, depth=-1, include_blobs=False, download_to_server=False, migration=True):
+    def __call__(
+        self,
+        portal_type=None,
+        path=None,
+        depth=-1,
+        include_blobs=False,
+        download_to_server=False,
+        migration=True,
+    ):
         self.portal_type = portal_type or []
         if isinstance(self.portal_type, str):
             self.portal_type = [self.portal_type]
         self.migration = migration
-        self.path = path or '/'.join(self.context.getPhysicalPath())
+        self.path = path or "/".join(self.context.getPhysicalPath())
 
         self.depth = int(depth)
         self.depth_options = (
@@ -135,7 +146,7 @@ class ExportContent(BrowserView):
             filename = self.portal_type[0]
         else:
             filename = self.path.split("/")[-1]
-        filename = '{}.json'.format(filename)
+        filename = "{}.json".format(filename)
 
         content_generator = self.export_content(include_blobs=include_blobs)
 
@@ -143,33 +154,35 @@ class ExportContent(BrowserView):
         if download_to_server:
             cfg = getConfiguration()
             filepath = os.path.join(cfg.clienthome, filename)
-            with open(filepath, 'w') as f:
+            with open(filepath, "w") as f:
                 for number, datum in enumerate(content_generator, start=1):
                     if number == 1:
-                        f.write('[')
+                        f.write("[")
                     else:
-                        f.write(',')
+                        f.write(",")
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
-                    f.write(']')
-            msg = u"Exported {} items ({}) as {} to {}".format(number, ", ".join(self.portal_type), filename, filepath)
+                    f.write("]")
+            msg = u"Exported {} items ({}) as {} to {}".format(
+                number, ", ".join(self.portal_type), filename, filepath
+            )
             logger.info(msg)
             api.portal.show_message(msg, self.request)
 
             if include_blobs:
                 # remove marker interface
                 noLongerProvides(self.request, IBase64BlobsMarker)
-            self.request.response.redirect(self.request['ACTUAL_URL'])
+            self.request.response.redirect(self.request["ACTUAL_URL"])
         else:
             with tempfile.TemporaryFile(mode="w+") as f:
                 for number, datum in enumerate(content_generator, start=1):
                     if number == 1:
-                        f.write('[')
+                        f.write("[")
                     else:
-                        f.write(',')
+                        f.write(",")
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
-                    f.write(']')
+                    f.write("]")
                 msg = u"Exported {} {}".format(number, self.portal_type)
                 logger.info(msg)
                 api.portal.show_message(msg, self.request)
@@ -193,7 +206,7 @@ class ExportContent(BrowserView):
         query = {
             "portal_type": self.portal_type,
             "sort_on": "path",
-            'path': {'query': self.path, 'depth': self.depth},
+            "path": {"query": self.path, "depth": self.depth},
         }
         # custom setting per type
         for portal_type in self.portal_type:
@@ -235,7 +248,7 @@ class ExportContent(BrowserView):
             try:
                 self.safe_portal_type = fix_portal_type(obj.portal_type)
                 serializer = getMultiAdapter((obj, self.request), ISerializeToJson)
-                if getattr(aq_base(obj), 'isPrincipiaFolderish', False):
+                if getattr(aq_base(obj), "isPrincipiaFolderish", False):
                     item = serializer(include_items=False)
                 else:
                     item = serializer()
@@ -313,11 +326,11 @@ class ExportContent(BrowserView):
 
         """
         # 1. Drop unused data
-        item.pop('@components', None)
-        item.pop('next_item', None)
-        item.pop('previous_item', None)
-        item.pop('immediatelyAddableTypes', None)
-        item.pop('locallyAllowedTypes', None)
+        item.pop("@components", None)
+        item.pop("next_item", None)
+        item.pop("previous_item", None)
+        item.pop("immediatelyAddableTypes", None)
+        item.pop("locallyAllowedTypes", None)
 
         # 2. Remove all relationfields
         if HAS_AT and IBaseObject.providedBy(obj):
@@ -327,28 +340,30 @@ class ExportContent(BrowserView):
         elif HAS_DX and HAS_RELATIONS and IDexterityContent.providedBy(obj):
             for schema in iterSchemata(obj):
                 for name, field in getFields(schema).items():
-                    if IRelationChoice.providedBy(field) or IRelationList.providedBy(field):
+                    if IRelationChoice.providedBy(field) or IRelationList.providedBy(
+                        field
+                    ):
                         item.pop(name, None)
 
         # 3. Change default-fieldnames (AT to DX)
-        item = migrate_field(item, 'excludeFromNav', 'exclude_from_nav')
-        item = migrate_field(item, 'allowDiscussion', 'allow_discussion')
-        item = migrate_field(item, 'subject', 'subjects')
+        item = migrate_field(item, "excludeFromNav", "exclude_from_nav")
+        item = migrate_field(item, "allowDiscussion", "allow_discussion")
+        item = migrate_field(item, "subject", "subjects")
 
         # Some Date fields
-        item = migrate_field(item, 'expirationDate', 'expires')
-        item = migrate_field(item, 'effectiveDate', 'effective')
-        item = migrate_field(item, 'creation_date', 'created')
-        item = migrate_field(item, 'modification_date', 'modified')
+        item = migrate_field(item, "expirationDate", "expires")
+        item = migrate_field(item, "effectiveDate", "effective")
+        item = migrate_field(item, "creation_date", "created")
+        item = migrate_field(item, "modification_date", "modified")
 
         # Event fields
-        item = migrate_field(item, 'startDate', 'start')
-        item = migrate_field(item, 'endDate', 'end')
-        item = migrate_field(item, 'openEnd', 'open_end')
-        item = migrate_field(item, 'wholeDay', 'whole_day')
-        item = migrate_field(item, 'contactEmail', 'contact_email')
-        item = migrate_field(item, 'contactName', 'contact_name')
-        item = migrate_field(item, 'contactPhone', 'contact_phone')
+        item = migrate_field(item, "startDate", "start")
+        item = migrate_field(item, "endDate", "end")
+        item = migrate_field(item, "openEnd", "open_end")
+        item = migrate_field(item, "wholeDay", "whole_day")
+        item = migrate_field(item, "contactEmail", "contact_email")
+        item = migrate_field(item, "contactName", "contact_name")
+        item = migrate_field(item, "contactPhone", "contact_phone")
 
         # 4. Fix issue with AT Text fields
         # This is done in the ATTextFieldSerializer
@@ -360,10 +375,10 @@ class ExportContent(BrowserView):
         # TODO
 
         # 7. Fix view names on Folders and Collection
-        if self.safe_portal_type in ('collection', 'topic', 'folder'):
-            old_layout = item.get('layout', 'does_not_exist')
+        if self.safe_portal_type in ("collection", "topic", "folder"):
+            old_layout = item.get("layout", "does_not_exist")
             if old_layout in LISTING_VIEW_MAPPING:
-                item['layout'] = LISTING_VIEW_MAPPING[old_layout]
+                item["layout"] = LISTING_VIEW_MAPPING[old_layout]
 
         return item
 
@@ -373,10 +388,10 @@ class ExportContent(BrowserView):
         """
         obj_url = obj.absolute_url()
         parent_url = obj.__parent__.absolute_url()
-        if item['@id'] != obj_url:
-            item['@id'] = obj_url
-        if item['parent']['@id'] != parent_url:
-            item['parent']['@id'] = parent_url
+        if item["@id"] != obj_url:
+            item["@id"] = obj_url
+        if item["parent"]["@id"] != parent_url:
+            item["parent"]["@id"] = parent_url
         return item
 
 

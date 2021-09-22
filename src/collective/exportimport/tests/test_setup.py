@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Setup tests for this package."""
 from plone import api
-from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_INTEGRATION_TESTING  # noqa: E501
+from collective.exportimport.testing import (
+    COLLECTIVE_EXPORTIMPORT_INTEGRATION_TESTING,
+)  # noqa: E501
 
 import unittest
 
@@ -20,8 +22,8 @@ class TestSetup(unittest.TestCase):
     def test_restapi_installed(self):
         """Test if restapi is installed, because we need it."""
         if get_installer:
-            installer = get_installer(self.layer['portal'], self.layer['request'])
-            self.assertTrue(installer.is_product_installed('plone.restapi'))
+            installer = get_installer(self.layer["portal"], self.layer["request"])
+            self.assertTrue(installer.is_product_installed("plone.restapi"))
         else:
-            installer = api.portal.get_tool('portal_quickinstaller')
-            self.assertTrue(installer.isProductInstalled('plone.restapi'))
+            installer = api.portal.get_tool("portal_quickinstaller")
+            self.assertTrue(installer.isProductInstalled("plone.restapi"))

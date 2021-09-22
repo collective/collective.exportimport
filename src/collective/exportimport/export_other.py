@@ -17,7 +17,12 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import ILocalPortletAssignmentManager
 from plone.portlets.interfaces import IPortletAssignmentSettings
 from plone.portlets.interfaces import IPortletManager
-from plone.portlets.constants import USER_CATEGORY, GROUP_CATEGORY, CONTENT_TYPE_CATEGORY, CONTEXT_CATEGORY
+from plone.portlets.constants import (
+    USER_CATEGORY,
+    GROUP_CATEGORY,
+    CONTENT_TYPE_CATEGORY,
+    CONTEXT_CATEGORY,
+)
 from zope.component import getUtilitiesFor
 from zope.component import queryMultiAdapter
 from zope.interface import providedBy
@@ -50,7 +55,7 @@ class ExportRelations(BrowserView):
     """Export all relations"""
 
     def __call__(self, debug=False):
-        self.title = 'Export relations'
+        self.title = "Export relations"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -102,7 +107,9 @@ class ExportRelations(BrowserView):
                 portal_catalog = getToolByName(self.context, "portal_catalog")
                 for rel in relation_catalog.findRelations():
                     if rel.from_path and rel.to_path:
-                        from_brain = portal_catalog(path=dict(query=rel.from_path, depth=0))
+                        from_brain = portal_catalog(
+                            path=dict(query=rel.from_path, depth=0)
+                        )
                         to_brain = portal_catalog(path=dict(query=rel.to_path, depth=0))
                         if len(from_brain) > 0 and len(to_brain) > 0:
                             item = {
@@ -136,7 +143,7 @@ class ExportMembers(BrowserView):
     AUTO_ROLES = ["Authenticated"]
 
     def __call__(self):
-        self.title = 'Export members, groups and roles'
+        self.title = "Export members, groups and roles"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -233,7 +240,7 @@ class ExportTranslations(BrowserView):
     DROP_PATH = []
 
     def __call__(self):
-        self.title = 'Export translations'
+        self.title = "Export translations"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -261,10 +268,11 @@ class ExportTranslations(BrowserView):
 
             if HAS_LINGUAPLONE:
                 from Products.Archetypes.config import REFERENCE_CATALOG
+
                 # Get all data from the reference_catalog if it exists
                 reference_catalog = getToolByName(self.context, REFERENCE_CATALOG, None)
                 if reference_catalog is not None:
-                    for ref in reference_catalog(relationship='translationOf'):
+                    for ref in reference_catalog(relationship="translationOf"):
                         source = api.content.get(UID=ref.sourceUID)
                         if not source:
                             continue
@@ -272,7 +280,7 @@ class ExportTranslations(BrowserView):
                         translations = source.getTranslations()
                         for lang in translations:
                             if not lang:
-                                logger.info(u'Skip translation: {}'.format(lang))
+                                logger.info(u"Skip translation: {}".format(lang))
                                 continue
                             uuid = IUUID(translations[lang][0], None)
                             if uuid:
@@ -316,7 +324,7 @@ class ExportLocalRoles(BrowserView):
     """Export all local roles"""
 
     def __call__(self):
-        self.title = 'Export local roles'
+        self.title = "Export local roles"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -361,7 +369,7 @@ class ExportOrdering(BrowserView):
     """Export all local roles"""
 
     def __call__(self):
-        self.title = 'Export ordering'
+        self.title = "Export ordering"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -391,7 +399,9 @@ class ExportOrdering(BrowserView):
             return
 
         portal = api.portal.get()
-        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_position_in_parent)
+        portal.ZopeFindAndApply(
+            portal, search_sub=True, apply_func=get_position_in_parent
+        )
         return sorted(results, key=itemgetter("order"))
 
 
@@ -399,7 +409,7 @@ class ExportDefaultPages(BrowserView):
     """Export all default_page settings."""
 
     def __call__(self):
-        self.title = 'Export default pages'
+        self.title = "Export default pages"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -432,7 +442,7 @@ class ExportDefaultPages(BrowserView):
 
 class ExportDiscussion(BrowserView):
     def __call__(self):
-        self.title = 'Export comments'
+        self.title = "Export comments"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -466,7 +476,7 @@ class ExportDiscussion(BrowserView):
 
 class ExportPortlets(BrowserView):
     def __call__(self):
-        self.title = 'Export portlets'
+        self.title = "Export portlets"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -509,13 +519,11 @@ def export_local_portlets(obj):
     Code mostly taken from https://github.com/plone/plone.restapi/pull/669
     """
     portlets_schemata = {
-        iface: name
-        for name, iface in getUtilitiesFor(IPortletTypeInterface)
+        iface: name for name, iface in getUtilitiesFor(IPortletTypeInterface)
     }
     items = {}
     for manager_name, manager in getUtilitiesFor(IPortletManager):
-        mapping = queryMultiAdapter((obj, manager),
-                                    IPortletAssignmentMapping)
+        mapping = queryMultiAdapter((obj, manager), IPortletAssignmentMapping)
         if mapping is None:
             continue
         mapping = mapping.__of__(obj)
@@ -532,14 +540,15 @@ def export_local_portlets(obj):
             settings = IPortletAssignmentSettings(assignment)
             if manager_name not in items:
                 items[manager_name] = []
-            items[manager_name].append({
-                'type': portlet_type,
-                'visible': settings.get('visible', True),
-                'assignment': {
-                    name: getattr(assignment, name, None)
-                    for name in schema.names()
-                },
-            })
+            items[manager_name].append(
+                {
+                    "type": portlet_type,
+                    "visible": settings.get("visible", True),
+                    "assignment": {
+                        name: getattr(assignment, name, None) for name in schema.names()
+                    },
+                }
+            )
     return items
 
 
@@ -549,17 +558,22 @@ def export_portlets_blacklist(obj):
         assignable = queryMultiAdapter((obj, manager), ILocalPortletAssignmentManager)
         if assignable is None:
             continue
-        for category in (USER_CATEGORY, GROUP_CATEGORY, CONTENT_TYPE_CATEGORY, CONTEXT_CATEGORY,):
+        for category in (
+            USER_CATEGORY,
+            GROUP_CATEGORY,
+            CONTENT_TYPE_CATEGORY,
+            CONTEXT_CATEGORY,
+        ):
             obj_results = {}
             status = assignable.getBlacklistStatus(category)
             if status is True:
-                obj_results['status'] = u'block'
+                obj_results["status"] = u"block"
             elif status is False:
-                obj_results['status'] = u'show'
+                obj_results["status"] = u"show"
 
             if obj_results:
-                obj_results['manager'] = manager_name
-                obj_results['category'] = category
+                obj_results["manager"] = manager_name
+                obj_results["category"] = category
                 results.append(obj_results)
     return results
 

@@ -15,11 +15,13 @@ import unittest
 
 try:
     from plone.testing import zope
+
     OLD_ZOPE_TESTBROWSER = False
 except ImportError:
     # BBB for plone.testing 4
     from plone.testing import z2 as zope
     from ZPublisher.HTTPResponse import HTTPResponse
+
     OLD_ZOPE_TESTBROWSER = True
 
 
@@ -99,7 +101,7 @@ class TestExport(unittest.TestCase):
         portal_type.value = ["Document"]
         try:
             # Plone 5.2
-            browser.getForm(action='@@export_content').submit(name='submit')
+            browser.getForm(action="@@export_content").submit(name="submit")
         except LookupError:
             # Plone 5.1 and lower
             browser.getForm(index=1).submit()
@@ -135,7 +137,7 @@ class TestExport(unittest.TestCase):
         self.assertNotIn("Folder", portal_type.options)
         portal_type.value = ["Collection"]
         try:
-            browser.getForm(action='@@export_content').submit(name='submit')
+            browser.getForm(action="@@export_content").submit(name="submit")
         except LookupError:
             # Plone 5.1 and lower
             browser.getForm(index=1).submit()
@@ -262,7 +264,7 @@ class TestExport(unittest.TestCase):
 
     def test_export_members(self):
         browser = self.open_page("@@export_members")
-        browser.getForm(action='@@export_members').submit(name='form.submitted')
+        browser.getForm(action="@@export_members").submit(name="form.submitted")
         contents = browser.contents
         if not browser.contents:
             contents = DATA[-1]
@@ -287,7 +289,7 @@ class TestExport(unittest.TestCase):
 
     def test_export_defaultpages_empty(self):
         browser = self.open_page("@@export_defaultpages")
-        browser.getForm(action='@@export_defaultpages').submit(name='form.submitted')
+        browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
         contents = browser.contents
         if not browser.contents:
             contents = DATA[-1]
@@ -309,14 +311,14 @@ class TestExport(unittest.TestCase):
         transaction.commit()
 
         browser = self.open_page("@@export_defaultpages")
-        browser.getForm(action='@@export_defaultpages').submit(name='form.submitted')
+        browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
         contents = browser.contents
         if not browser.contents:
             contents = DATA[-1]
         data = json.loads(contents)
         self.assertListEqual(
             data,
-            [{'default_page': 'doc1', 'uuid': folder1.UID()}],
+            [{"default_page": "doc1", "uuid": folder1.UID()}],
         )
 
     def test_export_ordering(self):
@@ -340,7 +342,7 @@ class TestExport(unittest.TestCase):
 
         # Export.
         browser = self.open_page("@@export_ordering")
-        browser.getForm(action='@@export_ordering').submit(name='form.submitted')
+        browser.getForm(action="@@export_ordering").submit(name="form.submitted")
         contents = browser.contents
         if not browser.contents:
             contents = DATA[-1]
@@ -368,7 +370,7 @@ class TestExport(unittest.TestCase):
 
         # Export and check.
         browser = self.open_page("@@export_ordering")
-        browser.getForm(action='@@export_ordering').submit(name='form.submitted')
+        browser.getForm(action="@@export_ordering").submit(name="form.submitted")
         contents = browser.contents
         if not browser.contents:
             contents = DATA[-1]
