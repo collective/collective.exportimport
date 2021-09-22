@@ -9,6 +9,7 @@ from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.namedfile.file import NamedImage
+from plone.namedfile.file import NamedBlobImage
 from Products.CMFPlone.tests import dummy
 
 import json
@@ -333,6 +334,56 @@ class TestImport(unittest.TestCase):
         # The content should be back.
         self.assertIn("events", portal.contentIds())
         self.assertEqual(portal["events"].portal_type, "Folder")
+        self.assertEqual(portal["image"].image.data, dummy.Image().data)
+
+    def _disabled_test_import_blob_path(self):
+        # This test is disabled, because the demo storage
+        # has no 'fshelper' from which we can ask the blob path.
+        # First create a demo image to export.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        image_data = dummy.Image().read()
+        self.image = api.content.create(
+            container=portal,
+            type="Image",
+            title=u"Image",
+            id="image",
+            image=NamedBlobImage(image_data, "image/gif", u"test.gif"),
+        )
+        self.assertIn("image", portal.contentIds())
+        transaction.commit()
+
+        # Now export the complete portal.
+        browser = self.open_page("@@export_content")
+        browser.getControl(name="portal_type").value = [
+            "Image",
+        ]
+        browser.getControl(name="include_blobs").value = [2]
+        browser.getForm(action="@@export_content").submit(name="submit")
+        contents = browser.contents
+        if not browser.contents:
+            # Note: the test would error here, because nothing is exported:
+            # the error is swallowed.
+            contents = DATA[-1]
+
+        data = json.loads(contents)
+        self.assertEqual(len(data), 1)
+
+        # Remove the added content.
+        api.content.delete(portal["image"])
+        transaction.commit()
+        self.assertNotIn("image", portal.contentIds())
+
+        # Now import it.
+        browser = self.open_page("@@import_content")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(contents, "application/json", "Image.json")
+        browser.getForm(action="@@import_content").submit()
+        self.assertIn("Imported 1 items", browser.contents)
+
+        # The image should be back.
+        self.assertEqual(portal["image"].portal_type, "Image")
         self.assertEqual(portal["image"].image.data, dummy.Image().data)
 
     def test_import_defaultpages(self):
