@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from DateTime import DateTime
-from pathlib import Path
 from plone import api
 from plone.api.exc import InvalidParameterError
 from plone.i18n.normalizer.interfaces import IIDNormalizer
@@ -49,13 +48,13 @@ def get_absolute_blob_path(obj, blob_path):
             return blob_path
         return
     if BLOB_HOME:
-        abs_path = Path(BLOB_HOME) / blob_path
+        abs_path = os.path.join(BLOB_HOME, blob_path)
         if os.path.isfile(abs_path):
             return abs_path
     # Try the blobstorage of the current ZODB.
     db = obj._p_jar.db()
     fshelper = db._storage.fshelper
-    abs_path = Path(fshelper.base_dir) / blob_path
+    abs_path = os.path.join(fshelper.base_dir, blob_path)
     if os.path.isfile(abs_path):
         return abs_path
 
@@ -374,8 +373,10 @@ class ImportContent(BrowserView):
                 klass = NamedBlobFile
 
             # Write the field.
+            with open(abs_blob_path, "rb") as myfile:
+                blobdata = myfile.read()
             field_value = klass(
-                data=abs_blob_path.read_bytes(),
+                data=blobdata,
                 contentType=content_type,
                 filename=filename,
             )
