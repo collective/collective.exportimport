@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from DateTime import DateTime
+from pathlib import Path
 from plone import api
 from plone.api.exc import InvalidParameterError
 from plone.i18n.normalizer.interfaces import IIDNormalizer
+from plone.namedfile.file import NamedBlobFile
+from plone.namedfile.file import NamedBlobImage
 from plone.restapi.interfaces import IDeserializeFromJson
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
@@ -28,6 +31,33 @@ except ImportError:
     HAS_COLLECTION_FIX = False
 
 logger = logging.getLogger(__name__)
+BLOB_HOME = os.getenv("COLLECTIVE_EXPORTIMPORT_BLOB_HOME", "")
+
+
+def get_absolute_blob_path(obj, blob_path):
+    """Get absolute path to a blob.
+
+    If the BLOB_HOME variable is set, try to use this.
+
+    If the blob is not found there, try the blobstorage of the current ZODB.
+    The blob may be an export from a different Plone Site in the same database.
+    Or the blobstorage from the old 4.3 site may have been copied
+    or hard linked to the new 5.2 site.
+    """
+    if os.path.isabs(blob_path):
+        if os.path.isfile(blob_path):
+            return blob_path
+        return
+    if BLOB_HOME:
+        abs_path = Path(BLOB_HOME) / blob_path
+        if os.path.isfile(abs_path):
+            return abs_path
+    # Try the blobstorage of the current ZODB.
+    db = obj._p_jar.db()
+    fshelper = db._storage.fshelper
+    abs_path = Path(fshelper.base_dir) / blob_path
+    if os.path.isfile(abs_path):
+        return abs_path
 
 
 class ImportContent(BrowserView):
@@ -244,6 +274,12 @@ class ImportContent(BrowserView):
             deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
             new = deserializer(validate_all=False, data=item)
 
+            # Blobs can be exported as only a path in the blob storage.
+            # It seems difficult to dynamically use a different deserializer,
+            # based on whether or not there is a blob_path somewhere in the item.
+            # So handle this case with a separate method.
+            self.import_blob_paths(new, item)
+
             self.global_obj_hook(new, item)
             self.custom_obj_hook(new, item)
 
@@ -311,6 +347,39 @@ class ImportContent(BrowserView):
             if not item.get(key, None):
                 item[key] = self.DEFAULTS[key]
         return item
+
+    def import_blob_paths(self, new, item):
+        for key, value in item.items():
+            # Look for dictionaries with a blob_path key.
+            if not isinstance(value, dict):
+                continue
+            blob_path = value.get("blob_path")
+            if not blob_path:
+                continue
+            abs_blob_path = get_absolute_blob_path(new, blob_path)
+            if not abs_blob_path:
+                __traceback_info__ = item
+                raise ValueError("Blob path {} does not exist!".format(blob_path))
+
+            # Determine the class to use: file or image.
+            filename = value["filename"]
+            content_type = value["content-type"]
+            if key == "file":
+                klass = NamedBlobFile
+            elif key == "image":
+                klass = NamedBlobImage
+            elif content_type.startswith("image"):
+                klass = NamedBlobImage
+            else:
+                klass = NamedBlobFile
+
+            # Write the field.
+            field_value = klass(
+                data=abs_blob_path.read_bytes(),
+                contentType=content_type,
+                filename=filename,
+            )
+            setattr(new, key, field_value)
 
     def global_dict_hook(self, item):
         """Overwrite this do general changes on the dict before deserializing.
