@@ -5,12 +5,19 @@ Changelog
 1.2 (unreleased)
 ----------------
 
-- Fixed creating missing folder structure.  [maurits]
-
-- Export portlets.
+- Unescape html entities and line-breaks when importing comments (#43).
   [pbauer]
 
-- Export content and write to file using a generator/yield. This avoids memory ballooning to the size of the exported file.
+- Export and import complete sites or content trees with configurable types, depth and path (#40).
+  [pbauer]
+
+- Fixed creating missing folder structure (#45).
+  [maurits]
+
+- Export and import portlets (#39).
+  [pbauer]
+
+- Export content and write to file using a generator/yield. This avoids memory ballooning to the size of the exported file (#41).
   [fredvd]
 
 

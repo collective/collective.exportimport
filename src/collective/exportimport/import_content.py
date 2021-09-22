@@ -164,7 +164,7 @@ class ImportContent(BrowserView):
         logger.info(msg)
         return msg
 
-    def import_new_content(self, data):
+    def import_new_content(self, data):  # noqa: C901
         portal_workflow = api.portal.get_tool("portal_workflow")
         added = []
 
@@ -277,7 +277,7 @@ class ImportContent(BrowserView):
                 # Python 2 strptime does not know of %z timezone
                 try:
                     created_data = datetime.strptime(created, "%Y-%m-%dT%H:%M:%S%z")
-                except:
+                except Exception:
                     created_data = datetime.strptime(created[:-6], "%Y-%m-%dT%H:%M:%S")
                 creation_date = DateTime(created_data)
                 new.creation_date = creation_date
@@ -458,7 +458,7 @@ class ImportContent(BrowserView):
                 same = False
                 break
         if same:
-            parent_path = parent_path[len(context_path) :]
+            parent_path = parent_path[len(context_path):]
         # create original structure for imported content
         for element in parent_path:
             if element not in folder:

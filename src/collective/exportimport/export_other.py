@@ -254,7 +254,7 @@ class ExportTranslations(BrowserView):
         )
         return self.request.response.write(safe_bytes(data))
 
-    def all_translations(self):
+    def all_translations(self):  # noqa: C901
         results = []
 
         # Archetypes with LinguaPlone

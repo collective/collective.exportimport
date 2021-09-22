@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 DISCUSSION_ANNOTATION_KEY = "plone.app.discussion:conversation"
 
 
-if HAS_PAM:
+if HAS_PAM:  # noqa: C901
 
     class ImportTranslations(BrowserView):
         def __call__(self, jsonfile=None, return_json=False):
