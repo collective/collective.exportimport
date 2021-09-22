@@ -12,6 +12,7 @@ from plone.app.testing import TEST_USER_ID
 from plone.namedfile.file import NamedImage
 from Products.CMFPlone.tests import dummy
 
+import datetime
 import json
 import os
 import shutil
@@ -65,6 +66,10 @@ class TestImport(unittest.TestCase):
         """
         portal = self.layer['portal']
 
+        today = datetime.datetime.now()
+        tomorrow = today + datetime.timedelta(days=1)
+        TZNAME = "Europe/Vienna"
+
         self.blog = api.content.create(
             container=portal,
             type='Link',
@@ -100,18 +105,27 @@ class TestImport(unittest.TestCase):
             type='Event',
             id='training',
             title=u'Training',
+            start=today,
+            end=tomorrow,
+            timezone=TZNAME,
         )
         self.conference = api.content.create(
             container=self.events,
             type='Event',
             id='conference',
             title=u'Conference',
+            start=today,
+            end=tomorrow,
+            timezone=TZNAME,
         )
         self.sprint = api.content.create(
             container=self.events,
             type='Event',
             id='sprint',
             title=u'Sprint',
+            start=today,
+            end=tomorrow,
+            timezone=TZNAME,
         )
         self.image = api.content.create(
             container=portal,
