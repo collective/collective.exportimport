@@ -114,6 +114,15 @@ class RichttextFieldSerializerWithRawText(DefaultFieldSerializer):
             }
 
 
+def get_relative_blob_path(obj, full_path):
+    # Get blob path relative from the blobstorage root.
+    db = obj._p_jar.db()
+    base_dir = db._storage.fshelper.base_dir
+    if not full_path.startswith(base_dir):
+        return full_path
+    return full_path[len(base_dir):]
+
+
 if HAS_AT:
     from OFS.Image import Pdata
     from plone.app.blob.interfaces import IBlobField
@@ -227,8 +236,9 @@ if HAS_AT:
 
     def get_at_blob_path(obj):
         full_path = obj.getBlob().committed()
-        if os.path.exists(full_path):
-            return full_path
+        if not os.path.exists(full_path):
+            return
+        return get_relative_blob_path(obj, full_path)
 
 
     @adapter(IBlobImageField, IBaseObject, IPathBlobsMarker)
@@ -357,8 +367,9 @@ if HAS_AT and HAS_PAC:
 
 def get_dx_blob_path(obj):
     full_path = obj._blob.committed()
-    if os.path.exists(full_path):
-        return full_path
+    if not os.path.exists(full_path):
+        return
+    return get_relative_blob_path(obj, full_path)
 
 
 @adapter(INamedFileField, IDexterityContent, IPathBlobsMarker)
