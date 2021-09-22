@@ -233,13 +233,11 @@ if HAS_AT:
             }
             return json_compatible(result)
 
-
     def get_at_blob_path(obj):
         full_path = obj.getBlob().committed()
         if not os.path.exists(full_path):
             return
         return get_relative_blob_path(obj, full_path)
-
 
     @adapter(IBlobImageField, IBaseObject, IPathBlobsMarker)
     @implementer(IFieldSerializer)
@@ -262,7 +260,6 @@ if HAS_AT:
             }
             return json_compatible(result)
 
-
     @adapter(IBlobField, IBaseObject, IPathBlobsMarker)
     @implementer(IFieldSerializer)
     class ATFileFieldSerializerWithBlobPaths(ATDefaultFieldSerializer):
@@ -284,7 +281,6 @@ if HAS_AT:
                 "blob_path": blobfilepath,
             }
             return json_compatible(result)
-
 
     @adapter(ITextField, IBaseObject, IRawRichTextMarker)
     @implementer(IFieldSerializer)
@@ -395,7 +391,6 @@ class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
             "blob_path": blobfilepath,
         }
         return json_compatible(result)
-
 
 
 @adapter(INamedImageField, IDexterityContent, IPathBlobsMarker)
