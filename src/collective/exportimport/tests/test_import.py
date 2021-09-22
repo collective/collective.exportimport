@@ -12,7 +12,6 @@ from plone.app.testing import TEST_USER_ID
 from plone.namedfile.file import NamedImage
 from Products.CMFPlone.tests import dummy
 
-import datetime
 import json
 import os
 import shutil
@@ -60,15 +59,8 @@ class TestImport(unittest.TestCase):
         |   |-- team
         |   `-- contact
         `-- events
-            |-- training
-            |-- conference
-            `-- sprint
         """
         portal = self.layer['portal']
-
-        today = datetime.datetime.now()
-        tomorrow = today + datetime.timedelta(days=1)
-        TZNAME = "Europe/Vienna"
 
         self.blog = api.content.create(
             container=portal,
@@ -100,33 +92,6 @@ class TestImport(unittest.TestCase):
             id='contact',
             title=u'Contact',
         )
-        self.training = api.content.create(
-            container=self.events,
-            type='Event',
-            id='training',
-            title=u'Training',
-            start=today,
-            end=tomorrow,
-            timezone=TZNAME,
-        )
-        self.conference = api.content.create(
-            container=self.events,
-            type='Event',
-            id='conference',
-            title=u'Conference',
-            start=today,
-            end=tomorrow,
-            timezone=TZNAME,
-        )
-        self.sprint = api.content.create(
-            container=self.events,
-            type='Event',
-            id='sprint',
-            title=u'Sprint',
-            start=today,
-            end=tomorrow,
-            timezone=TZNAME,
-        )
         self.image = api.content.create(
             container=portal,
             type='Image',
@@ -144,9 +109,6 @@ class TestImport(unittest.TestCase):
         |   |-- team
         |   `-- contact
         `-- events
-            |-- training
-            |-- conference
-            `-- sprint
 
         """
         portal = self.layer['portal']
@@ -345,14 +307,14 @@ class TestImport(unittest.TestCase):
 
         # Now export the complete portal.
         browser = self.open_page("@@export_content")
-        browser.getControl(name="portal_type").value = ['Event', 'Folder', 'Image', 'Link', 'Document']
+        browser.getControl(name="portal_type").value = ['Folder', 'Image', 'Link', 'Document']
         browser.getForm(action='@@export_content').submit(name='submit')
         contents = browser.contents
         if not browser.contents:
             contents = DATA[-1]
 
         data = json.loads(contents)
-        self.assertEqual(len(data), 9)
+        self.assertEqual(len(data), 6)
 
         # Remove the added content.
         self.remove_demo_content()
@@ -364,11 +326,11 @@ class TestImport(unittest.TestCase):
         upload = browser.getControl(name="jsonfile")
         upload.add_file(contents, "application/json", "Document.json")
         browser.getForm(action="@@import_content").submit()
-        self.assertIn("Imported 9 items", browser.contents)
+        self.assertIn("Imported 6 items", browser.contents)
 
         # The content should be back.
         self.assertIn("events", portal.contentIds())
-        self.assertEqual(portal["events"]["sprint"].portal_type, "Event")
+        self.assertEqual(portal["events"].portal_type, "Folder")
         self.assertEqual(portal["image"].image.data, dummy.Image().data)
 
     def test_import_defaultpages(self):
