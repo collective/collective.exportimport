@@ -10,13 +10,10 @@ from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import ISerializeToJson
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from zope.component import adapter
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.i18n import translate
 from zope.interface import alsoProvides
-from zope.interface import implementer
-from zope.interface import Interface
 from zope.interface import noLongerProvides
 from zope.schema import getFields
 

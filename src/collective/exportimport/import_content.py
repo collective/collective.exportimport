@@ -58,7 +58,6 @@ class ImportContent(BrowserView):
 
     def __call__(self, jsonfile=None, return_json=False, limit=None, server_file=None):
         self.limit = limit
-        response = self.request.response
 
         if not self.request.form.get("form.submitted", False):
             return self.template()

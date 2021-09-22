@@ -8,14 +8,12 @@ from plone import api
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
-from plone.app.testing import TEST_USER_ID
 from plone.namedfile.file import NamedImage
 from Products.CMFPlone.tests import dummy
 
 import json
 import os
 import shutil
-import sys
 import tempfile
 import transaction
 import unittest
@@ -210,7 +208,7 @@ class TestImport(unittest.TestCase):
         folder = api.content.create(
             container=portal, type="Folder", id="folder1", title="Folder 1"
         )
-        doc = api.content.create(
+        api.content.create(
             container=folder, type="Document", id="doc1", title="Document 1"
         )
         transaction.commit()
@@ -262,9 +260,6 @@ class TestImport(unittest.TestCase):
         browser.getControl(name="portal_type").value = ["Document"]
         browser.getControl("Save to file on server").click()
         browser.getForm(action='@@export_content').submit(name='submit')
-        raw_data = browser.contents
-        if not browser.contents:
-            raw_data = DATA[-1]
 
         self.assertIn("Exported 1 items (Document) as Document.json", browser.contents)
         self.assertIn(self.new_clienthome, browser.contents)
@@ -341,7 +336,7 @@ class TestImport(unittest.TestCase):
         folder1 = api.content.create(
             container=portal, type="Folder", id="folder1", title="Folder 1"
         )
-        doc1 = api.content.create(
+        api.content.create(
             container=folder1, type="Document", id="doc1", title="Document 1"
         )
         folder1._setProperty("default_page", "doc1")
@@ -370,7 +365,7 @@ class TestImport(unittest.TestCase):
         self.assertEqual(folder1.getProperty("default_page"), "doc1")
 
         # Set a different default page.
-        doc2 = api.content.create(
+        api.content.create(
             container=folder1, type="Document", id="doc2", title="Document 2"
         )
         folder1._updateProperty("default_page", "doc2")
@@ -393,13 +388,13 @@ class TestImport(unittest.TestCase):
         folder1 = api.content.create(
             container=portal, type="Folder", id="folder1", title="Folder 1"
         )
-        doc1 = api.content.create(
+        api.content.create(
             container=folder1, type="Document", id="doc1", title="Document 1"
         )
-        doc2 = api.content.create(
+        api.content.create(
             container=folder1, type="Document", id="doc2", title="Document 2"
         )
-        doc3 = api.content.create(
+        api.content.create(
             container=folder1, type="Document", id="doc3", title="Document 3"
         )
         transaction.commit()

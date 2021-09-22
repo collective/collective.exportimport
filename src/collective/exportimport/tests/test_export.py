@@ -160,10 +160,10 @@ class TestExport(unittest.TestCase):
         folder1 = api.content.create(
             container=portal, type="Folder", id="folder1", title="Folder 1"
         )
-        doc1 = api.content.create(
+        api.content.create(
             container=folder1, type="Document", id="doc1", title="Document 1"
         )
-        doc2 = api.content.create(
+        api.content.create(
             container=folder1, type="Document", id="doc2", title="Document 2"
         )
         doc3 = api.content.create(
@@ -172,7 +172,7 @@ class TestExport(unittest.TestCase):
         folder2 = api.content.create(
             container=portal, type="Folder", id="folder2", title="Folder 2"
         )
-        collection = api.content.create(
+        api.content.create(
             container=folder2, type="Collection", id="collection1", title="Collection 1"
         )
         transaction.commit()
@@ -260,7 +260,6 @@ class TestExport(unittest.TestCase):
         self.assertEqual(info["@type"], "Folder")
         self.assertEqual(info["title"], folder2.Title())
 
-
     def test_export_members(self):
         browser = self.open_page("@@export_members")
         browser.getForm(action='@@export_members').submit(name='form.submitted')
@@ -299,12 +298,11 @@ class TestExport(unittest.TestCase):
         # First create some content.
         app = self.layer["app"]
         portal = self.layer["portal"]
-        request = self.layer["request"]
         login(app, SITE_OWNER_NAME)
         folder1 = api.content.create(
             container=portal, type="Folder", id="folder1", title="Folder 1"
         )
-        doc1 = api.content.create(
+        api.content.create(
             container=folder1, type="Document", id="doc1", title="Document 1"
         )
         folder1._setProperty("default_page", "doc1")

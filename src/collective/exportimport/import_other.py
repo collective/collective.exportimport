@@ -5,7 +5,6 @@ from datetime import datetime
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
-from plone.app.discussion.browser.comments import CommentForm
 from plone.app.discussion.comment import Comment
 from plone.app.discussion.interfaces import IConversation
 from plone.app.portlets.interfaces import IPortletTypeInterface
@@ -13,7 +12,6 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletAssignmentSettings
 from plone.portlets.interfaces import ILocalPortletAssignmentManager
 from plone.portlets.interfaces import IPortletManager
-from plone.restapi.deserializer import json_body
 from Products.Five import BrowserView
 from six.moves.html_parser import HTMLParser
 from zope.annotation.interfaces import IAnnotations

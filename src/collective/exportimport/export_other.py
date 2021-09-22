@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
-from collections import defaultdict
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
@@ -15,7 +14,6 @@ from zope.component import getMultiAdapter
 from zope.component import queryUtility
 from plone.app.portlets.interfaces import IPortletTypeInterface
 from plone.portlets.interfaces import IPortletAssignmentMapping
-from plone.portlets.interfaces import ILocalPortletAssignable
 from plone.portlets.interfaces import ILocalPortletAssignmentManager
 from plone.portlets.interfaces import IPortletAssignmentSettings
 from plone.portlets.interfaces import IPortletManager
@@ -249,7 +247,6 @@ class ExportTranslations(BrowserView):
         )
         return self.request.response.write(safe_bytes(data))
 
-
     def all_translations(self):
         results = []
 
@@ -335,7 +332,6 @@ class ExportLocalRoles(BrowserView):
 
     def all_localroles(self):
         results = []
-        from Products.CMFPlone.utils import base_hasattr
 
         def get_localroles(obj, path):
             uid = IUUID(obj, None)
@@ -452,6 +448,7 @@ class ExportDiscussion(BrowserView):
 
     def all_discussions(self):
         results = []
+
         def get_discussion(obj, path):
             conversation = IConversation(obj, None)
             if not conversation:
@@ -545,6 +542,7 @@ def export_local_portlets(obj):
             })
     return items
 
+
 def export_portlets_blacklist(obj):
     results = []
     for manager_name, manager in getUtilitiesFor(IPortletManager):
@@ -554,9 +552,9 @@ def export_portlets_blacklist(obj):
         for category in (USER_CATEGORY, GROUP_CATEGORY, CONTENT_TYPE_CATEGORY, CONTEXT_CATEGORY,):
             obj_results = {}
             status = assignable.getBlacklistStatus(category)
-            if status == True:
+            if status is True:
                 obj_results['status'] = u'block'
-            elif status == False:
+            elif status is False:
                 obj_results['status'] = u'show'
 
             if obj_results:
@@ -564,7 +562,6 @@ def export_portlets_blacklist(obj):
                 obj_results['category'] = category
                 results.append(obj_results)
     return results
-
 
 
 def safe_bytes(value, encoding="utf-8"):
