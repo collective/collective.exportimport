@@ -99,7 +99,7 @@ class ExportContent(BrowserView):
         portal_type=None,
         path=None,
         depth=-1,
-        include_blobs=0,
+        include_blobs=1,
         download_to_server=False,
         migration=True,
     ):
