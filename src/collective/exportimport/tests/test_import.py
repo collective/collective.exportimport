@@ -173,6 +173,7 @@ class TestImport(unittest.TestCase):
         doc = api.content.create(
             container=portal, type="Document", id="doc1", title="Document 1"
         )
+        doc_uid = doc.UID()
         transaction.commit()
 
         # Now export it.
@@ -202,6 +203,25 @@ class TestImport(unittest.TestCase):
         new_doc = portal["doc1"]
         self.assertEqual(new_doc.Title(), "Document 1")
         self.assertEqual(new_doc.portal_type, "Document")
+        self.assertEqual(new_doc.UID(), doc_uid)
+
+        # See what happens when we import it a second time.
+        original_ids = portal.contentIds()
+        browser = self.open_page("@@import_content")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "Document.json")
+        browser.getForm(action="@@import_content").submit()
+        self.assertIn("Imported 1 items", browser.contents)
+
+        # A second document should be there.
+        new_ids = [docid for docid in portal.contentIds() if docid not in original_ids]
+        self.assertEqual(len(new_ids), 1)
+        doc2 = portal[new_ids[0]]
+        # doc2 is the same as the original
+        self.assertEqual(doc2.Title(), "Document 1")
+        self.assertEqual(doc2.portal_type, "Document")
+        # except for the UID
+        self.assertNotEqual(doc2.UID(), doc_uid)
 
     def test_import_content_with_missing_folder(self):
         # First create some content.
@@ -223,6 +243,58 @@ class TestImport(unittest.TestCase):
         raw_data = browser.contents
         if not browser.contents:
             raw_data = DATA[-1]
+
+        # Remove both the folder and document.
+        api.content.delete(folder)
+        transaction.commit()
+        self.assertNotIn("folder1", portal.contentIds())
+
+        # Now import the document.
+        # The missing folder structure should be created.
+        browser = self.open_page("@@import_content")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "Document.json")
+        browser.getForm(action="@@import_content").submit()
+        self.assertIn("Imported 1 items", browser.contents)
+
+        # The folder should be back.
+        self.assertIn("folder1", portal.contentIds())
+        new_folder = portal["folder1"]
+        # The auto generated folder will have its id as title
+        self.assertEqual(new_folder.Title(), "folder1")
+        # The document should be back.
+        self.assertIn("doc1", new_folder.contentIds())
+        new_doc = new_folder["doc1"]
+        self.assertEqual(new_doc.Title(), "Document 1")
+        self.assertEqual(new_doc.portal_type, "Document")
+
+    def test_import_content_from_other_plone_site(self):
+        # When we import nohost/nl/folder/page into
+        # nohost/plone, we should not get an 'nl' container.
+
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        api.content.create(
+            container=folder, type="Document", id="doc1", title="Document 1"
+        )
+        transaction.commit()
+
+        # Now export the document.
+        browser = self.open_page("@@export_content")
+        browser.getControl(name="portal_type").value = ["Document"]
+        browser.getForm(action="@@export_content").submit(name="submit")
+        raw_data = browser.contents
+        if not browser.contents:
+            raw_data = DATA[-1]
+
+        # Edit the raw data to pretend this was from a Plone Site
+        # with id 'nl' instead of 'plone'.
+        raw_data = raw_data.replace(b"/plone", b"/nl")
 
         # Remove both the folder and document.
         api.content.delete(folder)

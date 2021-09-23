@@ -5,6 +5,10 @@ Changelog
 1.2 (unreleased)
 ----------------
 
+- Prevent creating content in a different Plone Site in the same database (#52).
+  In general, cleanup parent paths when in development on localhost.
+  [maurits]
+
 - Read environment variable ``COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY`` (#51).
   When set, this is used for storing an export file and getting an import file.
   This is useful for sharing content between multiple Plone Sites on the same server.
