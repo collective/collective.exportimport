@@ -5,7 +5,7 @@ Changelog
 1.2 (unreleased)
 ----------------
 
-- Read environment variable ``COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY``.
+- Read environment variable ``COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY`` (#51).
   When set, this is used for storing an export file and getting an import file.
   This is useful for sharing content between multiple Plone Sites on the same server.
   [maurits]

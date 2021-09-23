@@ -8,4 +8,6 @@ import os
 # and copy it to this central directory on the server.
 # When set, this is used instead of for example
 # var/instance/ or var/instance/import/
-CENTRAL_DIRECTORY = os.getenv("COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY", "")
+CENTRAL_DIRECTORY = os.path.expanduser(
+    os.path.expandvars(os.getenv("COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY", ""))
+)
