@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collective.exportimport import config
 from datetime import datetime
 from DateTime import DateTime
 from plone import api
@@ -168,6 +169,8 @@ class ImportContent(BrowserView):
             directory = os.path.join(impath, "import")
             listing.append(directory)
         listing.sort()
+        if config.CENTRAL_DIRECTORY:
+            listing.insert(0, config.CENTRAL_DIRECTORY)
         return listing
 
     @property
@@ -177,7 +180,11 @@ class ImportContent(BrowserView):
         for directory in self.import_paths:
             if not os.path.isdir(directory):
                 continue
-            listing += [f for f in os.listdir(directory) if f.endswith(".json")]
+            listing += [
+                f
+                for f in os.listdir(directory)
+                if f.endswith(".json") and f not in listing
+            ]
         listing.sort()
         return listing
 

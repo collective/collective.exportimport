@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
 from App.config import getConfiguration
+from collective.exportimport import config
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IPathBlobsMarker
@@ -166,8 +167,15 @@ class ExportContent(BrowserView):
 
         number = 0
         if download_to_server:
-            cfg = getConfiguration()
-            filepath = os.path.join(cfg.clienthome, filename)
+            directory = config.CENTRAL_DIRECTORY
+            if directory:
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                    logger.info("Created central export/import directory %s", directory)
+            else:
+                cfg = getConfiguration()
+                directory = cfg.clienthome
+            filepath = os.path.join(directory, filename)
             with open(filepath, "w") as f:
                 for number, datum in enumerate(content_generator, start=1):
                     if number == 1:
