@@ -7,6 +7,10 @@ class IBase64BlobsMarker(Interface):
     """A marker interface to override default serializers."""
 
 
+class IPathBlobsMarker(Interface):
+    """A marker interface to override default serializers."""
+
+
 class IRawRichTextMarker(Interface):
     """A marker interface to override default serializers for Richtext."""
 

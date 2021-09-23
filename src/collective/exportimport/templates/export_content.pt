@@ -56,17 +56,21 @@
             </div>
 
             <div class="field mb-3">
-              <label>
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    name="include_blobs:boolean"
-                    id="include_blobs"
-                    value="1"
-                    checked
-                    />
-                Include data from image- and file-fields as base-64 encoded strings?
-              </label>
+              <label for="include_blobs">Include blobs</label>
+              <span class="formHelp">
+                  How should data from image- and file-fields be included?
+              </span>
+              <div class="widget">
+                <select name="include_blobs" class="">
+                  <option value="0"
+                          tal:repeat="current python:view.include_blobs_options"
+                          tal:attributes="value python: current[0];
+                                          selected python:'selected' if int(current[0]) == view.include_blobs else False"
+                          tal:content="python:current[1]">
+                        0
+                  </option>
+                </select>
+              </div>
             </div>
 
             <div class="field mb-3">

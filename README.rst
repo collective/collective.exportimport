@@ -189,7 +189,13 @@ Exporting and importing large amounts of content can take a while. Export is pre
 * Importing 5000 Documents takes >25 minutes because of versioning.
 * Importing 5000 Documents without versioning takes ~7 minutes.
 
-When exporting large numbers of binary files you will get huge json-files and may run out of memory. Options to export the blob-filepath instead are discussed in https://github.com/collective/collective.exportimport/issues/17.
+When exporting large numbers of blobs (binary files and images) you will get huge json-files and may run out of memory.
+You have various options to deal with this.
+The best way depends on how you are going to import the blobs:
+
+- Export as download urls: small download, but ``collective.exportimport`` cannot import the blobs, so you will need an own import script to download them.
+- Export as base-64 encoded strings: large download, but ``collective.exportimport`` can handle the import.
+- Export as blob paths: small download and ``collective.exportimport`` can handle the import, but you need to copy ``var/blobstorage`` to the Plone Site where you do the import.
 
 
 Customize export and import

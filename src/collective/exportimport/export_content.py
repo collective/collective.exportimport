@@ -3,6 +3,7 @@ from Acquisition import aq_base
 from App.config import getConfiguration
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
+from collective.exportimport.interfaces import IPathBlobsMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
 from operator import itemgetter
 from plone import api
@@ -98,7 +99,7 @@ class ExportContent(BrowserView):
         portal_type=None,
         path=None,
         depth=-1,
-        include_blobs=False,
+        include_blobs=1,
         download_to_server=False,
         migration=True,
     ):
@@ -123,6 +124,12 @@ class ExportContent(BrowserView):
             ("9", "9"),
             ("10", "10"),
         )
+        self.include_blobs = int(include_blobs)
+        self.include_blobs_options = (
+            ("0", "as download urls"),
+            ("1", "as base-64 encoded strings"),
+            ("2", "as blob paths"),
+        )
 
         self.update()
 
@@ -133,9 +140,16 @@ class ExportContent(BrowserView):
             api.portal.show_message(u"Select at least one type to export", self.request)
             return self.template()
 
-        if include_blobs:
+        if self.include_blobs == 1:
             # Add marker-interface to request to use our custom serializers
             alsoProvides(self.request, IBase64BlobsMarker)
+        elif self.include_blobs == 2:
+            # Add marker interface to export blob paths
+            alsoProvides(self.request, IPathBlobsMarker)
+        else:
+            # Use the default plone.restapi serializer,
+            # which gives a download url.
+            pass
 
         if self.migration:
             # Add marker-interface to request to use custom serializers
@@ -148,7 +162,7 @@ class ExportContent(BrowserView):
             filename = self.path.split("/")[-1]
         filename = "{}.json".format(filename)
 
-        content_generator = self.export_content(include_blobs=include_blobs)
+        content_generator = self.export_content()
 
         number = 0
         if download_to_server:
@@ -169,9 +183,11 @@ class ExportContent(BrowserView):
             logger.info(msg)
             api.portal.show_message(msg, self.request)
 
-            if include_blobs:
+            if self.include_blobs == 1:
                 # remove marker interface
                 noLongerProvides(self.request, IBase64BlobsMarker)
+            elif self.include_blobs == 2:
+                noLongerProvides(self.request, IPathBlobsMarker)
             self.request.response.redirect(self.request["ACTUAL_URL"])
         else:
             with tempfile.TemporaryFile(mode="w+") as f:
@@ -193,9 +209,11 @@ class ExportContent(BrowserView):
                     "content-disposition",
                     'attachment; filename="{0}"'.format(filename),
                 )
-                if include_blobs:
+                if self.include_blobs == 1:
                     # remove marker interface
                     noLongerProvides(self.request, IBase64BlobsMarker)
+                elif self.include_blobs == 2:
+                    noLongerProvides(self.request, IPathBlobsMarker)
                 f.seek(0)
                 return response.write(safe_bytes(f.read()))
 
@@ -218,7 +236,7 @@ class ExportContent(BrowserView):
         """Overwrite this if you want more control over which content to export."""
         return query
 
-    def export_content(self, include_blobs=False):
+    def export_content(self):
         query = self.build_query()
         catalog = api.portal.get_tool("portal_catalog")
         brains = catalog.unrestrictedSearchResults(**query)

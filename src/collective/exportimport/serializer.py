@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from hurry.filesize import size
 from collective.exportimport.interfaces import IBase64BlobsMarker
-from collective.exportimport.interfaces import IRawRichTextMarker
 from collective.exportimport.interfaces import IMigrationMarker
+from collective.exportimport.interfaces import IPathBlobsMarker
+from collective.exportimport.interfaces import IRawRichTextMarker
+from hurry.filesize import size
 from plone.app.textfield.interfaces import IRichText
 from plone.dexterity.interfaces import IDexterityContent
 from plone.namedfile.interfaces import INamedFileField
@@ -17,6 +18,7 @@ from zope.interface import implementer
 
 import base64
 import logging
+import os
 import pkg_resources
 
 try:
@@ -110,6 +112,15 @@ class RichttextFieldSerializerWithRawText(DefaultFieldSerializer):
                 u"content-type": json_compatible(value.mimeType),
                 u"encoding": json_compatible(value.encoding),
             }
+
+
+def get_relative_blob_path(obj, full_path):
+    # Get blob path relative from the blobstorage root.
+    db = obj._p_jar.db()
+    base_dir = db._storage.fshelper.base_dir
+    if not full_path.startswith(base_dir):
+        return full_path
+    return full_path[len(base_dir):]
 
 
 if HAS_AT:
@@ -222,6 +233,55 @@ if HAS_AT:
             }
             return json_compatible(result)
 
+    def get_at_blob_path(obj):
+        full_path = obj.getBlob().committed()
+        if not os.path.exists(full_path):
+            return
+        return get_relative_blob_path(obj, full_path)
+
+    @adapter(IBlobImageField, IBaseObject, IPathBlobsMarker)
+    @implementer(IFieldSerializer)
+    class ATImageFieldSerializerWithBlobPaths(ATDefaultFieldSerializer):
+        def __call__(self):
+            file_obj = self.field.get(self.context)
+            if not file_obj:
+                return None
+            blobfilepath = get_at_blob_path(file_obj)
+            if not blobfilepath:
+                logger.warning(
+                    "Blob file path of %s does not exist",
+                    self.context.absolute_url(),
+                )
+                return
+            result = {
+                "filename": self.field.getFilename(self.context),
+                "content-type": self.field.getContentType(self.context),
+                "blob_path": blobfilepath,
+            }
+            return json_compatible(result)
+
+    @adapter(IBlobField, IBaseObject, IPathBlobsMarker)
+    @implementer(IFieldSerializer)
+    class ATFileFieldSerializerWithBlobPaths(ATDefaultFieldSerializer):
+        def __call__(self):
+            file_obj = self.field.get(self.context)
+            if not file_obj:
+                return None
+
+            blobfilepath = get_at_blob_path(file_obj)
+            if not blobfilepath:
+                logger.warning(
+                    "Blob file path of %s does not exist",
+                    self.context.absolute_url(),
+                )
+                return
+            result = {
+                "filename": self.field.getFilename(self.context),
+                "content-type": self.field.getContentType(self.context),
+                "blob_path": blobfilepath,
+            }
+            return json_compatible(result)
+
     @adapter(ITextField, IBaseObject, IRawRichTextMarker)
     @implementer(IFieldSerializer)
     class ATTextFieldSerializer(ATDefaultFieldSerializer):
@@ -299,3 +359,63 @@ if HAS_AT and HAS_PAC:
                 topic_metadata["b_size"] = self.context.itemCount
 
             return topic_metadata
+
+
+def get_dx_blob_path(obj):
+    full_path = obj._blob.committed()
+    if not os.path.exists(full_path):
+        return
+    return get_relative_blob_path(obj, full_path)
+
+
+@adapter(INamedFileField, IDexterityContent, IPathBlobsMarker)
+@implementer(IFieldSerializer)
+class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
+
+    def __call__(self):
+        namedfile = self.field.get(self.context)
+        if namedfile is None:
+            return None
+
+        blobfilepath = get_dx_blob_path(namedfile)
+        if not blobfilepath:
+            logger.warning(
+                "Blob file path of %s does not exist",
+                self.context.absolute_url(),
+            )
+            return
+        result = {
+            "filename": namedfile.filename,
+            "content-type": namedfile.contentType,
+            "size": namedfile.getSize(),
+            "blob_path": blobfilepath,
+        }
+        return json_compatible(result)
+
+
+@adapter(INamedImageField, IDexterityContent, IPathBlobsMarker)
+@implementer(IFieldSerializer)
+class ImageFieldSerializerWithBlobPaths(DefaultFieldSerializer):
+
+    def __call__(self):
+        image = self.field.get(self.context)
+        if image is None:
+            return None
+
+        blobfilepath = get_dx_blob_path(image)
+        if not blobfilepath:
+            logger.warning(
+                "Blob file path of %s does not exist",
+                self.context.absolute_url(),
+            )
+            return
+        width, height = image.getImageSize()
+        result = {
+            "filename": image.filename,
+            "content-type": image.contentType,
+            "size": image.getSize(),
+            "width": width,
+            "height": height,
+            "blob_path": blobfilepath,
+        }
+        return json_compatible(result)
