@@ -11,10 +11,11 @@ Changelog
 - Export and import complete sites or content trees with configurable types, depth and path (#40).
   [pbauer]
 
-- Added option to export blobs as blob paths.
+- Added option to export blobs as blob paths (#50).
   [pbauer, maurits]
 
-- Fixed creating missing folder structure.  [maurits]
+- Fixed creating missing folder structure (#45).
+  [maurits]
 
 - Export and import portlets (#39).
   [pbauer]
