@@ -126,7 +126,7 @@ class ExportContent(BrowserView):
         )
         self.include_blobs = int(include_blobs)
         self.include_blobs_options = (
-            ("0", "as download urls (default)"),
+            ("0", "as download urls"),
             ("1", "as base-64 encoded strings"),
             ("2", "as blob paths"),
         )
