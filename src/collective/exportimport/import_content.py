@@ -506,7 +506,39 @@ class ImportContent(BrowserView):
             return self.get_parent_as_container(item)
 
     def get_parent_as_container(self, item):
-        """The default is to generate a folder-structure exactly as the original"""
+        """The default is to generate a folder-structure exactly as the original.
+
+        There is some trickyness that probably only happens during local
+        development, and not in production sites.
+        Situation:
+
+        - localhost:8080/nl is a Dutch Plone Site
+        - localhost:8080/de is a German Plone Site in the same ZODB
+        - localhost:9999/fr is a French Plone Site a different ZODB
+
+        We export nl/folder/page.
+        The parent url (parent/@id) is http://localhost:8080/nl/folder
+        Parent path is then: ["", "nl", "folder].
+
+        1. We import it in the NL site.
+           We should recognize this, and not try to create
+           /nl/random-id/nl
+           which would fail with BadRequest at the reserved id 'nl'.
+           Note: the 'random-id' would be because of the empty string
+           at the start of the parent path.
+           Expected result: nl/folder/page-1234
+
+        2. We import it in the DE site.
+           This should *not* traverse to the NL site and create the content there.
+           I have seen this happen.
+           It should also *not* create a de/nl folder: an unwanted extra level.
+           Expected result: de/folder/page
+
+        3. We import it in the FR site.
+           It should *not* create a fr/nl folder: an unwanted extra level.
+           Expected result: fr/folder/page
+
+        """
         parent_url = unquote(item["parent"]["@id"])
         parent_path = urlparse(parent_url).path
         # physical path is bytes in Zope 2 (not in Zope 4)
@@ -515,27 +547,40 @@ class ImportContent(BrowserView):
             parent_path = parent_path.encode("utf8")
         parent = api.content.get(path=parent_path)
         if parent:
-            return parent
-        else:
-            return self.create_container(item)
+            # Check that we did not traverse to content outside of the portal.
+            # Actually, we probably should not go outside the navigation root either,
+            # especially with multilingual, although most likely
+            # the context is the site root.
+            found_path = "/".join(parent.getPhysicalPath())
+            nav_path = "/".join(
+                api.portal.get_navigation_root(self.context).getPhysicalPath()
+            )
+            if found_path.startswith(nav_path):
+                return parent
+            logger.info(
+                "Ignoring existing container outside of navigation root: %s", found_path
+            )
+        return self.create_container(item)
 
     def create_container(self, item):
+        """Create container for item.
+
+        See remarks in get_parent_as_container for some corner cases.
+        """
         folder = self.context
         parent_url = unquote(item["parent"]["@id"])
-        parent_path = urlparse(parent_url).path.split("/")
-        context_path = self.context.getPhysicalPath()
-        # We could be importing /Plone/doc into /Plone.
-        # parent_path is then: ["", "Plone"].
-        # We should recognize this, and not try to create
-        # /Plone/random-id/Plone/doc,
-        # which would fail with BadRequest at the reserved id 'Plone'.
-        same = True
-        for i, path_item in enumerate(context_path):
-            if path_item != parent_path[i]:
-                same = False
-                break
-        if same:
-            parent_path = parent_path[len(context_path):]
+        parent_url_parsed = urlparse(parent_url)
+        # Get the path part, split it, remove the always empty first element.
+        parent_path = parent_url_parsed.path.split("/")[1:]
+        if (
+            len(parent_url_parsed.netloc.split(":")) > 1
+            or parent_url_parsed.netloc == "nohost"
+        ):
+            # For example localhost:8080, or nohost when running tests.
+            # First element will then be a Plone Site id.
+            # Get rid of it.
+            parent_path = parent_path[1:]
+
         # create original structure for imported content
         for element in parent_path:
             if element not in folder:
