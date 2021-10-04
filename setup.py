@@ -4,6 +4,8 @@
 from setuptools import find_packages
 from setuptools import setup
 
+import sys
+
 
 long_description = "\n\n".join(
     [
