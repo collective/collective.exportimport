@@ -3,7 +3,6 @@
 
 from setuptools import find_packages
 from setuptools import setup
-import sys
 
 
 long_description = "\n\n".join(
@@ -17,7 +16,6 @@ long_description = "\n\n".join(
 install_requires = [
     "setuptools",
     "plone.api >= 1.8.4",
-    "plone.restapi < 8.0.0 ; python_version<'3'",
     "hurry.filesize",
     "ijson",
     "six",
@@ -25,6 +23,9 @@ install_requires = [
 
 if sys.version_info[0] < 3:
     install_requires.append("plone.restapi < 8.0.0")
+    # plone.restapi depends on plone.schema, which depends on jsonschema,
+    # which has a Py3-only release since September 2021.
+    install_requires.append("jsonschema < 4")
 else:
     install_requires.append("plone.restapi")
 
