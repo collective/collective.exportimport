@@ -95,9 +95,9 @@ class ImportContent(BrowserView):
             try:
                 if isinstance(jsonfile, str):
                     return_json = True
-                    data = ijson.items(jsonfile, "item")
-                elif isinstance(jsonfile, FileUpload) or hasattr(jsonfile, "read"):
-                    data = ijson.items(jsonfile, "item")
+                    data = ijson.items(jsonfile, 'item')
+                elif isinstance(jsonfile, FileUpload) or hasattr(jsonfile, 'read'):
+                    data = ijson.items(jsonfile, 'item')
                 else:
                     raise RuntimeError("Data is neither text, file nor upload.")
             except Exception as e:
@@ -164,11 +164,19 @@ class ImportContent(BrowserView):
         logger.info(msg)
         return msg
 
+<<<<<<< HEAD
     def import_new_content(self, data):  # noqa
         portal_workflow = api.portal.get_tool("portal_workflow")
         added = []
 
         if getattr(data, "len", None):
+=======
+    def import_new_content(self, data):
+        portal_workflow = api.portal.get_tool('portal_workflow')
+        added = []
+
+        if getattr(data, 'len', None):
+>>>>>>> col/support_trees
             logger.info(u"Importing {} items".format(len(data)))
         else:
             logger.info(u"Importing data")
@@ -439,10 +447,22 @@ class ImportContent(BrowserView):
     def create_container(self, item):
         folder = self.context
         parent_url = unquote(item["parent"]["@id"])
-        parent_path = urlparse(parent_url).path
-
+        parent_path = urlparse(parent_url).path.split("/")
+        context_path = self.context.getPhysicalPath()
+        # We could be importing /Plone/doc into /Plone.
+        # parent_path is then: ["", "Plone"].
+        # We should recognize this, and not try to create
+        # /Plone/random-id/Plone/doc,
+        # which would fail with BadRequest at the reserved id 'Plone'.
+        same = True
+        for i, path_item in enumerate(context_path):
+            if path_item != parent_path[i]:
+                same = False
+                break
+        if same:
+            parent_path = parent_path[len(context_path):]
         # create original structure for imported content
-        for element in parent_path.split("/"):
+        for element in parent_path:
             if element not in folder:
                 folder = api.content.create(
                     container=folder,

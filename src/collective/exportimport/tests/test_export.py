@@ -8,17 +8,53 @@ from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
-from plone.testing import zope
 
 import json
 import transaction
 import unittest
+
+try:
+    from plone.testing import zope
+
+    OLD_ZOPE_TESTBROWSER = False
+except ImportError:
+    # BBB for plone.testing 4
+    from plone.testing import z2 as zope
+    from ZPublisher.HTTPResponse import HTTPResponse
+
+    OLD_ZOPE_TESTBROWSER = True
+
+
+DATA = []
+
+
+def write(self, data):
+    """Override for HTTPResponse.write.
+
+    In Zope 2 (Plone 4.3-5.1) in tests, when we export content to download it,
+    the resulting browser.contents is empty, instead of containing json.
+    This is an ugly hack to capture the data that should be available.
+    I tried a few other ways, but failed.
+    """
+    self._orig_write(data)
+    DATA.append(data)
 
 
 class TestExport(unittest.TestCase):
     """Test that we can export."""
 
     layer = COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
+
+    def setUp(self):
+        if OLD_ZOPE_TESTBROWSER:
+            # patch HTTPResponse so we can get an attachment
+            HTTPResponse._orig_write = HTTPResponse.write
+            HTTPResponse.write = write
+
+    def tearDown(self):
+        if OLD_ZOPE_TESTBROWSER:
+            # undo patch
+            HTTPResponse.write = HTTPResponse._orig_write
 
     def open_page(self, page):
         """Create a testbrowser, open a page, return the browser."""
@@ -63,10 +99,18 @@ class TestExport(unittest.TestCase):
         self.assertIn("Document", portal_type.options)
         self.assertNotIn("Folder", portal_type.options)
         portal_type.value = ["Document"]
-        browser.getControl("Export").click()
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
 
         # We should have gotten json.
-        data = json.loads(browser.contents)
+        data = json.loads(contents)
         self.assertEqual(len(data), 1)
 
         # Check a few important keys.
@@ -92,10 +136,17 @@ class TestExport(unittest.TestCase):
         self.assertIn("Collection", portal_type.options)
         self.assertNotIn("Folder", portal_type.options)
         portal_type.value = ["Collection"]
-        browser.getControl("Export").click()
+        try:
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
 
         # We should have gotten json.
-        data = json.loads(browser.contents)
+        data = json.loads(contents)
         self.assertEqual(len(data), 1)
 
         # Check a few important keys.
@@ -142,10 +193,18 @@ class TestExport(unittest.TestCase):
         depth = browser.getControl(name="depth")
         self.assertEqual(depth.value, ["-1"])
 
-        browser.getControl("Export").click()
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
 
         # We should have gotten json.
-        data = json.loads(browser.contents)
+        data = json.loads(contents)
         self.assertEqual(len(data), 6)
 
         # Check a few important keys.
@@ -160,10 +219,18 @@ class TestExport(unittest.TestCase):
         portal_type.value = ["Folder", "Document", "Collection"]
         path = browser.getControl(label="Path")
         path.value = "/plone/folder1"
-        browser.getControl("Export").click()
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
 
         # We should have gotten json.
-        data = json.loads(browser.contents)
+        data = json.loads(contents)
         self.assertEqual(len(data), 4)
         info = data[3]
         self.assertEqual(info["@id"], portal.absolute_url() + "/folder1/doc3")
@@ -178,20 +245,30 @@ class TestExport(unittest.TestCase):
         path.value = "/plone"
         depth = browser.getControl(name="depth")
         depth.value = ["1"]
-        browser.getControl("Export").click()
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
 
-        data = json.loads(browser.contents)
+        data = json.loads(contents)
         self.assertEqual(len(data), 2)
         info = data[1]
         self.assertEqual(info["@id"], portal.absolute_url() + "/folder2")
         self.assertEqual(info["@type"], "Folder")
         self.assertEqual(info["title"], folder2.Title())
 
-
     def test_export_members(self):
         browser = self.open_page("@@export_members")
-        browser.getForm(action='@@export_members').submit(name='form.submitted')
-        data = json.loads(browser.contents)
+        browser.getForm(action="@@export_members").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
         self.assertIn("groups", data.keys())
         self.assertIn("members", data.keys())
 
@@ -212,8 +289,11 @@ class TestExport(unittest.TestCase):
 
     def test_export_defaultpages_empty(self):
         browser = self.open_page("@@export_defaultpages")
-        browser.getForm(action='@@export_defaultpages').submit(name='form.submitted')
-        data = json.loads(browser.contents)
+        browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
         self.assertListEqual(data, [])
 
     def test_export_defaultpages(self):
@@ -232,11 +312,14 @@ class TestExport(unittest.TestCase):
         transaction.commit()
 
         browser = self.open_page("@@export_defaultpages")
-        browser.getForm(action='@@export_defaultpages').submit(name='form.submitted')
-        data = json.loads(browser.contents)
+        browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
         self.assertListEqual(
             data,
-            [{'default_page': 'doc1', 'uuid': folder1.UID()}],
+            [{"default_page": "doc1", "uuid": folder1.UID()}],
         )
 
     def test_export_ordering(self):
@@ -260,8 +343,11 @@ class TestExport(unittest.TestCase):
 
         # Export.
         browser = self.open_page("@@export_ordering")
-        browser.getForm(action='@@export_ordering').submit(name='form.submitted')
-        data = json.loads(browser.contents)
+        browser.getForm(action="@@export_ordering").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
 
         # Turn the list into a dict for easier searching and comparing.
         data_uuid2order = {}
@@ -285,8 +371,11 @@ class TestExport(unittest.TestCase):
 
         # Export and check.
         browser = self.open_page("@@export_ordering")
-        browser.getForm(action='@@export_ordering').submit(name='form.submitted')
-        data = json.loads(browser.contents)
+        browser.getForm(action="@@export_ordering").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
         data_uuid2order = {}
         for item in data:
             data_uuid2order[item["uuid"]] = item["order"]

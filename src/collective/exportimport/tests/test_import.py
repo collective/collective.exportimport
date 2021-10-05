@@ -10,8 +10,13 @@ from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
 from plone.namedfile.file import NamedImage
-from plone.testing import zope
 from Products.CMFPlone.tests import dummy
+
+try:
+    from plone.testing import zope
+except ImportError:
+    # BBB for plone.testing 4
+    from plone.testing import z2 as zope
 
 import json
 import os
@@ -27,7 +32,10 @@ import unittest
 # importing the modified date:
 # ValueError: 'z' is a bad directive in format '%Y-%m-%dT%H:%M:%S%z'
 # Ah, and we have the same error on Python 3.6.
-@unittest.skipIf(sys.version_info[:2] < (3, 7), "Import is only supported on Python 3.7+ for the moment")
+@unittest.skipIf(
+    sys.version_info[:2] < (3, 7),
+    "Import is only supported on Python 3.7+ for the moment",
+)
 class TestImport(unittest.TestCase):
     """Test that we can export."""
 
@@ -46,62 +54,62 @@ class TestImport(unittest.TestCase):
             |-- conference
             `-- sprint
         """
-        portal = self.layer['portal']
+        portal = self.layer["portal"]
 
         self.blog = api.content.create(
             container=portal,
-            type='Link',
-            id='blog',
-            title=u'Blog',
+            type="Link",
+            id="blog",
+            title=u"Blog",
         )
         self.about = api.content.create(
             container=portal,
-            type='Folder',
-            id='about',
-            title=u'About',
+            type="Folder",
+            id="about",
+            title=u"About",
         )
         self.events = api.content.create(
             container=portal,
-            type='Folder',
-            id='events',
-            title=u'Events',
+            type="Folder",
+            id="events",
+            title=u"Events",
         )
         self.team = api.content.create(
             container=self.about,
-            type='Document',
-            id='team',
-            title=u'Team',
+            type="Document",
+            id="team",
+            title=u"Team",
         )
         self.contact = api.content.create(
             container=self.about,
-            type='Document',
-            id='contact',
-            title=u'Contact',
+            type="Document",
+            id="contact",
+            title=u"Contact",
         )
         self.training = api.content.create(
             container=self.events,
-            type='Event',
-            id='training',
-            title=u'Training',
+            type="Event",
+            id="training",
+            title=u"Training",
         )
         self.conference = api.content.create(
             container=self.events,
-            type='Event',
-            id='conference',
-            title=u'Conference',
+            type="Event",
+            id="conference",
+            title=u"Conference",
         )
         self.sprint = api.content.create(
             container=self.events,
-            type='Event',
-            id='sprint',
-            title=u'Sprint',
+            type="Event",
+            id="sprint",
+            title=u"Sprint",
         )
         self.image = api.content.create(
             container=portal,
-            type='Image',
-            title=u'Image',
-            id='image',
-            image=NamedImage(dummy.Image(), 'image/gif', u'test.gif'),
+            type="Image",
+            title=u"Image",
+            id="image",
+            image=NamedImage(dummy.Image(), "image/gif", u"test.gif"),
         )
 
     def remove_demo_content(self):
@@ -118,11 +126,11 @@ class TestImport(unittest.TestCase):
             `-- sprint
 
         """
-        portal = self.layer['portal']
-        api.content.delete(portal['image'])
-        api.content.delete(portal['blog'])
-        api.content.delete(portal['about'])
-        api.content.delete(portal['events'])
+        portal = self.layer["portal"]
+        api.content.delete(portal["image"])
+        api.content.delete(portal["blog"])
+        api.content.delete(portal["about"])
+        api.content.delete(portal["events"])
 
     def setUp(self):
         # Set a client home for our import directory.
@@ -198,6 +206,49 @@ class TestImport(unittest.TestCase):
         self.assertEqual(new_doc.Title(), "Document 1")
         self.assertEqual(new_doc.portal_type, "Document")
 
+    def test_import_content_with_missing_folder(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        doc = api.content.create(
+            container=folder, type="Document", id="doc1", title="Document 1"
+        )
+        transaction.commit()
+
+        # Now export the document.
+        browser = self.open_page("@@export_content")
+        browser.getControl(name="portal_type").value = ["Document"]
+        browser.getControl("Export").click()
+        raw_data = browser.contents
+
+        # Remove both the folder and document.
+        api.content.delete(folder)
+        transaction.commit()
+        self.assertNotIn("folder1", portal.contentIds())
+
+        # Now import the document.
+        # The missing folder structure should be created.
+        browser = self.open_page("@@import_content")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "Document.json")
+        browser.getForm(action="@@import_content").submit()
+        self.assertIn("Imported 1 items", browser.contents)
+
+        # The folder should be back.
+        self.assertIn("folder1", portal.contentIds())
+        new_folder = portal["folder1"]
+        # The auto generated folder will have its id as title
+        self.assertEqual(new_folder.Title(), "folder1")
+        # The document should be back.
+        self.assertIn("doc1", new_folder.contentIds())
+        new_doc = new_folder["doc1"]
+        self.assertEqual(new_doc.Title(), "Document 1")
+        self.assertEqual(new_doc.portal_type, "Document")
+
     def test_import_content_from_server_file(self):
         # First create some content.
         app = self.layer["app"]
@@ -213,7 +264,7 @@ class TestImport(unittest.TestCase):
         browser.getControl(name="portal_type").value = ["Document"]
         browser.getControl("Save to file on server").click()
         browser.getControl("Export").click()
-        self.assertIn("Exported 1 ['Document'] as Document.json", browser.contents)
+        self.assertIn("Exported 1 items (Document) as Document.json", browser.contents)
         self.assertIn(self.new_clienthome, browser.contents)
 
         # Move the exported file to the import directory.
@@ -254,7 +305,13 @@ class TestImport(unittest.TestCase):
 
         # Now export the complete portal.
         browser = self.open_page("@@export_content")
-        browser.getControl(name="portal_type").value = ['Event', 'Folder', 'Image', 'Link', 'Document']
+        browser.getControl(name="portal_type").value = [
+            "Event",
+            "Folder",
+            "Image",
+            "Link",
+            "Document",
+        ]
         browser.getControl("Export").click()
         raw_data = browser.contents
         data = json.loads(raw_data)
@@ -293,7 +350,7 @@ class TestImport(unittest.TestCase):
 
         # Export it.
         browser = self.open_page("@@export_defaultpages")
-        browser.getForm(action="@@export_defaultpages").submit(name='form.submitted')
+        browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
         raw_data = browser.contents
 
         # Now remove the default page setting.
@@ -305,7 +362,7 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@import_defaultpages")
         upload = browser.getControl(name="jsonfile")
         upload.add_file(raw_data, "application/json", "defaultpages.json")
-        browser.getForm(action="@@import_defaultpages").submit(name='form.submitted')
+        browser.getForm(action="@@import_defaultpages").submit(name="form.submitted")
         self.assertIn("Changed 1 default page", browser.contents)
 
         # The default page should be back.
@@ -348,7 +405,7 @@ class TestImport(unittest.TestCase):
 
         # Export.
         browser = self.open_page("@@export_ordering")
-        browser.getForm(action="@@export_ordering").submit(name='form.submitted')
+        browser.getForm(action="@@export_ordering").submit(name="form.submitted")
         raw_data = browser.contents
 
         # Reorder the documents.
