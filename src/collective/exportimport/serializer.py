@@ -158,6 +158,11 @@ if HAS_AT:
             }
             return json_compatible(result)
 
+    @adapter(IImageField, IBaseObject, IPathBlobsMarker)
+    @implementer(IFieldSerializer)
+    class ATImageFieldSerializerForBlobPaths(ATImageFieldSerializer):
+        pass
+
     @adapter(IFileField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
     class ATFileFieldSerializer(ATDefaultFieldSerializer):
