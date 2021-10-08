@@ -23,6 +23,7 @@ from plone.portlets.constants import (
     CONTENT_TYPE_CATEGORY,
     CONTEXT_CATEGORY,
 )
+from z3c.relationfield import RelationValue
 from zope.component import getUtilitiesFor
 from zope.component import queryMultiAdapter
 from zope.interface import providedBy
@@ -540,13 +541,18 @@ def export_local_portlets(obj):
             settings = IPortletAssignmentSettings(assignment)
             if manager_name not in items:
                 items[manager_name] = []
+            values = {}
+            for name in schema.names():
+                value = getattr(assignment, name, None)
+                if isinstance(value, RelationValue):
+                    value = value.to_object.UID()
+                value = json_compatible(value, obj)
+                values[name] = value
             items[manager_name].append(
                 {
                     "type": portlet_type,
                     "visible": settings.get("visible", True),
-                    "assignment": {
-                        name: getattr(assignment, name, None) for name in schema.names()
-                    },
+                    "assignment": values,
                 }
             )
     return items
