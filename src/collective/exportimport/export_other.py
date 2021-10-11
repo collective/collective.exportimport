@@ -4,6 +4,7 @@ from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
 from plone.app.discussion.interfaces import IConversation
+from plone.app.textfield.value import RichTextValue
 from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
@@ -546,6 +547,12 @@ def export_local_portlets(obj):
                 value = getattr(assignment, name, None)
                 if isinstance(value, RelationValue):
                     value = value.to_object.UID()
+                elif isinstance(value, RichTextValue):
+                    value = {
+                        "data": json_compatible(value.raw),
+                        "content-type": json_compatible(value.mimeType),
+                        "encoding": json_compatible(value.encoding),
+                    }
                 value = json_compatible(value, obj)
                 values[name] = value
             items[manager_name].append(
