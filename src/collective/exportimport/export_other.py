@@ -553,7 +553,7 @@ def export_local_portlets(obj):
                         "content-type": json_compatible(value.mimeType),
                         "encoding": json_compatible(value.encoding),
                     }
-                value = json_compatible(value, obj)
+                value = json_compatible(value)
                 values[name] = value
             items[manager_name].append(
                 {
