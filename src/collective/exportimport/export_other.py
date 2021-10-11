@@ -4,6 +4,7 @@ from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
 from plone.app.discussion.interfaces import IConversation
+from plone.app.textfield.value import RichTextValue
 from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
@@ -23,6 +24,7 @@ from plone.portlets.constants import (
     CONTENT_TYPE_CATEGORY,
     CONTEXT_CATEGORY,
 )
+from z3c.relationfield import RelationValue
 from zope.component import getUtilitiesFor
 from zope.component import queryMultiAdapter
 from zope.interface import providedBy
@@ -540,13 +542,24 @@ def export_local_portlets(obj):
             settings = IPortletAssignmentSettings(assignment)
             if manager_name not in items:
                 items[manager_name] = []
+            values = {}
+            for name in schema.names():
+                value = getattr(assignment, name, None)
+                if isinstance(value, RelationValue):
+                    value = value.to_object.UID()
+                elif isinstance(value, RichTextValue):
+                    value = {
+                        "data": json_compatible(value.raw),
+                        "content-type": json_compatible(value.mimeType),
+                        "encoding": json_compatible(value.encoding),
+                    }
+                value = json_compatible(value)
+                values[name] = value
             items[manager_name].append(
                 {
                     "type": portlet_type,
                     "visible": settings.get("visible", True),
-                    "assignment": {
-                        name: getattr(assignment, name, None) for name in schema.names()
-                    },
+                    "assignment": values,
                 }
             )
     return items
