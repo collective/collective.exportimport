@@ -46,6 +46,18 @@
               </label>
             </div>
 
+            <div class="field">
+              <label>
+                <input
+                    type="checkbox"
+                    name="skip_existing_content:boolean"
+                    id="skip_existing_content"
+                    value="1"
+                    />
+                Skip existing content
+              </label>
+            </div>
+
             <div class="formControls" class="form-group">
                 <input type="hidden" name="form.submitted" value="1"/>
                 <button class="btn btn-primary submit-widget button-field context"
