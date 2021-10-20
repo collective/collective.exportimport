@@ -5,7 +5,9 @@ Changelog
 1.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- optionally (checkbox) skip existing content on import instead of generating
+  it new with a randomized id.
+  [petschki]
 
 
 1.2 (2021-10-11)
