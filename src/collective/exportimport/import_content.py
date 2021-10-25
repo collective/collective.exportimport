@@ -118,7 +118,7 @@ class ImportContent(BrowserView):
                         close_file = True
                         break
             else:
-                msg = f"File '{server_file}' not found on server."
+                msg = "File '{}' not found on server.".format(server_file)
                 api.portal.show_message(
                     msg, request=self.request, type="warn")
                 server_file = None
