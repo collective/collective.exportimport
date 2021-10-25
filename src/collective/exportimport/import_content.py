@@ -95,6 +95,8 @@ class ImportContent(BrowserView):
 
         # If we open a server file, we should close it at the end.
         close_file = False
+        status = "success"
+
         if server_file and jsonfile:
             # This is an error.  But when you upload 10 GB AND select a server file,
             # it is a pity when you would have to upload again.
@@ -104,6 +106,7 @@ class ImportContent(BrowserView):
                 type="warn",
             )
             server_file = None
+            status = "error"
         if server_file and not jsonfile:
             if server_file in self.server_files:
                 for path in self.import_paths:
@@ -115,13 +118,13 @@ class ImportContent(BrowserView):
                         close_file = True
                         break
             else:
+                msg = "File '{}' not found on server.".format(server_file)
                 api.portal.show_message(
-                    u"File not found on server.", request=self.request, type="warn"
-                )
+                    msg, request=self.request, type="warn")
                 server_file = None
+                status = "error"
         if jsonfile:
             self.portal = api.portal.get()
-            status = "success"
             try:
                 if isinstance(jsonfile, str):
                     return_json = True

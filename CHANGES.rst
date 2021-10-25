@@ -8,6 +8,9 @@ Changelog
 - optionally (checkbox) skip existing content on import instead of generating
   it new with a randomized id.
   [petschki]
+- fix `UnboundLocalError` when calling `import_content`
+  with `return_json` and `server_file`
+  [petschki]
 
 
 1.2 (2021-10-11)
