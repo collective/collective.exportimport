@@ -365,6 +365,54 @@ class TestImport(unittest.TestCase):
         self.assertEqual(new_doc.Title(), "Document 1")
         self.assertEqual(new_doc.portal_type, "Document")
 
+    def test_import_content_from_server_file_and_return_json(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        doc = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        transaction.commit()
+
+        # Now export it to a file on the server.
+        browser = self.open_page("@@export_content")
+        browser.getControl(name="portal_type").value = ["Document"]
+        browser.getControl("Save to file on server").click()
+        browser.getForm(action="@@export_content").submit(name="submit")
+
+        self.assertIn("Exported 1 items (Document) as Document.json", browser.contents)
+        self.assertIn(self.new_clienthome, browser.contents)
+
+        # Move the exported file to the import directory.
+        export_path = os.path.join(self.new_clienthome, "Document.json")
+        import_path = os.path.join(self.new_clienthome, "import", "Document.json")
+        self.assertTrue(os.path.isfile(export_path))
+        self.assertFalse(os.path.exists(import_path))
+        shutil.move(export_path, import_path)
+        self.assertTrue(os.path.isfile(import_path))
+
+        # Remove the added content.
+        api.content.delete(doc)
+        transaction.commit()
+        self.assertNotIn("doc1", portal.contentIds())
+
+        # Now import it programatically and return state as JSON
+        import_view = portal.restrictedTraverse("@@import_content")
+        self.layer["request"].form['form.submitted'] = True
+        return_json = json.loads(import_view(
+            server_file="Document.json",
+            return_json=True,
+        ))
+        self.assertEqual("success", return_json["state"])
+        self.assertIn("Imported 1 items", return_json["msg"])
+
+        # The document should be back.
+        self.assertIn("doc1", portal.contentIds())
+        new_doc = portal["doc1"]
+        self.assertEqual(new_doc.Title(), "Document 1")
+        self.assertEqual(new_doc.portal_type, "Document")
+
     def test_import_content_from_central_directory(self):
         from collective.exportimport import config
         import tempfile
