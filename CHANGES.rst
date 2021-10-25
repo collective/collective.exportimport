@@ -8,7 +8,7 @@ Changelog
 - optionally (checkbox) skip existing content on import instead of generating
   it new with a randomized id.
   [petschki]
-- fix `variable 'status' referenced before assignment` when calling `import_content`
+- fix `UnboundLocalError` when calling `import_content`
   with `return_json` and `server_file`
   [petschki]
 
