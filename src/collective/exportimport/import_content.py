@@ -118,9 +118,9 @@ class ImportContent(BrowserView):
                         close_file = True
                         break
             else:
+                msg = f"File '{server_file}' not found on server."
                 api.portal.show_message(
-                    u"File not found on server.", request=self.request, type="warn"
-                )
+                    msg, request=self.request, type="warn")
                 server_file = None
                 status = "error"
         if jsonfile:
