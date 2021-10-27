@@ -223,7 +223,7 @@ def fix_html_in_content_fields(context=None):
             text = getattr(obj.aq_base, fieldname, None)
             if text and IRichTextValue.providedBy(text) and text.raw:
                 logger.debug(f"Checking {obj.absolute_url()}")
-                clean_text = html_fixer(text.raw, obj, old_portal_url="http://localhost:9180/site_dpf")
+                clean_text = html_fixer(text.raw, obj)
                 if clean_text and clean_text != text.raw:
                     textvalue = RichTextValue(
                         raw=clean_text,
