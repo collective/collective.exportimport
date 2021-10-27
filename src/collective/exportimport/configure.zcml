@@ -207,4 +207,12 @@
       permission="cmf.ManagePortal"
       />
 
+  <browser:page
+      name="fix_html"
+      for="zope.interface.Interface"
+      class=".fix_html.FixHTML"
+      template="templates/export_other.pt"
+      permission="cmf.ManagePortal"
+      />
+
 </configure>

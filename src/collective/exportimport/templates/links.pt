@@ -85,6 +85,10 @@
       <li><a class=""
          tal:attributes="href python: portal_url + '/@@fix_collection_queries'">Fix collection queries
       </a></li>
+
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@fix_html'">Fix links to content and images in richtext
+      </a></li>
    </ul>
    </div>
 
