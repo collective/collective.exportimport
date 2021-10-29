@@ -430,7 +430,9 @@ Install collective.exportimport by adding it to your buildout::
 
 and then running ``bin/buildout``
 
-You don't need to install the add-on.
+You don't need to activate the add-on in the Site Setup Add-ons control panel to be able to use the forms @@export_content and @@import_content in your site.
+
+You do need to add it to your buildout configuration and run buildout to make these features available at all. See https://docs.plone.org/manage/installing/installing_addons.html for details.
 
 
 Contribute
