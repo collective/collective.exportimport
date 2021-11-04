@@ -194,7 +194,21 @@ def html_fixer(text, obj=None, old_portal_url=None):
         # data-attrs for tinymce pattern
         img_link["data-val"] = uuid
         img_link["data-linktype"] = "image"
-        img_link["class"] = ["image-richtext", "image-inline"]
+        iklass = img_link.get("class")
+        if not iklass:
+            img_link["class"] = ["image-richtext", "image-inline"]
+        else:
+            image_aligns = {
+                'image-right',
+                'image-left',
+                'image-responsive',
+                'image-inline',
+            }
+            if image_aligns.isdisjoint(set(iklass)):
+                # No image-align class is set, so we defaul to inline.
+                iklass.append("image-inline")
+            if "image-richtext" not in iklass:
+                iklass.append("image-richtext")
         if orig != img_link.decode():
             logger.debug(
                 "Change img from {orig} to {img_link}".format(
