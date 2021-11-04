@@ -107,16 +107,16 @@ def html_fixer(text, obj=None, old_portal_url=None):
         if not uuid:
             target, extra = findObject(obj, path)
             if not target:
-                logger.debug(f"Cannot find target obj for {path}")
+                logger.debug("Cannot find target obj for {path}".format(path=path))
                 continue
             uuid = IUUID(target, None)
 
         if not uuid:
-            logger.debug(f"Cannot find target obj for {link}")
+            logger.debug("Cannot find target obj for {link}".format(link=link))
             continue
 
         # construct new link from uuid
-        new_href = f"resolveuid/{uuid}"
+        new_href = "resolveuid/{uuid}".format(uuid=uuid)
         if parsed_link.fragment:
             new_href += "#" + parsed_link.fragment
 
@@ -124,7 +124,11 @@ def html_fixer(text, obj=None, old_portal_url=None):
         content_link["data-linktype"] = "internal"
         content_link["data-val"] = uuid
         if orig != content_link.decode():
-            logger.debug(f"Changed link from \n{orig} \n to \n{content_link}")
+            logger.debug(
+                "Changed link from \n{orig} \n to \n{content_link}".format(
+                    orig=orig, content_link=content_link
+                )
+            )
 
     for img_link in soup.find_all("img"):
         orig = img_link.decode()
@@ -148,9 +152,14 @@ def html_fixer(text, obj=None, old_portal_url=None):
         # update image scaling and traversal
         for old, new in IMAGE_SCALE_MAP.items():
             # replace plone.app.imaging old scale names with new ones
-            path = path.replace(f"/@@images/image/{old}", f"/@@images/image/{new}")
+            path = path.replace(
+                "/@@images/image/{old}".format(old=old),
+                "/@@images/image/{new}".format(new=new),
+            )
             # replace old AT traversing scales
-            path = path.replace(f"/image_{old}", f"/@@images/image/{new}")
+            path = path.replace(
+                "/image_{old}".format(old=old), "/@@images/image/{new}".format(new=new)
+            )
 
         scaled = False
         if "/@@images/" in path:
@@ -167,15 +176,17 @@ def html_fixer(text, obj=None, old_portal_url=None):
             uuid = IUUID(target, None)
 
         if not uuid:
-            logger.debug(f"Cannot find target obj for {path}")
+            logger.debug("Cannot find target obj for {path}".format(path=path))
             continue
 
         # construct new link
         if scaled:
-            new_src = f"resolveuid/{uuid}/@@images/image/{scale}"
+            new_src = "resolveuid/{uuid}/@@images/image/{scale}".format(
+                uuid=uuid, scale=scale
+            )
             img_link["data-scale"] = scale
         else:
-            new_src = f"resolveuid/{uuid}/@@images/image"
+            new_src = "resolveuid/{uuid}/@@images/image".format(uuid=uuid)
             img_link["data-scale"] = ""
 
         img_link["src"] = new_src
@@ -185,7 +196,11 @@ def html_fixer(text, obj=None, old_portal_url=None):
         img_link["data-linktype"] = "image"
         img_link["class"] = ["image-richtext", "image-inline"]
         if orig != img_link.decode():
-            logger.debug(f"Change img from {orig} to {img_link}")
+            logger.debug(
+                "Change img from {orig} to {img_link}".format(
+                    orig=orig, img_link=img_link
+                )
+            )
 
     return soup.decode()
 
@@ -222,7 +237,7 @@ def fix_html_in_content_fields(context=None):
         for fieldname in types_with_richtext_fields[obj.portal_type]:
             text = getattr(obj.aq_base, fieldname, None)
             if text and IRichTextValue.providedBy(text) and text.raw:
-                logger.debug(f"Checking {obj.absolute_url()}")
+                logger.debug("Checking {}".format(obj.absolute_url()))
                 clean_text = html_fixer(text.raw, obj)
                 if clean_text and clean_text != text.raw:
                     textvalue = RichTextValue(
