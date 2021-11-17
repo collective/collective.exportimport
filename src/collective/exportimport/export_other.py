@@ -24,7 +24,6 @@ from plone.portlets.constants import (
     CONTENT_TYPE_CATEGORY,
     CONTEXT_CATEGORY,
 )
-from z3c.relationfield import RelationValue
 from zope.component import getUtilitiesFor
 from zope.component import queryMultiAdapter
 from zope.interface import providedBy
@@ -48,6 +47,13 @@ except pkg_resources.DistributionNotFound:
     HAS_DX = False
 else:
     HAS_DX = True
+
+try:
+    pkg_resources.get_distribution("z3c.relationfield")
+except pkg_resources.DistributionNotFound:
+    RelationValue = None
+else:
+    from z3c.relationfield import RelationValue
 
 
 logger = logging.getLogger(__name__)
@@ -545,7 +551,7 @@ def export_local_portlets(obj):
             values = {}
             for name in schema.names():
                 value = getattr(assignment, name, None)
-                if isinstance(value, RelationValue):
+                if RelationValue is not None and isinstance(value, RelationValue):
                     value = value.to_object.UID()
                 elif isinstance(value, RichTextValue):
                     value = {
