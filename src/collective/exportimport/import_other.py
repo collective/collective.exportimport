@@ -41,8 +41,8 @@ except ImportError:
     HAS_PAM = False
 
 if six.PY2:
-    from html_parser import HTMLParser
-    unescape = HTMLParser.HTMLParser().unescape
+    from HTMLParser import HTMLParser
+    unescape = HTMLParser().unescape
 else:
     from html import unescape
 
