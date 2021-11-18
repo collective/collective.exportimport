@@ -12,6 +12,7 @@ from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from six.moves.urllib.parse import unquote
 from six.moves.urllib.parse import urlparse
+from zExceptions import NotFound
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from ZPublisher.HTTPRequest import FileUpload
@@ -563,7 +564,10 @@ class ImportContent(BrowserView):
         # so we need to encode parent_path before using plone.api.content.get
         if isinstance(self.context.getPhysicalPath()[0], bytes):
             parent_path = parent_path.encode("utf8")
-        parent = api.content.get(path=parent_path)
+        try:
+            parent = api.content.get(path=parent_path)
+        except NotFound:
+            parent = None
         if parent:
             # Check that we did not traverse to content outside of the portal.
             # Actually, we probably should not go outside the navigation root either,
