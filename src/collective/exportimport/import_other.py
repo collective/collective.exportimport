@@ -356,7 +356,8 @@ class ImportLocalRoles(BrowserView):
 
     def import_localroles(self, data):
         results = 0
-        for item in data:
+        total = len(data)
+        for index, item in enumerate(data, start=1):
             obj = api.content.get(UID=item["uuid"])
             if not obj:
                 continue
@@ -364,16 +365,18 @@ class ImportLocalRoles(BrowserView):
                 localroles = item["localroles"]
                 for userid in localroles:
                     obj.manage_setLocalRoles(userid=userid, roles=localroles[userid])
-                logger.info(
+                logger.debug(
                     u"Set roles on {}: {}".format(obj.absolute_url(), localroles)
                 )
             if item.get("block"):
                 obj.__ac_local_roles_block__ = 1
-                logger.info(
+                logger.debug(
                     u"Diable acquisition of local roles on {}".format(
                         obj.absolute_url()
                     )
                 )
+            if not index % 1000:
+                logger.info(u"Set local roles on {} ({}%) of {} items".format(index, round(index/total*100, 2), total))
             results += 1
         return results
 

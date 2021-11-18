@@ -34,6 +34,14 @@
               </div>
             </tal:block>
 
+            <div class="field mb-3">
+              <label for="commit">Do a commit after each number of items</label>
+              <div class="widget">
+                <input type="text" size="5" name="commit" id="commit" value=""
+                       tal:attributes="value python:view.commit">
+              </div>
+            </div>
+
             <div class="field">
               <label>
                 <input
