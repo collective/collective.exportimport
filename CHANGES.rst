@@ -17,6 +17,15 @@ Changelog
 - Improve logging during import in vairous cases.
   [pbauer]
 
+- Work around case where api.content.get(path=parent_path) raises NotFound instead of returning None.
+  [pbauer]
+
+- Keep value of import_to_current_folder.
+  [pbauer]
+
+- Fix html unescape in py3.
+  [pbauer]
+
 
 1.2 (2021-10-11)
 ----------------
