@@ -88,7 +88,9 @@ class ImportContent(BrowserView):
     DEFAULTS = {}
 
     def __call__(self, jsonfile=None, return_json=False, limit=None, server_file=None):
+        request = self.request
         self.limit = limit
+        self.commit = int(request["commit"]) if request.get("commit") else None
 
         if not self.request.form.get("form.submitted", False):
             return self.template()
@@ -334,6 +336,12 @@ class ImportContent(BrowserView):
                 new.creation_date_migrated = creation_date
             logger.info("Created {} {}".format(item["@type"], new.absolute_url()))
             added.append(new.absolute_url())
+
+            if self.commit and not len(added) % self.commit:
+                msg = u"Committing after {} created items...".format(len(added))
+                logger.info(msg)
+                transaction.get().note(msg)
+                transaction.commit()
         return added
 
     def handle_broken(self, item):
