@@ -5,12 +5,17 @@ Changelog
 1.3 (unreleased)
 ----------------
 
-- optionally (checkbox) skip existing content on import instead of generating
-  it new with a randomized id.
+- Optionally (checkbox) skip existing content on import instead of generating it new with a randomized id.
   [petschki]
-- fix `UnboundLocalError` when calling `import_content`
-  with `return_json` and `server_file`
+
+- Fix `UnboundLocalError` when calling `import_content` with `return_json` and `server_file`.
   [petschki]
+
+- Add option to make a commit every x items.
+  [pbauer]
+
+- Improve logging during import in vairous cases.
+  [pbauer]
 
 
 1.2 (2021-10-11)

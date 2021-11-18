@@ -225,6 +225,7 @@ class ImportContent(BrowserView):
             for drop in self.DROP_PATHS:
                 if drop in item["@id"]:
                     skip = True
+                    logger.info(u"Skipping {}".format(item['@id']))
             if skip:
                 continue
 
@@ -334,7 +335,7 @@ class ImportContent(BrowserView):
                 creation_date = DateTime(created_data)
                 new.creation_date = creation_date
                 new.creation_date_migrated = creation_date
-            logger.info("Created {} {}".format(item["@type"], new.absolute_url()))
+            logger.info("Created item #{}: {} {}".format(index, item["@type"], new.absolute_url()))
             added.append(new.absolute_url())
 
             if self.commit and not len(added) % self.commit:
@@ -664,7 +665,8 @@ class ResetModifiedAndCreatedDate(BrowserView):
                 obj.reindexObject(idxs=["created"])
 
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=reset_dates)
-        msg = "Finished resetting creation and modification date."
+        msg = "Finished resetting creation and modification dates."
+        logger.info(msg)
         api.portal.show_message(msg, self.request)
         return self.index()
 

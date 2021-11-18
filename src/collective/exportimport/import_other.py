@@ -404,8 +404,12 @@ class ImportOrdering(BrowserView):
                     request=self.request,
                 )
             else:
+                start = datetime.now()
                 orders = self.import_ordering(data)
-                msg = u"Imported {} orders".format(orders)
+                end = datetime.now()
+                delta = end - start
+                msg = u"Imported {} orders in {} seconds".format(orders, delta.seconds)
+                logger.info(msg)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
@@ -415,7 +419,8 @@ class ImportOrdering(BrowserView):
 
     def import_ordering(self, data):
         results = 0
-        for item in data:
+        total = len(data)
+        for index, item in enumerate(data, start=1):
             obj = api.content.get(UID=item["uuid"])
             if not obj:
                 continue
@@ -423,6 +428,8 @@ class ImportOrdering(BrowserView):
             if not ordered:
                 continue
             ordered.moveObjectToPosition(obj.getId(), item["order"])
+            if not index % 1000:
+                logger.info(u"Ordered {} ({}%) of {} items".format(index, round(index/total*100, 2), total))
             results += 1
         return results
 
@@ -471,6 +478,7 @@ class ImportDefaultPages(BrowserView):
             else:
                 obj.setDefaultPage(item["default_page"])
             if old != obj.getDefaultPage():
+                logger.debug(u"Set {} as default page for {}".format(item["default_page"], obj.absolute_url()))
                 results += 1
         return results
 
