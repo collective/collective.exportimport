@@ -49,6 +49,7 @@
                     name="import_to_current_folder:boolean"
                     id="import_to_current_folder"
                     value="1"
+                    tal:attributes="value python:view.import_to_current_folder"
                     />
                 Import all items into the current folder
               </label>

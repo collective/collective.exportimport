@@ -91,6 +91,7 @@ class ImportContent(BrowserView):
         request = self.request
         self.limit = limit
         self.commit = int(request["commit"]) if request.get("commit") else None
+        self.import_to_current_folder = request.get("import_to_current_folder", False)
 
         if not self.request.form.get("form.submitted", False):
             return self.template()
@@ -500,7 +501,7 @@ class ImportContent(BrowserView):
 
             return self.portal['images']
         """
-        if self.request.get("import_to_current_folder", None):
+        if self.import_to_current_folder:
             return self.context
 
         container_path = self.CONTAINER.get(item["@type"], None)
