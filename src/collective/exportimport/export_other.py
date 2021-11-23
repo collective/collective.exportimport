@@ -347,31 +347,37 @@ class ExportLocalRoles(BrowserView):
         return self.request.response.write(safe_bytes(data))
 
     def all_localroles(self):
-        results = []
+        self.results = []
 
-        def get_localroles(obj, path):
-            uid = IUUID(obj, None)
-            if not uid:
-                return
-            localroles = None
-            block = None
-            obj = aq_base(obj)
-            if getattr(obj, "__ac_local_roles__", None) is not None:
-                localroles = obj.__ac_local_roles__
-            if getattr(obj, "__ac_local_roles_block__", False):
-                block = obj.__ac_local_roles_block__
-            if localroles or block:
-                item = {"uuid": uid}
-                if localroles:
-                    item["localroles"] = localroles
-                if block:
-                    item["block"] = 1
-                results.append(item)
 
         portal = api.portal.get()
-        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_localroles)
-        return results
+        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=self.get_localroles)
+        return self.results
 
+    def get_localroles(self, obj, path):
+        uid = IUUID(obj, None)
+        if not uid:
+            return
+        localroles = None
+        block = None
+        obj = aq_base(obj)
+        if getattr(obj, "__ac_local_roles__", None) is not None:
+            localroles = obj.__ac_local_roles__
+        if getattr(obj, "__ac_local_roles_block__", False):
+            block = obj.__ac_local_roles_block__
+        if localroles or block:
+            item = {"uuid": uid}
+            if localroles:
+                item["localroles"] = localroles
+            if block:
+                item["block"] = 1
+            item = self.item_hook(item)
+            if item is None:
+                return
+            self.results.append(item)
+        
+    def item_hook(self, item):
+        return item
 
 class ExportOrdering(BrowserView):
     """Export all local roles"""
