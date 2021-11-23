@@ -89,6 +89,8 @@
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATImageFieldSerializer" />
   <adapter zcml:condition="installed Products.Archetypes"
+      factory=".serializer.ATImageFieldSerializerForBlobPaths" />
+  <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATTextFieldSerializer" />
   <configure zcml:condition="installed Products.Archetypes">
     <adapter zcml:condition="installed plone.app.contenttypes"

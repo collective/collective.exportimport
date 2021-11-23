@@ -386,6 +386,7 @@ class ExportContent(BrowserView):
         item = migrate_field(item, "startDate", "start")
         item = migrate_field(item, "endDate", "end")
         item = migrate_field(item, "openEnd", "open_end")
+        item = migrate_field(item, "eventUrl", "event_url")
         item = migrate_field(item, "wholeDay", "whole_day")
         item = migrate_field(item, "contactEmail", "contact_email")
         item = migrate_field(item, "contactName", "contact_name")

@@ -291,7 +291,13 @@ class ImportContent(BrowserView):
 
             # import using plone.restapi deserializers
             deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
-            new = deserializer(validate_all=False, data=item)
+            try:
+                new = deserializer(validate_all=False, data=item)
+            except Exception as error:
+                logger.warning(
+                    "cannot deserialize {}: {}".format(item["@id"], repr(error))
+                )
+                continue
 
             # Blobs can be exported as only a path in the blob storage.
             # It seems difficult to dynamically use a different deserializer,
