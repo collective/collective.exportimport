@@ -167,6 +167,13 @@ class ImportContent(BrowserView):
     def finish(self):
         """Hook to do something after importing one file."""
 
+    def commit_hook(self, added, index):
+        """Hook to do something after importing every x items."""
+        msg = u"Committing after creating {} of {} handled items...".format(len(added), index)
+        logger.info(msg)
+        transaction.get().note(msg)
+        transaction.commit()
+
     @property
     def import_paths(self):
         # Adapted from ObjectManager.list_imports, which lists zexps.
@@ -348,10 +355,8 @@ class ImportContent(BrowserView):
             added.append(new.absolute_url())
 
             if self.commit and not len(added) % self.commit:
-                msg = u"Committing after {} created items...".format(len(added))
-                logger.info(msg)
-                transaction.get().note(msg)
-                transaction.commit()
+                self.commit_hook(added, index)
+
         return added
 
     def handle_broken(self, item):
