@@ -26,6 +26,24 @@ Changelog
 - Fix html unescape in py3.
   [pbauer]
 
+- Fix serializing ATNewsItem image field content.
+  [gotcha]
+
+- Migrate eventUrl to event_url (AT to DX).
+  [ThibautBorn]
+
+- Log items that cannot be serialized instead of aborting the export.
+  [ThibautBorn]
+
+- Add a item_hook to export_localroles.
+  [ThibautBorn]
+
+- Fix handling of checkboxes for skip_existing_content and import_to_current_folder.
+  [pbauer]
+
+- Move intermediary commit code into commit_hook method to allow overriding.
+  [pbauer]
+
 
 1.2 (2021-10-11)
 ----------------
