@@ -48,8 +48,7 @@
                     type="checkbox"
                     name="import_to_current_folder:boolean"
                     id="import_to_current_folder"
-                    value="1"
-                    tal:attributes="value python:view.import_to_current_folder"
+                    tal:attributes="checked python:view.import_to_current_folder"
                     />
                 Import all items into the current folder
               </label>
@@ -61,7 +60,7 @@
                     type="checkbox"
                     name="skip_existing_content:boolean"
                     id="skip_existing_content"
-                    value="1"
+                    tal:attributes="checked python:view.skip_existing_content"
                     />
                 Skip existing content
               </label>
