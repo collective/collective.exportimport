@@ -44,6 +44,9 @@ Changelog
 - Move intermediary commit code into commit_hook method to allow overriding.
   [pbauer]
 
+- Add hook global_obj_hook_before_deserializing to modify the created obj before deserializing the data.
+  [pbauer]
+
 
 1.2 (2021-10-11)
 ----------------

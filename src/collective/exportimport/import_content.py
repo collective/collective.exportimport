@@ -297,6 +297,8 @@ class ImportContent(BrowserView):
             container.invokeFactory(item["@type"], item["id"], **factory_kwargs)
             new = container[item["id"]]
 
+            new, item = self.global_obj_hook_before_deserializing(new, item)
+
             # import using plone.restapi deserializers
             deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
             try:
@@ -445,8 +447,20 @@ class ImportContent(BrowserView):
             item = modifier(item)
         return item
 
+    def global_obj_hook_before_deserializing(self, obj, item):
+        """Hook to modify the created obj before deserializing the data.
+        Example that applies marker-interfaces:
+
+        for iface_name in item.pop("marker_interfaces", []):
+            iface = resolveDottedName(iface_name)
+            if not iface.providedBy(obj):
+                alsoProvides(obj, iface)
+        return obj, item
+        """
+        return obj, item
+
     def global_obj_hook(self, obj, item):
-        """Override hook to modify all items of the imported item by type."""
+        """Override hook to modify each imported content after deserializing."""
         return obj
 
     def custom_obj_hook(self, obj, item):
