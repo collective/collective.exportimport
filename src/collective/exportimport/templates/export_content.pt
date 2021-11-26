@@ -12,13 +12,41 @@
 
       <p class="documentDescription">Select which content to export as a json-file.</p>
 
-        <form action="@@export_content" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
+        <form id="export_content" action="@@export_content" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
 
             <div class="field mb-3">
               <label for="portal_type">
                 <span i18n:translate="">Content Types to export</span>
               </label>
-              <div class="widget">
+              <div class="widget" id="portal_type">
+                <input type="checkbox" class="checkboxType" name="checkall" id="checkall"
+                       title="Toggle all" i18n:attributes="title label_toggle" />
+                <label for="checkall"><i>Select all/none</i></label><br />
+                <script type="text/javascript">
+                   // Check or Uncheck All checkboxes
+                   $("#checkall").change(function(){
+                     var checked = $(this).is(':checked');
+                     if(checked){
+                       $("form#export_content #portal_type input[type='checkbox']").each(function(){
+                         $(this).prop("checked",true);
+                       });
+                     }else{
+                       $("form#export_content #portal_type input[type='checkbox']").each(function(){
+                         $(this).prop("checked",false);
+                       });
+                     }
+                   });
+
+                  // Changing state of CheckAll checkbox
+                  $("form#export_content").on("click", "form#export_content #portal_type input[name='portal_type']", function(){
+                    if($("form#export_content #portal_type input[type='checkbox']").length == $("form#export_content #portal_type input[type='checkbox']:checked").length) {
+                      $("#checkall").prop("checked", true);
+                    } else {
+                      $("#checkall").prop("checked", false);
+                    }
+
+                  });
+                </script>
                 <tal:types tal:repeat="ptype python: view.portal_types()">
                   <input type="checkbox"
                          name="portal_type"
