@@ -380,7 +380,9 @@ Save all content to ``var/instance/``:
         def __call__(self):
             export_content = api.content.get_view('export_content', self.context, self.request)
             self.request.form['form.submitted'] = True
-            export_content(portal_type=['Folder', 'Document', 'Event'], include_blobs=True, download_to_server=True)
+            export_content(portal_type=['Folder', 'Document', 'Event'], include_blobs=2, download_to_server=True)
+            # Important! Redirect to prevent infinite export loop :)
+            return self.request.response.redirect(self.context.absolute_url())
 
 Import all content from ``var/instance/import/``:
 
