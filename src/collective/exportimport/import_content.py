@@ -101,6 +101,7 @@ class ImportContent(BrowserView):
         # If we open a server file, we should close it at the end.
         close_file = False
         status = "success"
+        msg = ""
 
         if server_file and jsonfile:
             # This is an error.  But when you upload 10 GB AND select a server file,
