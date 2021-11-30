@@ -67,8 +67,7 @@ class ExportRelations(BrowserView):
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        self.debug = debug
-        all_stored_relations = self.get_all_references()
+        all_stored_relations = self.get_all_references(debug)
         data = json.dumps(all_stored_relations, indent=4)
         filename = "relations.json"
         self.request.response.setHeader("Content-type", "application/json")
@@ -78,7 +77,7 @@ class ExportRelations(BrowserView):
         )
         return self.request.response.write(safe_bytes(data))
 
-    def get_all_references(self):
+    def get_all_references(self, debug=False):
         results = []
 
         if HAS_AT:
@@ -100,9 +99,12 @@ class ExportRelations(BrowserView):
                         "to_uuid": rel.targetUID,
                         "relationship": rel.relationship,
                     }
-                    if self.debug:
+                    if debug:
                         item["from_path"] = source.absolute_url_path()
                         item["to_path"] = target.absolute_url_path()
+                    item = self.reference_hook(item)
+                    if item is None:
+                        continue
                     results.append(item)
 
         if HAS_DX:
@@ -128,9 +130,16 @@ class ExportRelations(BrowserView):
                             if self.debug:
                                 item["from_path"] = from_brain[0].getPath()
                                 item["to_path"] = to_brain[0].getPath()
+                            item = self.reference_hook(item)
+                            if item is None:
+                                continue
                             results.append(item)
 
         return results
+
+
+    def reference_hook(self, item):
+        return item
 
 
 class ExportMembers(BrowserView):
