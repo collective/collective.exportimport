@@ -103,6 +103,8 @@ class ExportRelations(BrowserView):
                         item["from_path"] = source.absolute_url_path()
                         item["to_path"] = target.absolute_url_path()
                     item = self.reference_hook(item)
+                    if item is None:
+                        continue
                     results.append(item)
 
         if HAS_DX:
@@ -129,6 +131,8 @@ class ExportRelations(BrowserView):
                                 item["from_path"] = from_brain[0].getPath()
                                 item["to_path"] = to_brain[0].getPath()
                             item = self.reference_hook(item)
+                            if item is None:
+                                continue
                             results.append(item)
 
         return results
