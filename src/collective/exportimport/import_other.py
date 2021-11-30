@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
 from BTrees.LLBTree import LLSet
+from collective.exportimport import config
 from datetime import datetime
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
@@ -492,10 +493,10 @@ class ImportDefaultPages(BrowserView):
         for item in data:
             obj = api.content.get(UID=item["uuid"])
             if not obj:
-                if item["uuid"]:
-                    continue
-                else:
+                if item["uuid"] == config.SITE_ROOT:
                     obj = self.portal
+                else:
+                    continue
             old = obj.getDefaultPage()
             if six.PY2:
                 obj.setDefaultPage(item["default_page"].encode("utf-8"))

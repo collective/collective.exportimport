@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from App.config import getConfiguration
+from collective.exportimport import config
 from collective.exportimport.testing import (
     COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,  # noqa: E501,,
 )
@@ -614,6 +615,10 @@ class TestImport(unittest.TestCase):
         self.assertEqual(folder1.getProperty("default_page"), "doc1")
 
     def test_import_defaultpage_for_site(self):
+        # Check that the sample format uses the expected string
+        browser = self.open_page("@@import_defaultpages")
+        self.assertIn('"uuid": "{}",'.format(config.SITE_ROOT), browser.contents)
+
         # First create some content.
         app = self.layer["app"]
         portal = self.layer["portal"]

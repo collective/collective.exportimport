@@ -11,3 +11,5 @@ import os
 CENTRAL_DIRECTORY = os.path.expanduser(
     os.path.expandvars(os.getenv("COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY", ""))
 )
+
+SITE_ROOT = 'plone_site_root'

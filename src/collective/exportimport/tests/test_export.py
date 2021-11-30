@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collective.exportimport import config
 from collective.exportimport.testing import (
     COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,  # noqa: E501,
 )
@@ -340,7 +341,7 @@ class TestExport(unittest.TestCase):
         data = json.loads(contents)
         self.assertListEqual(
             data,
-            [{"default_page": "doc1", "uuid": ""}],
+            [{"default_page": "doc1", "uuid": config.SITE_ROOT}],
         )
 
     def test_export_ordering(self):
