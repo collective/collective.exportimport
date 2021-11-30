@@ -492,7 +492,10 @@ class ImportDefaultPages(BrowserView):
         for item in data:
             obj = api.content.get(UID=item["uuid"])
             if not obj:
-                continue
+                if item["uuid"]:
+                    continue
+                else:
+                    obj = self.portal
             old = obj.getDefaultPage()
             if six.PY2:
                 obj.setDefaultPage(item["default_page"].encode("utf-8"))

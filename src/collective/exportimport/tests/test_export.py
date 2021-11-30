@@ -321,6 +321,28 @@ class TestExport(unittest.TestCase):
             [{"default_page": "doc1", "uuid": folder1.UID()}],
         )
 
+    def test_export_defaultpage_for_site(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        portal._setProperty("default_page", "doc1")
+        transaction.commit()
+
+        browser = self.open_page("@@export_defaultpages")
+        browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
+        self.assertListEqual(
+            data,
+            [{"default_page": "doc1", "uuid": ""}],
+        )
+
     def test_export_ordering(self):
         # First create some content.
         app = self.layer["app"]

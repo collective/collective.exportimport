@@ -613,6 +613,55 @@ class TestImport(unittest.TestCase):
         # The default page should be back.
         self.assertEqual(folder1.getProperty("default_page"), "doc1")
 
+    def test_import_defaultpage_for_site(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        portal._setProperty("default_page", "doc1")
+        transaction.commit()
+
+        # Export it.
+        browser = self.open_page("@@export_defaultpages")
+        browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
+        raw_data = browser.contents
+        if not browser.contents:
+            raw_data = DATA[-1]
+
+        # Now remove the default page setting.
+        portal._delProperty("default_page")
+        transaction.commit()
+        self.assertFalse(portal.getProperty("default_page"))
+
+        # Now import it.
+        browser = self.open_page("@@import_defaultpages")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "defaultpages.json")
+        browser.getForm(action="@@import_defaultpages").submit(name="form.submitted")
+        self.assertIn("Changed 1 default page", browser.contents)
+
+        # The default page should be back.
+        self.assertEqual(portal.getProperty("default_page"), "doc1")
+
+        # Set a different default page.
+        api.content.create(
+            container=portal, type="Document", id="doc2", title="Document 2"
+        )
+        portal._updateProperty("default_page", "doc2")
+        transaction.commit()
+
+        # Import again.
+        browser = self.open_page("@@import_defaultpages")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "defaultpages.json")
+        browser.getForm(action="@@import_defaultpages").submit()
+
+        # The default page should be back.
+        self.assertEqual(portal.getProperty("default_page"), "doc1")
+
     def test_import_ordering(self):
         # First create some content.
         app = self.layer["app"]
