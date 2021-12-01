@@ -47,6 +47,10 @@
     {
         "uuid": "fff6deb0b812dd80f9366de68a868ae2",
         "default_page": "history"
+    },
+    {
+        "uuid": "plone_site_root",
+        "default_page": "another-page"
     }
 ]
           </pre>

@@ -5,6 +5,9 @@ Changelog
 1.3 (unreleased)
 ----------------
 
+- Handle default page of the site root object.
+  [fulv]
+
 - Optionally (checkbox) skip existing content on import instead of generating it new with a randomized id.
   [petschki]
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
+from collective.exportimport import config
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
@@ -460,6 +461,9 @@ class ExportDefaultPages(BrowserView):
 
         portal = api.portal.get()
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_default_page)
+        portal_default_page = portal.getDefaultPage()
+        if portal_default_page:
+            results.append({"uuid": config.SITE_ROOT, "default_page": portal_default_page})
         return results
 
 
