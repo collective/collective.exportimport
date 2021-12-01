@@ -672,7 +672,7 @@ def register_portlets(obj, item):
                 assignment = portlet_factory()
             except ComponentLookupError as e:
                 logger.error(e)
-                logger.info(f'{portlet_type} not found for {obj.absolute_url()} on {manager_name}')
+                logger.info('{} not found for {} on {}'.format(portlet_type, obj.absolute_url(), manager_name)) 
                 continue
 
             name = namechooser.chooseName(None, assignment)
