@@ -15,6 +15,7 @@ from plone.portlets.interfaces import ILocalPortletAssignmentManager
 from plone.portlets.interfaces import IPortletManager
 from Products.Five import BrowserView
 from zope.annotation.interfaces import IAnnotations
+from zope.component import ComponentLookupError
 from zope.component import getUtility
 from zope.component import queryMultiAdapter
 from zope.component.interfaces import IFactory
@@ -643,7 +644,7 @@ class ImportPortlets(BrowserView):
             obj = api.content.get(UID=item["uuid"])
             if not obj:
                 if item["uuid"] == config.SITE_ROOT:
-                    obj = portal
+                    obj = self.portal
                 else:
                     continue
             registered_portlets = register_portlets(obj, item)
