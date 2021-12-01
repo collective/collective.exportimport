@@ -642,7 +642,10 @@ class ImportPortlets(BrowserView):
         for item in data:
             obj = api.content.get(UID=item["uuid"])
             if not obj:
-                continue
+                if item["uuid"] == config.SITE_ROOT:
+                    obj = portal
+                else:
+                    continue
             registered_portlets = register_portlets(obj, item)
             results += registered_portlets
         return results
@@ -664,8 +667,13 @@ def register_portlets(obj, item):
             # 1. Create the assignment
             assignment_data = portlet_data["assignment"]
             portlet_type = portlet_data["type"]
-            portlet_factory = getUtility(IFactory, name=portlet_type)
-            assignment = portlet_factory()
+            try:
+                portlet_factory = getUtility(IFactory, name=portlet_type)
+                assignment = portlet_factory()
+            except ComponentLookupError as e:
+                logger.error(e)
+                logger.info(f'{portlet_type} not found for {obj.absolute_url()} on {manager_name}')
+                continue
 
             name = namechooser.chooseName(None, assignment)
             mapping[name] = assignment

@@ -523,7 +523,10 @@ class ExportPortlets(BrowserView):
         def get_portlets(obj, path):
             uid = IUUID(obj, None)
             if not uid:
-                return
+                if obj == portal:
+                    uid = config.SITE_ROOT
+                else:
+                    return
             portlets = export_local_portlets(obj)
             blacklist = export_portlets_blacklist(obj)
             obj_results = {}
@@ -538,6 +541,7 @@ class ExportPortlets(BrowserView):
 
         portal = api.portal.get()
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_portlets)
+        get_portlets(portal, None)
         return results
 
 
