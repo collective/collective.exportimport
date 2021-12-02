@@ -684,10 +684,9 @@ def register_portlets(obj, item):
             assignment = assignment.__of__(site)
 
             # set visibility setting
-            visible = portlet_data.get("visible")
-            if visible:
-                settings = IPortletAssignmentSettings(assignment)
-                settings["visible"] = visible
+            visible = bool(portlet_data.get("visible"))
+            settings = IPortletAssignmentSettings(assignment)
+            settings["visible"] = visible
 
             # 2. Apply portlet settings
             portlet_interface = getUtility(IPortletTypeInterface, name=portlet_type)
