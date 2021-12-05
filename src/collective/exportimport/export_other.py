@@ -138,7 +138,6 @@ class ExportRelations(BrowserView):
 
         return results
 
-
     def reference_hook(self, item):
         return item
 
@@ -359,7 +358,6 @@ class ExportLocalRoles(BrowserView):
     def all_localroles(self):
         self.results = []
 
-
         portal = api.portal.get()
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=self.get_localroles)
         return self.results
@@ -385,9 +383,10 @@ class ExportLocalRoles(BrowserView):
             if item is None:
                 return
             self.results.append(item)
-        
+
     def item_hook(self, item):
         return item
+
 
 class ExportOrdering(BrowserView):
     """Export all local roles"""
