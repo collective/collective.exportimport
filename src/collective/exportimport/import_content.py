@@ -338,9 +338,7 @@ class ImportContent(BrowserView):
                 try:
                     modified_data = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%S%z")
                 except ValueError:
-                    modified_data = datetime.strptime(
-                        modified[:-6], "%Y-%m-%dT%H:%M:%S"
-                    )
+                    modified_data = datetime.strptime(modified[:19], "%Y-%m-%dT%H:%M:%S")
                 modification_date = DateTime(modified_data)
                 new.modification_date = modification_date
                 new.modification_date_migrated = modification_date
@@ -350,7 +348,7 @@ class ImportContent(BrowserView):
                 try:
                     created_data = datetime.strptime(created, "%Y-%m-%dT%H:%M:%S%z")
                 except Exception:
-                    created_data = datetime.strptime(created[:-6], "%Y-%m-%dT%H:%M:%S")
+                    created_data = datetime.strptime(created[:19], "%Y-%m-%dT%H:%M:%S")
                 creation_date = DateTime(created_data)
                 new.creation_date = creation_date
                 new.creation_date_migrated = creation_date
