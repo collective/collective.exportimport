@@ -80,8 +80,13 @@ class TestExport(unittest.TestCase):
         self.assertIn("Export default pages", browser.contents)
         self.assertIn("Export object positions", browser.contents)
         # We cannot choose a portal_type, because there is no content to export.
-        with self.assertRaises(LookupError):
+        fti = self.layer['portal'].portal_types['Plone Site']
+        if "DexterityFTI" in repr(fti):
+            # In Plone 6 the portal is exportable
             browser.getControl(name="portal_type")
+        else:
+            with self.assertRaises(LookupError):
+                browser.getControl(name="portal_type")
 
     def test_export_content_document(self):
         # First create some content.
