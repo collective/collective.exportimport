@@ -488,8 +488,8 @@ class ImportContent(BrowserView):
         constrains.setConstrainTypesMode(ENABLED)
         locally_allowed_types = item["exportimport.constrains"]["locally_allowed_types"]
         constrains.setLocallyAllowedTypes(locally_allowed_types)
-        immediately_allowed_types = item["exportimport.constrains"]["immediately_allowed_types"]
-        constrains.setImmediatelyAddableTypes(immediately_allowed_types)
+        immediately_addable_types = item["exportimport.constrains"]["immediately_addable_types"]
+        constrains.setImmediatelyAddableTypes(immediately_addable_types)
 
     def global_obj_hook_before_deserializing(self, obj, item):
         """Hook to modify the created obj before deserializing the data.

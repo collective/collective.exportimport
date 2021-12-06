@@ -432,7 +432,7 @@ class ExportContent(BrowserView):
             key = "exportimport.constrains"
             item[key] = {
                 "locally_allowed_types": constrains.getLocallyAllowedTypes(),
-                "immediately_allowed_types": constrains.getImmediatelyAddableTypes(),
+                "immediately_addable_types": constrains.getImmediatelyAddableTypes(),
             }
         return item
 
