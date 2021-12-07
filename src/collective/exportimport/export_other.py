@@ -159,12 +159,16 @@ class ExportMembers(BrowserView):
     AUTO_GROUPS = ["AuthenticatedUsers"]
     AUTO_ROLES = ["Authenticated"]
 
-    def __call__(self):
+    def __init__(self, context, request):
+        super(ExportMembers, self).__init__(context, request)
+        self.pms = api.portal.get_tool("portal_membership")
         self.title = "Export members, groups and roles"
+        self.group_roles = {}
+
+    def __call__(self):
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        self.pms = api.portal.get_tool("portal_membership")
         data = {}
         data["groups"] = self.export_groups()
         data["members"] = [i for i in self.export_members()]
@@ -202,7 +206,6 @@ class ExportMembers(BrowserView):
         pg = api.portal.get_tool("portal_groups")
         acl = api.portal.get_tool("acl_users")
         gids = set([item["id"] for item in acl.searchGroups()])
-        self.group_roles = {}
         for gid in gids:
             self.group_roles[gid] = pg.getGroupById(gid).getRoles()
         return self._getUsersInfos()
