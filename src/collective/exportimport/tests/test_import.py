@@ -219,7 +219,7 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@import_content")
         upload = browser.getControl(name="jsonfile")
         upload.add_file(raw_data, "application/json", "Document.json")
-        browser.getControl(name="handle_existing_content").value = "3"
+        browser.getControl(name="handle_existing_content").value = ["3"]
         browser.getForm(action="@@import_content").submit()
         self.assertIn("Imported 1 items", browser.contents)
 
@@ -283,7 +283,7 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@import_content")
         upload = browser.getControl(name="jsonfile")
         upload.add_file(changed_raw_data.encode(), "application/json", "Document.json")
-        browser.getControl(name="handle_existing_content").value = "2"  # update!
+        browser.getControl(name="handle_existing_content").value = ["2"]  # update!
         browser.getForm(action="@@import_content").submit()
         self.assertIn("Imported 1 items in 0 seconds", browser.contents)
 
@@ -349,7 +349,7 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@import_content")
         upload = browser.getControl(name="jsonfile")
         upload.add_file(changed_raw_data.encode(), "application/json", "Document.json")
-        browser.getControl(name="handle_existing_content").value = "1"  # replace!
+        browser.getControl(name="handle_existing_content").value = ["1"]  # replace!
         browser.getForm(action="@@import_content").submit()
         self.assertIn("Imported 1 items in 0 seconds", browser.contents)
 
