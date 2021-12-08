@@ -105,6 +105,7 @@ You can use this addon to
 * Combine content from mutiple plone-sites into one.
 * Import a plone-site as a subsite into another.
 * Import content from other systems as long as it fits the required format.
+* Update or replace existing data
 * ...
 
 Details
@@ -175,6 +176,13 @@ To fix this you can check the checkbox "Modify exported data for migrations". Th
 Control creating imported content
 ---------------------------------
 
+You can choose between four options how to deal with content that already exists:
+
+  * Skip: Don't import at all
+  * Replace: Delete item and create new
+  * Update: Reuse and only overwrite imported data
+  * Ignore: Create with a new id
+
 Imported content is initially created with ``invokeFactory`` using portal_type and id of the exported item before deserialing the rest of the data.
 You can set additional values by specifying a dict ``factory_kwargs`` that will be passed to the facory.
 Like this you can set values on the imported object that are expected to be there by subscribers to IObjectAddedEvent.
@@ -188,6 +196,8 @@ Exporting and importing large amounts of content can take a while. Export is pre
 * Importing 5000 Folders takes ~5 minutes
 * Importing 5000 Documents takes >25 minutes because of versioning.
 * Importing 5000 Documents without versioning takes ~7 minutes.
+
+During import you can commit every x number of items which will free up memory and disk-space in your TMPDIR (where blobs are added before each commit).
 
 When exporting large numbers of blobs (binary files and images) you will get huge json-files and may run out of memory.
 You have various options to deal with this.

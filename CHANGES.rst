@@ -50,6 +50,9 @@ Changelog
 - Add hook global_obj_hook_before_deserializing to modify the created obj before deserializing the data.
   [pbauer]
 
+- Add support to update and to replace existing content during import (#76)
+  [pbauer]
+
 
 1.2 (2021-10-11)
 ----------------
