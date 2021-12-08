@@ -53,6 +53,9 @@ Changelog
 - Add support to update and to replace existing content during import (#76)
   [pbauer]
 
+- Reindex permissions after importing local roles.
+  [pbauer]
+
 
 1.2 (2021-10-11)
 ----------------
