@@ -14,6 +14,7 @@ from plone.portlets.interfaces import IPortletAssignmentSettings
 from plone.portlets.interfaces import ILocalPortletAssignmentManager
 from plone.portlets.interfaces import IPortletManager
 from Products.Five import BrowserView
+from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getUtility
 from zope.component import queryMultiAdapter
@@ -400,6 +401,11 @@ class ImportLocalRoles(BrowserView):
             if not index % 1000:
                 logger.info(u"Set local roles on {} ({}%) of {} items".format(index, round(index / total * 100, 2), total))
             results += 1
+        if results:
+            logger.info("Reindexing Security")
+            catalog = api.portal.get_tool("portal_catalog")
+            pghandler = ZLogHandler(1000)
+            catalog.reindexIndex("allowedRolesAndUsers", None, pghandler=pghandler)
         return results
 
 

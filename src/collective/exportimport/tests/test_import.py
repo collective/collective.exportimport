@@ -926,3 +926,67 @@ class TestImport(unittest.TestCase):
         self.assertEqual(ordered.getObjectPosition("doc1"), 0)
         self.assertEqual(ordered.getObjectPosition("doc2"), 1)
         self.assertEqual(ordered.getObjectPosition("doc3"), 2)
+
+    def test_import_localroles(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder = api.content.create(
+            container=portal, type="Folder", id="folder", title="Folder"
+        )
+        folder.__ac_local_roles_block__ = 1
+        doc1 = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document"
+        )
+        doc2 = api.content.create(
+            container=folder, type="Document", id="doc2", title="Document"
+        )
+        api.user.create(
+            username="peter",
+            email="peter@example.org",
+            password="secret",
+            roles=("Member",),
+        )
+        api.user.grant_roles(username="peter", obj=doc1, roles=["Reviewer"])
+        api.user.grant_roles(username="peter", obj=doc2, roles=["Owner"])
+        transaction.commit()
+
+        # Export.
+        browser = self.open_page("@@export_localroles")
+        browser.getForm(action="@@export_localroles").submit(name="form.submitted")
+        raw_data = browser.contents
+        if not browser.contents:
+            raw_data = DATA[-1]
+
+        data = json.loads(raw_data)
+        self.assertEqual(data[0]["block"], 1)
+        self.assertEqual(data[0]["localroles"], {"admin": ["Owner"]})
+        self.assertEqual(data[1]["localroles"], {"admin": ["Owner"], "peter": ["Owner"]})
+        self.assertEqual(data[2]["localroles"], {"admin": ["Owner"], "peter": ["Reviewer"]})
+        self.assertNotIn("block", data[1])
+        self.assertNotIn("block", data[2])
+
+        # remove local roles
+        del folder.__ac_local_roles_block__
+        api.user.revoke_roles(username="peter", obj=doc1, roles=["Reviewer"])
+        api.user.revoke_roles(username="peter", obj=doc2, roles=["Owner"])
+        self.assertEqual(doc1.__ac_local_roles__, {'admin': ['Owner']})
+        folder.reindexObjectSecurity()
+        doc1.reindexObjectSecurity()
+        doc2.reindexObjectSecurity()
+
+        # Import and check.
+        browser = self.open_page("@@import_localroles")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "localroles.json")
+        browser.getForm(action="@@import_localroles").submit()
+        self.assertIn("Imported 3 localroles", browser.contents)
+        # The documents have the original local roles again.
+        self.assertEqual(folder.__ac_local_roles_block__, 1)
+        self.assertEqual(doc1.__ac_local_roles__, {'admin': ['Owner'], 'peter': ['Reviewer']})
+        # permissions are reindexed
+        self.assertTrue(api.user.has_permission("Review portal content", username="peter", obj=doc1))
+        self.assertFalse(api.user.has_permission("Modify portal content", username="peter", obj=doc1))
+        self.assertFalse(api.user.has_permission("Review portal content", username="peter", obj=doc2))
+        self.assertTrue(api.user.has_permission("Modify portal content", username="peter", obj=doc2))
