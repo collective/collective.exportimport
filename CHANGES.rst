@@ -62,6 +62,9 @@ Changelog
 - Reindex permissions after importing local roles.
   [pbauer]
 
+- Add export/import for constrains but import content without checking constrains or permissions (#71).
+  [pbauer]
+
 
 1.2 (2021-10-11)
 ----------------
