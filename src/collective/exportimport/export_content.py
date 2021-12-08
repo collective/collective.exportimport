@@ -10,6 +10,8 @@ from operator import itemgetter
 from plone import api
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import ISerializeToJson
+from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
+from Products.CMFPlone.interfaces.constrains import ENABLED
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.component import getMultiAdapter
@@ -279,6 +281,7 @@ class ExportContent(BrowserView):
                 else:
                     item = serializer()
                 item = self.fix_url(item, obj)
+                item = self.export_constraints(item, obj)
                 if self.migration:
                     item = self.update_data_for_migration(item, obj)
                 item = self.global_dict_hook(item, obj)
@@ -419,6 +422,18 @@ class ExportContent(BrowserView):
             item["@id"] = obj_url
         if item["parent"]["@id"] != parent_url:
             item["parent"]["@id"] = parent_url
+        return item
+
+    def export_constraints(self, item, obj):
+        constrains = ISelectableConstrainTypes(obj, None)
+        if constrains is None:
+            return item
+        if constrains.getConstrainTypesMode() == ENABLED:
+            key = "exportimport.constrains"
+            item[key] = {
+                "locally_allowed_types": constrains.getLocallyAllowedTypes(),
+                "immediately_addable_types": constrains.getImmediatelyAddableTypes(),
+            }
         return item
 
 

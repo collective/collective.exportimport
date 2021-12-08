@@ -8,6 +8,9 @@ from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from plone.restapi.interfaces import IDeserializeFromJson
+from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
+from Products.CMFPlone.interfaces.constrains import ENABLED
+from Products.CMFPlone.utils import _createObjectByType
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from six.moves.urllib.parse import unquote
@@ -324,8 +327,8 @@ class ImportContent(BrowserView):
                     )
 
             if not self.update_existing:
-                container.invokeFactory(item["@type"], item["id"], **factory_kwargs)
-                new = container[item["id"]]
+                # create without checking constrains and permissions
+                new = _createObjectByType(item["@type"], container, item["id"], **factory_kwargs)
 
             new, item = self.global_obj_hook_before_deserializing(new, item)
 
@@ -344,6 +347,7 @@ class ImportContent(BrowserView):
             # based on whether or not there is a blob_path somewhere in the item.
             # So handle this case with a separate method.
             self.import_blob_paths(new, item)
+            self.import_constrains(new, item)
 
             self.global_obj_hook(new, item)
             self.custom_obj_hook(new, item)
@@ -475,6 +479,18 @@ class ImportContent(BrowserView):
         if modifier and callable(modifier):
             item = modifier(item)
         return item
+
+    def import_constrains(self, obj, item):
+        if not item.get("exportimport.constrains"):
+            return
+        constrains = ISelectableConstrainTypes(obj, None)
+        if constrains is None:
+            return
+        constrains.setConstrainTypesMode(ENABLED)
+        locally_allowed_types = item["exportimport.constrains"]["locally_allowed_types"]
+        constrains.setLocallyAllowedTypes(locally_allowed_types)
+        immediately_addable_types = item["exportimport.constrains"]["immediately_addable_types"]
+        constrains.setImmediatelyAddableTypes(immediately_addable_types)
 
     def global_obj_hook_before_deserializing(self, obj, item):
         """Hook to modify the created obj before deserializing the data.
