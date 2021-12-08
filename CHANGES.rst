@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.3 (unreleased)
+1.3 (2021-12-08)
 ----------------
 
 - Handle default page of the site root object.
