@@ -10,6 +10,7 @@ from plone.namedfile.file import NamedBlobImage
 from plone.restapi.interfaces import IDeserializeFromJson
 from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.interfaces.constrains import ENABLED
+from Products.CMFPlone.utils import _createObjectByType
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from six.moves.urllib.parse import unquote
@@ -326,8 +327,8 @@ class ImportContent(BrowserView):
                     )
 
             if not self.update_existing:
-                container.invokeFactory(item["@type"], item["id"], **factory_kwargs)
-                new = container[item["id"]]
+                # create without checking constrains and permissions
+                new = _createObjectByType(item["@type"], container, item["id"], **factory_kwargs)
 
             new, item = self.global_obj_hook_before_deserializing(new, item)
 
