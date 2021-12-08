@@ -390,6 +390,9 @@ class ExportContent(BrowserView):
         item = migrate_field(item, "endDate", "end")
         item = migrate_field(item, "openEnd", "open_end")
         item = migrate_field(item, "eventUrl", "event_url")
+        # url cannot be a empty string
+        if item.get("event_url", None) == "":
+            item["event_url"] = None
         item = migrate_field(item, "wholeDay", "whole_day")
         item = migrate_field(item, "contactEmail", "contact_email")
         item = migrate_field(item, "contactName", "contact_name")
