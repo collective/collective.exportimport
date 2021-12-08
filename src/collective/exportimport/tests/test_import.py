@@ -11,6 +11,8 @@ from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.namedfile.file import NamedImage
 from plone.namedfile.file import NamedBlobImage
+from Products.CMFPlone.interfaces.constrains import ENABLED
+from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.tests import dummy
 
 import json
@@ -651,6 +653,82 @@ class TestImport(unittest.TestCase):
         self.assertIn("events", portal.contentIds())
         self.assertEqual(portal["events"].portal_type, "Folder")
         self.assertEqual(portal["image"].image.data, dummy.Image().data)
+
+    def test_import_imports_but_ignores_constrains(self):
+        """Constrains are exported and imported but not checked during import
+        """
+        # First create some content to export.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        self.create_demo_content()
+        self.assertIn("events", portal.contentIds())
+        self.assertIn("image", portal.contentIds())
+
+        # create a collection in self.about
+        collection = api.content.create(
+            container=self.about,
+            type="Collection",
+            id="collection",
+            title=u"Collection",
+        )
+        # constrain self.about to only allow documents
+        constrains = ISelectableConstrainTypes(self.about)
+        constrains.setConstrainTypesMode(ENABLED)
+        constrains.setLocallyAllowedTypes(["Document"])
+        constrains.setImmediatelyAddableTypes(["Document"])
+        from plone.api.exc import InvalidParameterError
+        with self.assertRaises(InvalidParameterError):
+            api.content.create(
+                container=self.about,
+                type="Collection",
+                id="collection2",
+                title=u"Collection 2",
+            )
+        transaction.commit()
+
+        # Now export the complete portal.
+        browser = self.open_page("@@export_content")
+        browser.getControl(name="portal_type").value = [
+            "Folder",
+            "Image",
+            "Link",
+            "Document",
+            "Collection",
+        ]
+        browser.getForm(action="@@export_content").submit(name="submit")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+
+        data = json.loads(contents)
+        self.assertEqual(len(data), 7)
+
+        # Remove the added content.
+        self.remove_demo_content()
+        transaction.commit()
+        self.assertNotIn("events", portal.contentIds())
+
+        # Now import it.
+        browser = self.open_page("@@import_content")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(contents, "application/json", "Document.json")
+        browser.getForm(action="@@import_content").submit()
+        self.assertIn("Imported 7 items", browser.contents)
+
+        # The collection is imported despite the constrain
+        constrains = ISelectableConstrainTypes(portal["about"])
+        self.assertEqual(constrains.getConstrainTypesMode(), ENABLED)
+        self.assertEqual(constrains.getLocallyAllowedTypes(), ["Document"])
+        self.assertEqual(constrains.getLocallyAllowedTypes(), ["Document"])
+        self.assertEqual(portal["about"]["collection"].portal_type, "Collection")
+        with self.assertRaises(InvalidParameterError):
+            api.content.create(
+                container=portal["about"],
+                type="Collection",
+                id="collection2",
+                title=u"Collection 2",
+            )
 
     def _disabled_test_import_blob_path(self):
         # This test is disabled, because the demo storage
