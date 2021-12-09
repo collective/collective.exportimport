@@ -2,7 +2,13 @@ Changelog
 =========
 
 
-1.3 (unreleased)
+1.4 (unreleased)
+----------------
+
+- Nothing changed yet.
+
+
+1.3 (2021-12-08)
 ----------------
 
 - Handle default page of the site root object.
@@ -48,6 +54,15 @@ Changelog
   [pbauer]
 
 - Add hook global_obj_hook_before_deserializing to modify the created obj before deserializing the data.
+  [pbauer]
+
+- Add support to update and to replace existing content during import (#76)
+  [pbauer]
+
+- Reindex permissions after importing local roles.
+  [pbauer]
+
+- Add export/import for constrains but import content without checking constrains or permissions (#71).
   [pbauer]
 
 
