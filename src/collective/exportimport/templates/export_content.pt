@@ -69,7 +69,7 @@
 
             <div class="field mb-3">
               <label for="depth">Depth</label>
-              <span class="formHelp">Unlimited: this item and all children, 0: this object only, 1: only direct childen of this object, 2-x: childen of this object up to the specified level</span>
+              <span class="formHelp">Unlimited: this item and all children, 0: this object only, 1: only direct children of this object, 2-x: children of this object up to the specified level</span>
               <div class="widget">
                 <select name="depth" class="">
                   <option value="1"
