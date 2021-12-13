@@ -5,7 +5,8 @@ Changelog
 1.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- fix `debug` flag in `ExportRelations`
+  [petschki]
 
 
 1.3 (2021-12-08)

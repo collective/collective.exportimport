@@ -128,7 +128,7 @@ class ExportRelations(BrowserView):
                                 "to_uuid": to_brain[0].UID,
                                 "relationship": rel.from_attribute,
                             }
-                            if self.debug:
+                            if debug:
                                 item["from_path"] = from_brain[0].getPath()
                                 item["to_path"] = to_brain[0].getPath()
                             item = self.reference_hook(item)
