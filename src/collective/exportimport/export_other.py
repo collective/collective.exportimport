@@ -117,7 +117,12 @@ class ExportRelations(BrowserView):
             if relation_catalog:
                 portal_catalog = getToolByName(self.context, "portal_catalog")
                 for rel in relation_catalog.findRelations():
-                    if rel.from_path and rel.to_path:
+                    try:
+                        rel_from_path_and_rel_to_path = rel.from_path and rel.to_path
+                    except ValueError:
+                        logger.exception("Cannot export relation %s, skipping", rel)
+                        continue
+                    if rel_from_path_and_rel_to_path:
                         from_brain = portal_catalog(
                             path=dict(query=rel.from_path, depth=0)
                         )
