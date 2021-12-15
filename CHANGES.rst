@@ -5,8 +5,11 @@ Changelog
 1.4 (unreleased)
 ----------------
 
-- fix `debug` flag in `ExportRelations`
+- Fix `debug` flag in `ExportRelations`
   [petschki]
+
+- Deserialize portlet-data using restapi to fix importing RichText.
+  [pbauer]
 
 
 1.3 (2021-12-08)
