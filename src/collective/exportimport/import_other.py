@@ -13,6 +13,7 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletAssignmentSettings
 from plone.portlets.interfaces import ILocalPortletAssignmentManager
 from plone.portlets.interfaces import IPortletManager
+from plone.restapi.interfaces import IFieldDeserializer
 from Products.Five import BrowserView
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.annotation.interfaces import IAnnotations
@@ -20,6 +21,7 @@ from zope.component import getUtility
 from zope.component import queryMultiAdapter
 from zope.component.interfaces import IFactory
 from zope.container.interfaces import INameChooser
+from zope.globalrequest import getRequest
 from ZPublisher.HTTPRequest import FileUpload
 
 import dateutil
@@ -660,6 +662,7 @@ def register_portlets(obj, item):
     Work in progress...
     """
     site = api.portal.get()
+    request = getRequest()
     results = 0
     for manager_name, portlets in item.get("portlets", {}).items():
         manager = getUtility(IPortletManager, manager_name)
@@ -693,6 +696,10 @@ def register_portlets(obj, item):
                 if field is None:
                     continue
                 field = field.bind(assignment)
+                # deserialize data (e.g. for RichText)
+                deserializer = queryMultiAdapter((field, obj, request), IFieldDeserializer)
+                if deserializer is not None:
+                    value = deserializer(value)
                 field.set(assignment, value)
 
             results += 1
