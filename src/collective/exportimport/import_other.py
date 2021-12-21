@@ -467,7 +467,6 @@ class ImportDefaultPages(BrowserView):
 
     def __call__(self, jsonfile=None, return_json=False):
         if jsonfile:
-            self.portal = api.portal.get()
             status = "success"
             try:
                 if isinstance(jsonfile, str):
@@ -500,7 +499,7 @@ class ImportDefaultPages(BrowserView):
             obj = api.content.get(UID=item["uuid"])
             if not obj:
                 if item["uuid"] == config.SITE_ROOT:
-                    obj = self.portal
+                    obj = api.portal.get()
                 else:
                     continue
             old = obj.getDefaultPage()
