@@ -38,9 +38,8 @@ IMAGE_SCALE_MAP = {
 
 
 class FixHTML(BrowserView):
-
     def __call__(self):
-        self.title = 'Fix links to content and images in richtext'
+        self.title = "Fix links to content and images in richtext"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -76,153 +75,177 @@ def html_fixer(text, obj=None, old_portal_url=None):
         old_portal_url = portal_url
 
     soup = BeautifulSoup(text, "html.parser")
-    for content_link in soup.find_all("a"):
-        orig = content_link.decode()  # to compare
-        link = content_link.get("href")
-        if not link:
-            # Ignore <a>-tags without href
-            continue
-
-        uuid = None
-        parsed_link = urlparse(link)
-        if parsed_link.scheme in ["mailto", "file"]:
-            continue
-
-        if parsed_link.netloc and parsed_link.netloc not in old_portal_url:
-            # skip external url
-            continue
-
-        path = parsed_link.path
-        if not path:
-            # link to ancor only?
-            continue
-
-        # remove trailing /view
-        if path.endswith('/view'):
-            path = path[:-5]
-
-        # get uuid from link with resolveuid
-        components = path.split('/')
-        if 'resolveuid' in components:
-            uuid = components[components.index('resolveuid') + 1]
-
-        # get uuid from path
-        if not uuid:
-            target = find_object(obj, path)
-            if not target:
-                logger.debug("Cannot find target obj for {path}".format(path=path))
-                continue
-            uuid = IUUID(target, None)
-
-        if not uuid:
-            logger.debug("Cannot find target obj for {link}".format(link=link))
-            continue
-
-        # construct new link from uuid
-        new_href = "resolveuid/{uuid}".format(uuid=uuid)
-
-        # re-add additional url components
-        if parsed_link.query or parsed_link.fragment:
-            url_components = ["", "", new_href, "", parsed_link.query, parsed_link.fragment]
-            new_href = urlunparse(url_components)
-
-        content_link["href"] = new_href
-        content_link["data-linktype"] = "internal"
-        content_link["data-val"] = uuid
-        if orig != content_link.decode():
-            logger.debug(
-                "Changed link from \n{orig} \n to \n{content_link}".format(
-                    orig=orig, content_link=content_link
-                )
-            )
-
-    for img_link in soup.find_all("img"):
-        orig = img_link.decode()
-        link = img_link.get("src")
-        if not link:
-            # Ignore <img>-tags without src
-            continue
-
-        uuid = None
-        parsed_link = urlparse(link)
-        if parsed_link.scheme in ["mailto", "file", ]:
-            continue
-
-        path = parsed_link.path
-
-        # get uuid from link with resolveuid
-        components = path.split('/')
-        if 'resolveuid' in components:
-            uuid = components[components.index('resolveuid') + 1]
-
-        # update image scaling and traversal
-        for old, new in IMAGE_SCALE_MAP.items():
-            # replace plone.app.imaging old scale names with new ones
-            path = path.replace(
-                "/@@images/image/{old}".format(old=old),
-                "/@@images/image/{new}".format(new=new),
-            )
-            # replace old AT traversing scales
-            path = path.replace(
-                "/image_{old}".format(old=old), "/@@images/image/{new}".format(new=new)
-            )
-
-        scaled = False
-        if "/@@images/" in path:
-            scale = path.split("/@@images/image")[-1]
-            if scale and scale.startswith("/"):
-                scale = scale[1:]
-                img_link["data-scale"] = scale
-                path = path.split("/@@images/")[0]
-                scaled = True
-
-        # get uuid from path
-        if not uuid:
-            target = find_object(obj, path)
-            uuid = IUUID(target, None)
-
-        if not uuid:
-            logger.debug("Cannot find target obj for {path}".format(path=path))
-            continue
-
-        # construct new link
-        if scaled:
-            new_src = "resolveuid/{uuid}/@@images/image/{scale}".format(
-                uuid=uuid, scale=scale
-            )
-            img_link["data-scale"] = scale
-        else:
-            new_src = "resolveuid/{uuid}/@@images/image".format(uuid=uuid)
-            img_link["data-scale"] = ""
-
-        img_link["src"] = new_src
-
-        # data-attrs for tinymce pattern
-        img_link["data-val"] = uuid
-        img_link["data-linktype"] = "image"
-        iklass = img_link.get("class")
-        if not iklass:
-            img_link["class"] = ["image-richtext", "image-inline"]
-        else:
-            image_aligns = {
-                'image-right',
-                'image-left',
-                'image-responsive',
-                'image-inline',
-            }
-            if image_aligns.isdisjoint(set(iklass)):
-                # No image-align class is set, so we defaul to inline.
-                iklass.append("image-inline")
-            if "image-richtext" not in iklass:
-                iklass.append("image-richtext")
-        if orig != img_link.decode():
-            logger.debug(
-                "Change img from {orig} to {img_link}".format(
-                    orig=orig, img_link=img_link
-                )
-            )
+    for tag, attr in [
+        (tag, attr)
+        for attr, tags in [
+            ("href", ["a"]),
+            ("src", ["source", "img", "video", "audio", "iframe"]),
+            ("srcset", ["source", "img"]),
+        ]
+        for tag in tags
+    ]:
+        fix_tag_attr(soup, tag, attr, old_portal_url, obj=obj)
 
     return soup.decode()
+
+
+def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
+    """Fix the attribute every matching tag passed within the soup."""
+    for content_link in soup.find_all(tag):
+        origlink = content_link.get(attr)
+        if not origlink:
+            # Ignore tags without attr
+            continue
+        orig = content_link.decode()  # to compare
+
+        if attr == "srcset":
+            links = [x.split()[0].strip() for x in origlink.split(",")]
+        else:
+            links = [origlink]
+        if not links:
+            # Ignore tags with no usable content
+            continue
+
+        for n, link in enumerate(links):
+            uuid = None
+            parsed_link = urlparse(link)
+            if parsed_link.scheme in ["mailto", "file"]:
+                continue
+
+            if parsed_link.netloc and parsed_link.netloc not in old_portal_url:
+                # skip external url
+                continue
+
+            path = parsed_link.path
+            if not path:
+                # link to anchor only?
+                continue
+
+            # remove trailing /view
+            if path.endswith("/view"):
+                path = path[:-5]
+
+            # get uuid from link with resolveuid
+            components = path.split("/")
+            if "resolveuid" in components:
+                uuid = components[components.index("resolveuid") + 1]
+
+            # update image scaling and traversal
+            if tag == "img":
+                for old, new in IMAGE_SCALE_MAP.items():
+                    # replace plone.app.imaging old scale names with new ones
+                    path = path.replace(
+                        "/@@images/image/{old}".format(old=old),
+                        "/@@images/image/{new}".format(new=new),
+                    )
+                    # replace old AT traversing scales
+                    path = path.replace(
+                        "/image_{old}".format(old=old),
+                        "/@@images/image/{new}".format(new=new),
+                    )
+
+                scaled = False
+                if "/@@images/" in path:
+                    scale = path.split("/@@images/image")[-1]
+                    if scale and scale.startswith("/"):
+                        scale = scale[1:]
+                        if attr == "src":
+                            # Different srcset items can have different scales.
+                            content_link["data-scale"] = scale
+                        path = path.split("/@@images/")[0]
+                        scaled = True
+
+            # get uuid from path
+            if not uuid:
+                target = find_object(obj, path)
+                if not target:
+                    logger.debug("Cannot find target obj for {path}".format(path=path))
+                    continue
+                uuid = IUUID(target, None)
+
+            if not uuid:
+                logger.debug("Cannot find target obj for {link}".format(link=link))
+                continue
+
+            # construct new link
+            if tag == "img":
+                if scaled:
+                    new_href = "resolveuid/{uuid}/@@images/image/{scale}".format(
+                        uuid=uuid, scale=scale
+                    )
+                    if attr == "src":
+                        content_link["data-scale"] = scale
+                else:
+                    new_href = "resolveuid/{uuid}/@@images/image".format(uuid=uuid)
+                    if attr == "src":
+                        content_link["data-scale"] = ""
+            else:
+                new_href = "resolveuid/{uuid}".format(uuid=uuid)
+                if parsed_link.fragment:
+                    new_href += "#" + parsed_link.fragment
+                if attr != "srcset":
+                    content_link["data-linktype"] = "internal"
+                    content_link["data-val"] = uuid
+
+            if tag == "img":
+                # data-attrs for tinymce pattern
+                if attr == "src":
+                    # Different srcset items can have different UUIDs.
+                    content_link["data-val"] = uuid
+                content_link["data-linktype"] = "image"
+                iklass = content_link.get("class")
+                if not iklass:
+                    content_link["class"] = ["image-richtext", "image-inline"]
+                else:
+                    image_aligns = {
+                        "image-right",
+                        "image-left",
+                        "image-responsive",
+                        "image-inline",
+                    }
+                    if image_aligns.isdisjoint(set(iklass)):
+                        # No image-align class is set, so we defaul to inline.
+                        iklass.append("image-inline")
+                    if "image-richtext" not in iklass:
+                        iklass.append("image-richtext")
+
+            links[n] = new_href
+
+        content_link[attr] = ",".join(
+            " ".join([links[n]] + x.split()[1:])
+            for n, x in enumerate(origlink.split(","))
+        )
+
+        if orig != content_link.decode():
+            logger.debug(
+                "Changed {tag} {attr} from {orig} to {content_link}".format(
+                    tag=tag, attr=attr, orig=orig, content_link=content_link
+                )
+            )
+
+
+def find_object(base, path):
+    """Find a link target based ob a absolute or relative path.
+    When the target in the link is no content leave the link as is.
+    It might be a link to a browser-view, form or script...
+    """
+    if six.PY2 and isinstance(path, six.text_type):
+        path = path.encode("utf-8")
+    if path.startswith("/"):
+        # Make an absolute path relative to the portal root
+        obj = api.portal.get()
+        portal_path = obj.absolute_url_path() + "/"
+        if path.startswith(portal_path):
+            path = path[len(portal_path) :]
+    else:
+        obj = aq_parent(base)  # relative urls start at the parent...
+
+    try:
+        target = obj.unrestrictedTraverse(path)
+    except:
+        return
+    if IContentish.providedBy(target):
+        return target
 
 
 def find_object(base, path):
@@ -266,7 +289,9 @@ def fix_html_in_content_fields(context=None):
 
     brains = catalog(**query)
     total = len(brains)
-    logger.info("There are {} content items in total, starting migration...".format(len(brains)))
+    logger.info(
+        "There are {} content items in total, starting migration...".format(len(brains))
+    )
     results = 0
     for index, brain in enumerate(brains, start=1):
         try:
@@ -292,11 +317,17 @@ def fix_html_in_content_fields(context=None):
                     )
                     setattr(obj, fieldname, textvalue)
                     obj.reindexObject(idxs=("SearchableText",))
-                    logger.debug("Fixed html for field {} of {}".format(fieldname, obj.absolute_url()))
+                    logger.debug(
+                        "Fixed html for field {} of {}".format(
+                            fieldname, obj.absolute_url()
+                        )
+                    )
                     results += 1
 
         if not index % 1000:
-            msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(index, round(index / total * 100, 2), total, results)
+            msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(
+                index, round(index / total * 100, 2), total, results
+            )
             logger.info(msg)
             transaction.get().note(msg)
             transaction.commit()
@@ -336,20 +367,26 @@ def fix_html_in_portlets(context=None):
                                     encoding=text.encoding,
                                 )
                                 setattr(assignment, fieldname, textvalue)
-                                logger.info("Fixed html for field {} of portlet at {}".format(
-                                    fieldname, obj.absolute_url()))
+                                logger.info(
+                                    "Fixed html for field {} of portlet at {}".format(
+                                        fieldname, obj.absolute_url()
+                                    )
+                                )
                         elif text and isinstance(text, str):
                             clean_text = html_fixer(text, obj)
                             if clean_text and clean_text != text:
                                 textvalue = RichTextValue(
                                     raw=clean_text,
-                                    mimeType='text/html',
-                                    outputMimeType='text/x-html-safe',
-                                    encoding='utf-8',
+                                    mimeType="text/html",
+                                    outputMimeType="text/x-html-safe",
+                                    encoding="utf-8",
                                 )
                                 setattr(assignment, fieldname, textvalue)
-                                logger.info("Fixed html for field {} of portlet {} at {}".format(
-                                    fieldname, str(assignment), obj.absolute_url()))
+                                logger.info(
+                                    "Fixed html for field {} of portlet {} at {}".format(
+                                        fieldname, str(assignment), obj.absolute_url()
+                                    )
+                                )
 
     portal = api.portal.get()
     portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_portlets)

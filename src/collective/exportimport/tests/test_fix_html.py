@@ -104,6 +104,24 @@ class TestFixHTML(unittest.TestCase):
         output = html_fixer(old_text, self.team)
         self.assertEqual(output, fixed_html)
 
+        # image with srcset
+        old_text = '<img srcset="image/@@images/image/large 280w,image/@@images/image/icon 64w" />'
+        fixed_html = '<img class="image-richtext image-inline" data-linktype="image" srcset="resolveuid/{0}/@@images/image/large 280w,resolveuid/{0}/@@images/image/icon 64w"/>'.format(self.image.UID())
+        output = html_fixer(old_text, self.team)
+        self.assertEqual(output, fixed_html)
+
+        # relative embed of content
+        old_text = '<p><iframe src="team"></iframe></p>'
+        fixed_html = '<p><iframe data-linktype="internal" data-val="{0}" src="resolveuid/{0}"></iframe></p>'.format(self.team.UID())
+        output = html_fixer(old_text, self.team)
+        self.assertEqual(output, fixed_html)
+
+        # relative video/audio embed
+        old_text = '<p><video src="team"></video><audio src="team"></audio></p>'
+        fixed_html = '<p><video data-linktype="internal" data-val="{0}" src="resolveuid/{0}"></video><audio data-linktype="internal" data-val="{0}" src="resolveuid/{0}"></audio></p>'.format(self.team.UID())
+        output = html_fixer(old_text, self.team)
+        self.assertEqual(output, fixed_html)
+
         # TODO: image scale is fixed, link to image with scale is not fixed yet
         old_text = '<p><a href="image/image_preview"><img src="image/image_preview"/></a></p>'
         fixed_html = '<p><a href="image/image_preview"><img class="image-richtext image-inline" data-linktype="image" data-scale="preview" data-val="{0}" src="resolveuid/{0}/@@images/image/preview"/></a></p>'.format(self.image.UID())
