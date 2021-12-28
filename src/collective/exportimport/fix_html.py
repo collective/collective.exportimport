@@ -46,12 +46,12 @@ class FixHTML(BrowserView):
 
         msg = []
 
-        content = fix_html_in_content_fields()
-        msg.append(u"Fixed html for {} fields in content items".format(content))
+        fix_count = fix_html_in_content_fields()
+        msg.append(u"Fixed HTML for {} fields in content items".format(fix_count))
         logger.info(msg)
 
-        fix_html_in_portlets()
-        msg.append(u"Fixed html for portlets")
+        fix_count = fix_html_in_portlets()
+        msg.append(u"Fixed HTML for {} portlets".format(fix_count))
         logger.info(msg)
 
         # TODO: Fix html in tiles
@@ -327,6 +327,8 @@ def fix_html_in_portlets(context=None):
         iface: name for name, iface in getUtilitiesFor(IPortletTypeInterface)
     }
 
+    fix_count = 0
+
     def get_portlets(obj, path):
         for manager_name, manager in getUtilitiesFor(IPortletManager):
             mapping = queryMultiAdapter((obj, manager), IPortletAssignmentMapping)
@@ -353,6 +355,7 @@ def fix_html_in_portlets(context=None):
                                     outputMimeType=text.outputMimeType,
                                     encoding=text.encoding,
                                 )
+                                fix_count += 1
                                 setattr(assignment, fieldname, textvalue)
                                 logger.info("Fixed html for field {} of portlet at {}".format(
                                     fieldname, obj.absolute_url()))
@@ -365,9 +368,11 @@ def fix_html_in_portlets(context=None):
                                     outputMimeType='text/x-html-safe',
                                     encoding='utf-8',
                                 )
+                                fix_count += 1
                                 setattr(assignment, fieldname, textvalue)
                                 logger.info("Fixed html for field {} of portlet {} at {}".format(
                                     fieldname, str(assignment), obj.absolute_url()))
 
     portal = api.portal.get()
     portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_portlets)
+    return fix_count
