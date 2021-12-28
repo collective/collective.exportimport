@@ -44,21 +44,22 @@ class FixHTML(BrowserView):
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
+        msg = []
+
         content = fix_html_in_content_fields()
-        msg = u"Fixed html for {} content items".format(content)
+        msg.append(u"Fixed html for {} fields in content items".format(content))
         logger.info(msg)
 
         fix_html_in_portlets()
-        msg = u"Fixed html for portlets"
+        msg.append(u"Fixed html for portlets")
         logger.info(msg)
 
         # TODO: Fix html in tiles
         # tiles = fix_html_in_tiles()
         # msg = u"Fixed html for {} tiles".format(tiles)
 
-        logger.info("committing...")
-        msg = u"Fixed html"
-        api.portal.show_message(msg, self.request)
+        # It is not clear to me if the message can be HTML or not.
+        api.portal.show_message("\n".join(msg), self.request)
         return self.index()
 
 
@@ -266,8 +267,10 @@ def fix_html_in_content_fields(context=None):
 
     brains = catalog(**query)
     total = len(brains)
-    logger.info("There are {} content items in total, starting migration...".format(len(brains)))
+    logger.info("There are {} content items in total, starting migration...".format(total))
     results = 0
+    results_to_commit = 0
+    items_to_commit = 0
     for index, brain in enumerate(brains, start=1):
         try:
             obj = brain.getObject()
@@ -278,6 +281,7 @@ def fix_html_in_content_fields(context=None):
             )
             continue
 
+        _p = results_to_commit
         for fieldname in types_with_richtext_fields[obj.portal_type]:
             text = getattr(obj.aq_base, fieldname, None)
             if text and IRichTextValue.providedBy(text) and text.raw:
@@ -294,12 +298,26 @@ def fix_html_in_content_fields(context=None):
                     obj.reindexObject(idxs=("SearchableText",))
                     logger.debug("Fixed html for field {} of {}".format(fieldname, obj.absolute_url()))
                     results += 1
+                    results_to_commit += 1
+        if _p != results_to_commit:
+            items_to_commit += 1
 
-        if not index % 1000:
-            msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(index, round(index / total * 100, 2), total, results)
+        if results_to_commit >= 1000:
+            # Commit every 1000 changes.
+            msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(items_to_commit, round(items_to_commit / total * 100, 2), total, results)
             logger.info(msg)
             transaction.get().note(msg)
             transaction.commit()
+            results_to_commit = 0
+            items_to_commit = 0
+
+    if results_to_commit > 0:
+        # Commit any remaining changes.
+        msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(items_to_commit, round(items_to_commit / total * 100, 2), total, results)
+        logger.info(msg)
+        transaction.get().note(msg)
+        transaction.commit()
+
     return results
 
 
