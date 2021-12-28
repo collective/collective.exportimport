@@ -296,7 +296,7 @@ class ExportContent(BrowserView):
 
                 yield item
             except Exception as e:
-                logger.info(u"Error exporting {}: {}".format(obj.absolute_url(), e))
+                logger.exception(u"Error exporting {}".format(obj.absolute_url()))
 
     def portal_types(self):
         """A list with info on all content types with existing items."""
