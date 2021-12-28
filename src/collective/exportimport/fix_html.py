@@ -25,7 +25,6 @@ import transaction
 
 logger = getLogger(__name__)
 
-
 IMAGE_SCALE_MAP = {
     "icon": "icon",
     "large": "large",
@@ -48,18 +47,17 @@ class FixHTML(BrowserView):
 
         fix_count = fix_html_in_content_fields()
         msg.append(u"Fixed HTML for {} fields in content items".format(fix_count))
-        logger.info(msg)
+        logger.info(msg[-1])
 
         fix_count = fix_html_in_portlets()
         msg.append(u"Fixed HTML for {} portlets".format(fix_count))
-        logger.info(msg)
+        logger.info(msg[-1])
 
         # TODO: Fix html in tiles
         # tiles = fix_html_in_tiles()
         # msg = u"Fixed html for {} tiles".format(tiles)
 
-        # It is not clear to me if the message can be HTML or not.
-        api.portal.show_message("\n".join(msg), self.request)
+        api.portal.show_message("".join(m + "." for m in msg), self.request)
         return self.index()
 
 
@@ -327,9 +325,7 @@ def fix_html_in_portlets(context=None):
         iface: name for name, iface in getUtilitiesFor(IPortletTypeInterface)
     }
 
-    fix_count = 0
-
-    def get_portlets(obj, path):
+    def get_portlets(obj, path, fix_count_ref):
         for manager_name, manager in getUtilitiesFor(IPortletManager):
             mapping = queryMultiAdapter((obj, manager), IPortletAssignmentMapping)
             if mapping is None or not mapping.items():
@@ -355,7 +351,7 @@ def fix_html_in_portlets(context=None):
                                     outputMimeType=text.outputMimeType,
                                     encoding=text.encoding,
                                 )
-                                fix_count += 1
+                                fix_count_ref.append(True)
                                 setattr(assignment, fieldname, textvalue)
                                 logger.info("Fixed html for field {} of portlet at {}".format(
                                     fieldname, obj.absolute_url()))
@@ -368,11 +364,13 @@ def fix_html_in_portlets(context=None):
                                     outputMimeType='text/x-html-safe',
                                     encoding='utf-8',
                                 )
-                                fix_count += 1
+                                fix_count_ref.append(True)
                                 setattr(assignment, fieldname, textvalue)
                                 logger.info("Fixed html for field {} of portlet {} at {}".format(
                                     fieldname, str(assignment), obj.absolute_url()))
 
     portal = api.portal.get()
-    portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_portlets)
-    return fix_count
+    fix_count = []
+    f = lambda obj, path: get_portlets(obj, path, fix_count)
+    portal.ZopeFindAndApply(portal, search_sub=True, apply_func=f)
+    return len(fix_count)
