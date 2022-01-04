@@ -1035,9 +1035,13 @@ class TestImport(unittest.TestCase):
         app = self.layer["app"]
         portal = self.layer["portal"]
         login(app, SITE_OWNER_NAME)
-        doc = api.content.create(
+        doc1 = api.content.create(
             container=portal, type="Document", id="doc1", title="Document 1",
-            text="<a href=\"/doc1\">Link to doc1 that will be fixed.</a>",
+            text="<p>My document.</p>",
+        )
+        doc2 = api.content.create(
+            container=portal, type="Document", id="doc2", title="Document 2",
+            text="<a href=\"doc1/view\">Link to doc1 that will be fixed.</a>",
         )
         transaction.commit()
 
