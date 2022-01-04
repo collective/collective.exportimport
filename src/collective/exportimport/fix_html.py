@@ -57,7 +57,7 @@ class FixHTML(BrowserView):
         # tiles = fix_html_in_tiles()
         # msg = u"Fixed html for {} tiles".format(tiles)
 
-        api.portal.show_message(" ".join(m + "." for m in msg), self.request)
+        api.portal.show_message(u" ".join(m + u"." for m in msg), self.request)
         return self.index()
 
 
