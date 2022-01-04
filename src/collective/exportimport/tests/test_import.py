@@ -1043,6 +1043,6 @@ class TestImport(unittest.TestCase):
 
         # Now export it to a file on the server.
         browser = self.open_page("@@fix_html")
-        browser.getForm(action="@@fix_html").submit(name="submit")
+        browser.getForm(action="@@fix_html").submit(name="form.submitted")
 
         self.assertIn("Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.", browser.contents)
