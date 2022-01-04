@@ -6,6 +6,7 @@ from collective.exportimport.testing import (
 )
 from OFS.interfaces import IOrderedContainer
 from plone import api
+from plone.app.textfield import RichTextValue
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
@@ -1037,11 +1038,19 @@ class TestImport(unittest.TestCase):
         login(app, SITE_OWNER_NAME)
         doc1 = api.content.create(
             container=portal, type="Document", id="doc1", title="Document 1",
-            text="<p>My document.</p>",
+            text=RichTextValue(
+                u"<p>My document.</p>",
+                "text/html",
+                "text/x/html-safe",
+            ),
         )
         doc2 = api.content.create(
             container=portal, type="Document", id="doc2", title="Document 2",
-            text="<a href=\"doc1/view\">Link to doc1 that will be fixed.</a>",
+            text=RichTextValue(
+                u"<a href=\"doc1/view\">Link to doc1 that will be fixed.</a>",
+                "text/html",
+                "text/x/html-safe",
+            ),
         )
         transaction.commit()
 
