@@ -1,9 +1,9 @@
 # -*- coding: UTF-8 -*-
+from Acquisition import aq_parent
 from bs4 import BeautifulSoup
 from collections import defaultdict
 from logging import getLogger
 from plone import api
-from plone.app.linkintegrity.handlers import findObject
 from plone.app.portlets.interfaces import IPortletTypeInterface
 from plone.app.textfield import RichTextValue
 from plone.app.textfield.interfaces import IRichText
@@ -12,12 +12,15 @@ from plone.dexterity.utils import iterSchemataForType
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
 from plone.uuid.interfaces import IUUID
+from Products.CMFCore.interfaces import IContentish
 from Products.Five import BrowserView
 from six.moves.urllib.parse import urlparse
+from six.moves.urllib.parse import urlunparse
 from zope.component import getUtilitiesFor
 from zope.component import queryMultiAdapter
 from zope.interface import providedBy
 
+import six
 import transaction
 
 logger = getLogger(__name__)
@@ -105,7 +108,7 @@ def html_fixer(text, obj=None, old_portal_url=None):
 
         # get uuid from path
         if not uuid:
-            target, extra = findObject(obj, path)
+            target = find_object(obj, path)
             if not target:
                 logger.debug("Cannot find target obj for {path}".format(path=path))
                 continue
@@ -117,8 +120,11 @@ def html_fixer(text, obj=None, old_portal_url=None):
 
         # construct new link from uuid
         new_href = "resolveuid/{uuid}".format(uuid=uuid)
-        if parsed_link.fragment:
-            new_href += "#" + parsed_link.fragment
+
+        # re-add additional url components
+        if parsed_link.query or parsed_link.fragment:
+            url_components = ["", "", new_href, "", parsed_link.query, parsed_link.fragment]
+            new_href = urlunparse(url_components)
 
         content_link["href"] = new_href
         content_link["data-linktype"] = "internal"
@@ -172,7 +178,7 @@ def html_fixer(text, obj=None, old_portal_url=None):
 
         # get uuid from path
         if not uuid:
-            target, extra = findObject(obj, path)
+            target = find_object(obj, path)
             uuid = IUUID(target, None)
 
         if not uuid:
@@ -217,6 +223,30 @@ def html_fixer(text, obj=None, old_portal_url=None):
             )
 
     return soup.decode()
+
+
+def find_object(base, path):
+    """Find a link target based ob a absolute or relative path.
+    When the target in the link is no content leave the link as is.
+    It might be a link to a browser-view, form or script...
+    """
+    if six.PY2 and isinstance(path, six.text_type):
+        path = path.encode('utf-8')
+    if path.startswith('/'):
+        # Make an absolute path relative to the portal root
+        obj = api.portal.get()
+        portal_path = obj.absolute_url_path() + '/'
+        if path.startswith(portal_path):
+            path = path[len(portal_path):]
+    else:
+        obj = aq_parent(base)   # relative urls start at the parent...
+
+    try:
+        target = obj.unrestrictedTraverse(path)
+    except:
+        return
+    if IContentish.providedBy(target):
+        return target
 
 
 def fix_html_in_content_fields(context=None):
