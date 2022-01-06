@@ -13,6 +13,7 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
 from plone.uuid.interfaces import IUUID
 from Products.CMFCore.interfaces import IContentish
+from Products.CMFPlone.utils import safe_encode
 from Products.Five import BrowserView
 from six.moves.urllib.parse import urlparse
 from six.moves.urllib.parse import urlunparse
@@ -20,6 +21,7 @@ from zope.component import getUtilitiesFor
 from zope.component import queryMultiAdapter
 from zope.interface import providedBy
 
+import six
 import transaction
 
 logger = getLogger(__name__)
@@ -229,6 +231,8 @@ def find_object(base, path):
     When the target in the link is no content leave the link as is.
     It might be a link to a browser-view, form or script...
     """
+    if six.PY2:
+        path= safe_encode(path)
     if path.startswith('/'):
         # Make an absolute path relative to the portal root
         obj = api.portal.get()
