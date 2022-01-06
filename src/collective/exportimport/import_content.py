@@ -284,7 +284,7 @@ class ImportContent(BrowserView):
 
             if not container:
                 logger.info(
-                    u"No container found for {} {}".format(item["@type"], item["@id"])
+                    u"No container (parent was {}) found for {} {}".format(item["parent"]["@type"], item["@type"], item["@id"])
                 )
                 continue
 
