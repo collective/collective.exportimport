@@ -13,7 +13,6 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
 from plone.uuid.interfaces import IUUID
 from Products.CMFCore.interfaces import IContentish
-from Products.CMFPlone.utils import safe_encode
 from Products.Five import BrowserView
 from six.moves.urllib.parse import urlparse
 from six.moves.urllib.parse import urlunparse
@@ -231,8 +230,8 @@ def find_object(base, path):
     When the target in the link is no content leave the link as is.
     It might be a link to a browser-view, form or script...
     """
-    if six.PY2:
-        path= safe_encode(path)
+    if six.PY2 and isinstance(path, six.text_type):
+        path = path.encode('utf-8')
     if path.startswith('/'):
         # Make an absolute path relative to the portal root
         obj = api.portal.get()
