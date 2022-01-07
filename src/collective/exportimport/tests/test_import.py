@@ -9,6 +9,7 @@ from plone import api
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
+from plone.app.textfield.value import RichTextValue
 from plone.namedfile.file import NamedImage
 from plone.namedfile.file import NamedBlobImage
 from Products.CMFPlone.interfaces.constrains import ENABLED
@@ -990,3 +991,41 @@ class TestImport(unittest.TestCase):
         self.assertFalse(api.user.has_permission("Modify portal content", username="peter", obj=doc1))
         self.assertFalse(api.user.has_permission("Review portal content", username="peter", obj=doc2))
         self.assertTrue(api.user.has_permission("Modify portal content", username="peter", obj=doc2))
+
+    def test_import_richtext_with_html_entities(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        old_text = "<pre>Code example: &lt;h2&gt;Heading 2&lt;/h2&gt; example</pre>"
+        doc = api.content.create(
+            container=portal,
+            type="Document",
+            id="doc1",
+            title="Document 1",
+            text=RichTextValue(old_text, 'text/html', 'text/x-html-safe'),
+        )
+        transaction.commit()
+
+        # Now export it.
+        browser = self.open_page("@@export_content")
+        browser.getControl(name="portal_type").value = ["Document"]
+        browser.getForm(action="@@export_content").submit(name="submit")
+
+        # We should have gotten json.
+        raw_data = browser.contents
+        if not browser.contents:
+            raw_data = DATA[-1]
+
+        # Remove the added content.
+        api.content.delete(doc)
+        transaction.commit()
+
+        # Now import it.
+        browser = self.open_page("@@import_content")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "Document.json")
+        browser.getForm(action="@@import_content").submit()
+
+        new_doc = portal["doc1"]
+        # the text should be the same
+        self.assertEqual(new_doc.text.raw, old_text)
