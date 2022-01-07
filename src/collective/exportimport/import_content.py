@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from collective.exportimport import config
+from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
 from DateTime import DateTime
 from plone import api
@@ -18,6 +19,7 @@ from six.moves.urllib.parse import urlparse
 from zExceptions import NotFound
 from zope.component import getMultiAdapter
 from zope.component import getUtility
+from zope.interface import alsoProvides
 from ZPublisher.HTTPRequest import FileUpload
 
 import ijson
@@ -216,6 +218,7 @@ class ImportContent(BrowserView):
 
     def do_import(self, data):
         start = datetime.now()
+        alsoProvides(self.request, IMigrationMarker)
         added = self.import_new_content(data)
         end = datetime.now()
         delta = end - start

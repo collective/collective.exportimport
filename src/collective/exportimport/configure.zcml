@@ -112,6 +112,9 @@
   <adapter factory=".serializer.ImageFieldSerializerWithBlobPaths" />
   <adapter factory=".serializer.RichttextFieldSerializerWithRawText" />
 
+  <!-- Deserializers -->
+  <adapter factory=".deserializer.RichTextFieldDeserializerWithoutUnescape" />
+
   <browser:page
       name="exportimport_links"
       for="zope.interface.Interface"
