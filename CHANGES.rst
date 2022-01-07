@@ -11,6 +11,18 @@ Changelog
 - Deserialize portlet-data using restapi to fix importing RichText.
   [pbauer]
 
+- Fix importing richtext with html-entities. Fixes #99
+  [pbauer]
+
+- Preserve links to browser-views by using a custom find_object. Fixes #97
+  [pbauer]
+
+- Ignore linkintegrity when importing items with replace-strategy.
+  [pbauer]
+
+- Add tests for fix_html.
+  [pbauer]
+
 
 1.3 (2021-12-08)
 ----------------
