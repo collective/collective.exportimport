@@ -308,7 +308,7 @@ class ImportContent(BrowserView):
                     logger.info(u"{} ({}) already exists. Replacing it.".format(
                         new_id, item["@id"])
                     )
-                    api.content.delete(container[new_id])
+                    api.content.delete(container[new_id], check_linkintegrity=False)
 
                 elif self.handle_existing_content == 2:
                     # Update existing item
