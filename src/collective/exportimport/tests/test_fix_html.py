@@ -173,7 +173,7 @@ class TestFixHTML(unittest.TestCase):
             % self.about.UID()
         )
         doc = api.content.create(
-            container=portal,
+            container=self.portal,
             type="Document",
             id="doc",
             title="Document 2",
