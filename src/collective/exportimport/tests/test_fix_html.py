@@ -179,11 +179,10 @@ class TestFixHTML(unittest.TestCase):
             title="Document 2",
             text=RichTextValue(old_text, "text/html", "text/x-html-safe"),
         )
-        # Now run the fixer
-        browser = self.open_page("@@fix_html")
-        browser.getForm(action="@@fix_html").submit(name="form.submitted")
+        form = self.portal.restrictedTraverse("@@fix_html")
+        html = form()
+        self.assertIn("Fix links to content and images in richtext", html)
+        self.request.form["form.submitted"] = True
+        html = form()
         self.assertEqual(fixed_html, doc.text.raw)
-        self.assertIn(
-            "Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.",
-            browser.contents,
-        )
+        self.assertIn("Fixed html", html)
