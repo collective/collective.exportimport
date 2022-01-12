@@ -152,7 +152,7 @@ class TestFixHTML(unittest.TestCase):
             "form.commit": False,
         })
         html = form()
-        self.assertIn("Fixed html", html)
+        self.assertIn("Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.", html)
         fixed_html = """
 <p><a class="some-class" data-linktype="internal" data-val="{0}" href="resolveuid/{0}">Links to uuid</a></p>
 <p><a href="delete_confirmation">Link to view/form</a></p>
@@ -171,7 +171,7 @@ class TestFixHTML(unittest.TestCase):
         """Test that the status message displays the correct number of fields fixed."""
         self.create_demo_content()
         old_text = '<a href="about">Link to about that will be fixed.</a>'
-        doc = api.content.create(
+        api.content.create(
             container=self.portal,
             type="Document",
             id="doc",
@@ -190,4 +190,3 @@ class TestFixHTML(unittest.TestCase):
             "Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.",
             html,
         )
-
