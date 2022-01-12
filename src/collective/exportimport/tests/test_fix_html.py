@@ -168,7 +168,7 @@ class TestFixHTML(unittest.TestCase):
         """Test that the status message displays the correct number of fields fixed."""
         self.create_demo_content()
         old_text = '<a href="about">Link to about that will be fixed.</a>'
-        fixed_text = (
+        fixed_html = (
             '<a href="resolveuid/%s">Link to about that will be fixed.</a>'
             % self.about.UID()
         )
