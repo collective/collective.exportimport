@@ -42,10 +42,11 @@ class FixHTML(BrowserView):
         self.title = 'Fix links to content and images in richtext'
         if not self.request.form.get("form.submitted", False):
             return self.index()
+        commit = self.request.form.get("form.commit", True)
 
         msg = []
 
-        fix_count = fix_html_in_content_fields()
+        fix_count = fix_html_in_content_fields(commit=commit)
         msg.append(u"Fixed HTML for {} fields in content items".format(fix_count))
         logger.info(msg[-1])
 
@@ -248,7 +249,7 @@ def find_object(base, path):
         return target
 
 
-def fix_html_in_content_fields(context=None):
+def fix_html_in_content_fields(context=None, commit=True):
     """Run this in Plone 5.x"""
     catalog = api.portal.get_tool("portal_catalog")
     portal_types = api.portal.get_tool("portal_types")
@@ -304,8 +305,9 @@ def fix_html_in_content_fields(context=None):
             # Commit every 1000 changes.
             msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(items_to_commit, round(items_to_commit / total * 100, 2), total, results)
             logger.info(msg)
-            transaction.get().note(msg)
-            transaction.commit()
+            if commit:
+                transaction.get().note(msg)
+                transaction.commit()
             results_to_commit = 0
             items_to_commit = 0
 
@@ -313,8 +315,9 @@ def fix_html_in_content_fields(context=None):
         # Commit any remaining changes.
         msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(items_to_commit, round(items_to_commit / total * 100, 2), total, results)
         logger.info(msg)
-        transaction.get().note(msg)
-        transaction.commit()
+        if commit:
+            transaction.get().note(msg)
+            transaction.commit()
 
     return results
 

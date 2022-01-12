@@ -147,7 +147,10 @@ class TestFixHTML(unittest.TestCase):
         form = self.portal.restrictedTraverse("@@fix_html")
         html = form()
         self.assertIn("Fix links to content and images in richtext", html)
-        self.request.form["form.submitted"] = True
+        self.request.form.update({
+            "form.submitted": True,
+            "form.commit": False,
+        })
         html = form()
         self.assertIn("Fixed html", html)
         fixed_html = """
@@ -182,7 +185,10 @@ class TestFixHTML(unittest.TestCase):
         form = self.portal.restrictedTraverse("@@fix_html")
         html = form()
         self.assertIn("Fix links to content and images in richtext", html)
-        self.request.form["form.submitted"] = True
+        self.request.form.update({
+            "form.submitted": True,
+            "form.commit": False,
+        })
         html = form()
         self.assertEqual(fixed_html, doc.text.raw)
         self.assertIn(
