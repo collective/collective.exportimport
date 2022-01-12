@@ -1047,7 +1047,7 @@ class TestImport(unittest.TestCase):
         doc2 = api.content.create(
             container=portal, type="Document", id="doc2", title="Document 2",
             text=RichTextValue(
-                u"<a href=\"doc1/view\">Link to doc1 that will be fixed.</a>",
+                u"<a href=\"doc1\">Link to doc1 that will be fixed.</a>",
                 "text/html",
                 "text/x/html-safe",
             ),
@@ -1058,4 +1058,7 @@ class TestImport(unittest.TestCase):
         browser = self.open_page("@@fix_html")
         browser.getForm(action="@@fix_html").submit(name="form.submitted")
 
-        self.assertIn("Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.", browser.contents)
+        try:
+            self.assertIn("Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.", browser.contents)
+        except Exception:
+            assert 0, api.content.get("doc2").text
