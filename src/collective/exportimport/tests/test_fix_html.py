@@ -185,4 +185,8 @@ class TestFixHTML(unittest.TestCase):
         self.request.form["form.submitted"] = True
         html = form()
         self.assertEqual(fixed_html, doc.text.raw)
-        self.assertIn("Fixed html", html)
+        self.assertIn(
+            "Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.",
+            html,
+        )
+
