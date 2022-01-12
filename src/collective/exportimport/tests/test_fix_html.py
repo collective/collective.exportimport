@@ -172,7 +172,7 @@ class TestFixHTML(unittest.TestCase):
         self.create_demo_content()
         old_text = '<a href="about">Link to about that will be fixed.</a>'
         fixed_html = (
-            '<a href="resolveuid/%s">Link to about that will be fixed.</a>'
+            '<a data-linktype="internal" data-val="61e46690b91f459385f5a775597a449d" href="resolveuid/%s">Link to about that will be fixed.</a>'
             % self.about.UID()
         )
         doc = api.content.create(
