@@ -1030,35 +1030,3 @@ class TestImport(unittest.TestCase):
         new_doc = portal["doc1"]
         # the text should be the same
         self.assertEqual(new_doc.text.raw, old_text)
-
-    def test_fix_html(self):
-        # First create some content with .
-        app = self.layer["app"]
-        portal = self.layer["portal"]
-        login(app, SITE_OWNER_NAME)
-        doc1 = api.content.create(
-            container=portal, type="Document", id="doc1", title="Document 1",
-            text=RichTextValue(
-                u"<p>My document.</p>",
-                "text/html",
-                "text/x/html-safe",
-            ),
-        )
-        doc2 = api.content.create(
-            container=portal, type="Document", id="doc2", title="Document 2",
-            text=RichTextValue(
-                u"<a href=\"doc1\">Link to doc1 that will be fixed.</a>",
-                "text/html",
-                "text/x/html-safe",
-            ),
-        )
-        transaction.commit()
-
-        # Now export it to a file on the server.
-        browser = self.open_page("@@fix_html")
-        browser.getForm(action="@@fix_html").submit(name="form.submitted")
-
-        try:
-            self.assertIn("Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.", browser.contents)
-        except Exception:
-            assert 0, api.content.get("doc2").text

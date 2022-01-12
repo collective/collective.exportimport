@@ -145,3 +145,17 @@ class TestFixHTML(unittest.TestCase):
 <p><a href="image/image_preview"><img class="image-richtext image-inline" data-linktype="image" data-scale="preview" data-val="{2}" src="resolveuid/{2}/@@images/image/preview"/></a></p>
 """.format(self.contact.UID(), self.team.UID(), self.image.UID())
         self.assertEqual(fixed_html, doc.text.raw)
+
+    def test_fix_html(self):
+        self.create_demo_content()
+        old_text = "<a href=\"about\">Link to about that will be fixed.</a>"
+        fixed_text "<a href=\"resolveuid/%s\">Link to about that will be fixed.</a>" % self.about.UID()
+        doc = api.content.create(
+            container=portal, type="Document", id="doc", title="Document 2",
+            text=RichTextValue(old_text, "text/html", "text/x-html-safe"),
+        )
+        # Now run the fixer
+        browser = self.open_page("@@fix_html")
+        browser.getForm(action="@@fix_html").submit(name="form.submitted")
+        self.assertEqual(fixed_html, doc.text.raw)
+        self.assertIn("Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.", browser.contents)
