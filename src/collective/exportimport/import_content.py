@@ -731,24 +731,25 @@ class ResetModifiedAndCreatedDate(BrowserView):
 
         portal = api.portal.get()
 
-        def reset_dates(obj, path):
-            modified = getattr(obj.aq_base, "modification_date_migrated", None)
-            if modified and modified != obj.modification_date:
-                obj.modification_date = modified
-                del obj.modification_date_migrated
-                obj.reindexObject(idxs=["modified"])
-
-            created = getattr(obj.aq_base, "creation_date_migrated", None)
-            if created and created != obj.creation_date:
-                obj.creation_date = created
-                del obj.creation_date_migrated
-                obj.reindexObject(idxs=["created"])
-
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=reset_dates)
         msg = "Finished resetting creation and modification dates."
         logger.info(msg)
         api.portal.show_message(msg, self.request)
         return self.index()
+
+
+def reset_dates(obj, path):
+    modified = getattr(obj.aq_base, "modification_date_migrated", None)
+    if modified and modified != obj.modification_date:
+        obj.modification_date = modified
+        del obj.modification_date_migrated
+        obj.reindexObject(idxs=["modified"])
+
+    created = getattr(obj.aq_base, "creation_date_migrated", None)
+    if created and created != obj.creation_date:
+        obj.creation_date = created
+        del obj.creation_date_migrated
+        obj.reindexObject(idxs=["created"])
 
 
 class FixCollectionQueries(BrowserView):
