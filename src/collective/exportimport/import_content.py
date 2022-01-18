@@ -378,7 +378,7 @@ class ImportContent(BrowserView):
                     modified_data = datetime.strptime(modified[:19], "%Y-%m-%dT%H:%M:%S")
                 modification_date = DateTime(modified_data)
                 new.modification_date = modification_date
-                new.modification_date_migrated = modification_date
+                new.aq_base.modification_date_migrated = modification_date
             created = item.get("created", item.get("creation_date", None))
             if created:
                 # Python 2 strptime does not know of %z timezone
@@ -388,7 +388,7 @@ class ImportContent(BrowserView):
                     created_data = datetime.strptime(created[:19], "%Y-%m-%dT%H:%M:%S")
                 creation_date = DateTime(created_data)
                 new.creation_date = creation_date
-                new.creation_date_migrated = creation_date
+                new.aq_base.creation_date_migrated = creation_date
             logger.info("Created item #{}: {} {}".format(index, item["@type"], new.absolute_url()))
             added.append(new.absolute_url())
 
@@ -731,24 +731,25 @@ class ResetModifiedAndCreatedDate(BrowserView):
 
         portal = api.portal.get()
 
-        def reset_dates(obj, path):
-            modified = getattr(obj.aq_base, "modification_date_migrated", None)
-            if modified and modified != obj.modification_date:
-                obj.modification_date = modified
-                del obj.modification_date_migrated
-                obj.reindexObject(idxs=["modified"])
-
-            created = getattr(obj.aq_base, "creation_date_migrated", None)
-            if created and created != obj.creation_date:
-                obj.creation_date = created
-                del obj.creation_date_migrated
-                obj.reindexObject(idxs=["created"])
-
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=reset_dates)
         msg = "Finished resetting creation and modification dates."
         logger.info(msg)
         api.portal.show_message(msg, self.request)
         return self.index()
+
+
+def reset_dates(obj, path):
+    modified = getattr(obj.aq_base, "modification_date_migrated", None)
+    if modified and modified != obj.modification_date:
+        obj.modification_date = modified
+        del obj.modification_date_migrated
+        obj.reindexObject(idxs=["modified"])
+
+    created = getattr(obj.aq_base, "creation_date_migrated", None)
+    if created and created != obj.creation_date:
+        obj.creation_date = created
+        del obj.creation_date_migrated
+        obj.reindexObject(idxs=["created"])
 
 
 class FixCollectionQueries(BrowserView):

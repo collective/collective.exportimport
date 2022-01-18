@@ -25,7 +25,6 @@ import transaction
 
 logger = getLogger(__name__)
 
-
 IMAGE_SCALE_MAP = {
     "icon": "icon",
     "large": "large",
@@ -42,22 +41,23 @@ class FixHTML(BrowserView):
         self.title = "Fix links to content and images in richtext"
         if not self.request.form.get("form.submitted", False):
             return self.index()
+        commit = self.request.form.get("form.commit", True)
 
-        content = fix_html_in_content_fields()
-        msg = u"Fixed html for {} content items".format(content)
-        logger.info(msg)
+        msg = []
 
-        fix_html_in_portlets()
-        msg = u"Fixed html for portlets"
-        logger.info(msg)
+        fix_count = fix_html_in_content_fields(commit=commit)
+        msg.append(u"Fixed HTML for {} fields in content items".format(fix_count))
+        logger.info(msg[-1])
+
+        fix_count = fix_html_in_portlets()
+        msg.append(u"Fixed HTML for {} portlets".format(fix_count))
+        logger.info(msg[-1])
 
         # TODO: Fix html in tiles
         # tiles = fix_html_in_tiles()
         # msg = u"Fixed html for {} tiles".format(tiles)
 
-        logger.info("committing...")
-        msg = u"Fixed html"
-        api.portal.show_message(msg, self.request)
+        api.portal.show_message(u" ".join(m + u"." for m in msg), self.request)
         return self.index()
 
 
@@ -272,7 +272,7 @@ def find_object(base, path):
         return target
 
 
-def fix_html_in_content_fields(context=None):
+def fix_html_in_content_fields(context=None, commit=True):
     """Run this in Plone 5.x"""
     catalog = api.portal.get_tool("portal_catalog")
     portal_types = api.portal.get_tool("portal_types")
@@ -293,6 +293,8 @@ def fix_html_in_content_fields(context=None):
         "There are {} content items in total, starting migration...".format(len(brains))
     )
     results = 0
+    results_to_commit = 0
+    items_to_commit = 0
     for index, brain in enumerate(brains, start=1):
         try:
             obj = brain.getObject()
@@ -303,6 +305,7 @@ def fix_html_in_content_fields(context=None):
             )
             continue
 
+        _p = results_to_commit
         for fieldname in types_with_richtext_fields[obj.portal_type]:
             text = getattr(obj.aq_base, fieldname, None)
             if text and IRichTextValue.providedBy(text) and text.raw:
@@ -323,14 +326,28 @@ def fix_html_in_content_fields(context=None):
                         )
                     )
                     results += 1
+                    results_to_commit += 1
+        if _p != results_to_commit:
+            items_to_commit += 1
 
-        if not index % 1000:
-            msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(
-                index, round(index / total * 100, 2), total, results
-            )
+        if results_to_commit >= 1000:
+            # Commit every 1000 changes.
+            msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(items_to_commit, round(items_to_commit / total * 100, 2), total, results)
             logger.info(msg)
+            if commit:
+                transaction.get().note(msg)
+                transaction.commit()
+            results_to_commit = 0
+            items_to_commit = 0
+
+    if results_to_commit > 0:
+        # Commit any remaining changes.
+        msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(items_to_commit, round(items_to_commit / total * 100, 2), total, results)
+        logger.info(msg)
+        if commit:
             transaction.get().note(msg)
             transaction.commit()
+
     return results
 
 
@@ -340,7 +357,7 @@ def fix_html_in_portlets(context=None):
         iface: name for name, iface in getUtilitiesFor(IPortletTypeInterface)
     }
 
-    def get_portlets(obj, path):
+    def get_portlets(obj, path, fix_count_ref):
         for manager_name, manager in getUtilitiesFor(IPortletManager):
             mapping = queryMultiAdapter((obj, manager), IPortletAssignmentMapping)
             if mapping is None or not mapping.items():
@@ -366,6 +383,7 @@ def fix_html_in_portlets(context=None):
                                     outputMimeType=text.outputMimeType,
                                     encoding=text.encoding,
                                 )
+                                fix_count_ref.append(True)
                                 setattr(assignment, fieldname, textvalue)
                                 logger.info(
                                     "Fixed html for field {} of portlet at {}".format(
@@ -381,6 +399,7 @@ def fix_html_in_portlets(context=None):
                                     outputMimeType="text/x-html-safe",
                                     encoding="utf-8",
                                 )
+                                fix_count_ref.append(True)
                                 setattr(assignment, fieldname, textvalue)
                                 logger.info(
                                     "Fixed html for field {} of portlet {} at {}".format(
@@ -389,4 +408,7 @@ def fix_html_in_portlets(context=None):
                                 )
 
     portal = api.portal.get()
-    portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_portlets)
+    fix_count = []
+    f = lambda obj, path: get_portlets(obj, path, fix_count)
+    portal.ZopeFindAndApply(portal, search_sub=True, apply_func=f)
+    return len(fix_count)

@@ -63,8 +63,12 @@ class TestFixHTML(unittest.TestCase):
         self.create_demo_content()
 
         # link to uuid
-        old_text = '<p><a class="some-class" href="resolveuid/{0}">Links to uuid</a></p>'.format(self.contact.UID())
-        fixed_html = '<p><a class="some-class" data-linktype="internal" data-val="{0}" href="resolveuid/{0}">Links to uuid</a></p>'.format(self.contact.UID())
+        old_text = '<p><a class="some-class" href="resolveuid/{0}">Links to uuid</a></p>'.format(
+            self.contact.UID()
+        )
+        fixed_html = '<p><a class="some-class" data-linktype="internal" data-val="{0}" href="resolveuid/{0}">Links to uuid</a></p>'.format(
+            self.contact.UID()
+        )
         output = html_fixer(old_text, self.team)
         self.assertEqual(output, fixed_html)
 
@@ -76,7 +80,9 @@ class TestFixHTML(unittest.TestCase):
 
         # relative link to content
         old_text = '<p><a href="team">Link to content</a></p>'
-        fixed_html = '<p><a data-linktype="internal" data-val="{0}" href="resolveuid/{0}">Link to content</a></p>'.format(self.team.UID())
+        fixed_html = '<p><a data-linktype="internal" data-val="{0}" href="resolveuid/{0}">Link to content</a></p>'.format(
+            self.team.UID()
+        )
         output = html_fixer(old_text, self.team)
         self.assertEqual(output, fixed_html)
 
@@ -94,13 +100,17 @@ class TestFixHTML(unittest.TestCase):
 
         # image without scale
         old_text = '<img src="image" />'
-        fixed_html = '<img class="image-richtext image-inline" data-linktype="image" data-scale="" data-val="{0}" src="resolveuid/{0}/@@images/image"/>'.format(self.image.UID())
+        fixed_html = '<img class="image-richtext image-inline" data-linktype="image" data-scale="" data-val="{0}" src="resolveuid/{0}/@@images/image"/>'.format(
+            self.image.UID()
+        )
         output = html_fixer(old_text, self.team)
         self.assertEqual(output, fixed_html)
 
         # image with modern scale
         old_text = '<img src="image/@@images/image/large" />'
-        fixed_html = '<img class="image-richtext image-inline" data-linktype="image" data-scale="large" data-val="{0}" src="resolveuid/{0}/@@images/image/large"/>'.format(self.image.UID())
+        fixed_html = '<img class="image-richtext image-inline" data-linktype="image" data-scale="large" data-val="{0}" src="resolveuid/{0}/@@images/image/large"/>'.format(
+            self.image.UID()
+        )
         output = html_fixer(old_text, self.team)
         self.assertEqual(output, fixed_html)
 
@@ -123,8 +133,12 @@ class TestFixHTML(unittest.TestCase):
         self.assertEqual(output, fixed_html)
 
         # TODO: image scale is fixed, link to image with scale is not fixed yet
-        old_text = '<p><a href="image/image_preview"><img src="image/image_preview"/></a></p>'
-        fixed_html = '<p><a href="image/image_preview"><img class="image-richtext image-inline" data-linktype="image" data-scale="preview" data-val="{0}" src="resolveuid/{0}/@@images/image/preview"/></a></p>'.format(self.image.UID())
+        old_text = (
+            '<p><a href="image/image_preview"><img src="image/image_preview"/></a></p>'
+        )
+        fixed_html = '<p><a href="image/image_preview"><img class="image-richtext image-inline" data-linktype="image" data-scale="preview" data-val="{0}" src="resolveuid/{0}/@@images/image/preview"/></a></p>'.format(
+            self.image.UID()
+        )
         output = html_fixer(old_text, self.team)
         self.assertEqual(output, fixed_html)
 
@@ -139,19 +153,24 @@ class TestFixHTML(unittest.TestCase):
 <img src="image" />
 <img src="image/@@images/image/large" />
 <p><a href="image/image_preview"><img src="image/image_preview"/></a></p>
-""".format(self.contact.UID())
+""".format(
+            self.contact.UID()
+        )
         doc = api.content.create(
             container=self.about,
             type="Document",
             id="doc1",
-            text=RichTextValue(old_text, 'text/html', 'text/x-html-safe'),
+            text=RichTextValue(old_text, "text/html", "text/x-html-safe"),
         )
         form = self.portal.restrictedTraverse("@@fix_html")
         html = form()
         self.assertIn("Fix links to content and images in richtext", html)
-        self.request.form["form.submitted"] = True
+        self.request.form.update({
+            "form.submitted": True,
+            "form.commit": False,
+        })
         html = form()
-        self.assertIn("Fixed html", html)
+        self.assertIn("Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.", html)
         fixed_html = """
 <p><a class="some-class" data-linktype="internal" data-val="{0}" href="resolveuid/{0}">Links to uuid</a></p>
 <p><a href="delete_confirmation">Link to view/form</a></p>
@@ -161,5 +180,31 @@ class TestFixHTML(unittest.TestCase):
 <img class="image-richtext image-inline" data-linktype="image" data-scale="" data-val="{2}" src="resolveuid/{2}/@@images/image"/>
 <img class="image-richtext image-inline" data-linktype="image" data-scale="large" data-val="{2}" src="resolveuid/{2}/@@images/image/large"/>
 <p><a href="image/image_preview"><img class="image-richtext image-inline" data-linktype="image" data-scale="preview" data-val="{2}" src="resolveuid/{2}/@@images/image/preview"/></a></p>
-""".format(self.contact.UID(), self.team.UID(), self.image.UID())
+""".format(
+            self.contact.UID(), self.team.UID(), self.image.UID()
+        )
         self.assertEqual(fixed_html, doc.text.raw)
+
+    def test_fix_html_status_message(self):
+        """Test that the status message displays the correct number of fields fixed."""
+        self.create_demo_content()
+        old_text = '<a href="about">Link to about that will be fixed.</a>'
+        api.content.create(
+            container=self.portal,
+            type="Document",
+            id="doc",
+            title="Document 2",
+            text=RichTextValue(old_text, "text/html", "text/x-html-safe"),
+        )
+        form = self.portal.restrictedTraverse("@@fix_html")
+        html = form()
+        self.assertIn("Fix links to content and images in richtext", html)
+        self.request.form.update({
+            "form.submitted": True,
+            "form.commit": False,
+        })
+        html = form()
+        self.assertIn(
+            "Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.",
+            html,
+        )
