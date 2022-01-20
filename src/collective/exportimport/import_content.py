@@ -28,6 +28,7 @@ import logging
 import os
 import random
 import transaction
+import tempfile
 
 try:
     from plone.app.querystring.upgrades import fix_select_all_existing_collections
@@ -66,9 +67,14 @@ def get_absolute_blob_path(obj, blob_path):
         return abs_path
 
 
+class DeserializeError(ValueError):
+    pass
+
+
 class ImportContent(BrowserView):
 
     template = ViewPageTemplateFile("templates/import_content.pt")
+    error_template = ViewPageTemplateFile("templates/errors_summary.pt")
 
     # You can specify a default-target container for all items of a type.
     # Example {'News Item': '/imported-newsitems'}
@@ -92,6 +98,11 @@ class ImportContent(BrowserView):
     # Default values for some fields
     # Example: {'which_price': 'normal'}
     DEFAULTS = {}
+
+    def __init__(self, context, request):
+        super(ImportContent, self).__init__(context, request)
+        self.portal_workflow = api.portal.get_tool("portal_workflow")
+        self.errors = []
 
     def __call__(self, jsonfile=None, return_json=False, limit=None, server_file=None):
         request = self.request
@@ -156,7 +167,7 @@ class ImportContent(BrowserView):
                 status = "error"
                 msg = str(e)
                 api.portal.show_message(
-                    u"Exception during uplad: {}".format(e),
+                    u"Exception during upload: {}".format(e),
                     request=self.request,
                 )
             else:
@@ -225,24 +236,34 @@ class ImportContent(BrowserView):
         msg = u"Imported {} items".format(len(added))
         transaction.get().note(msg)
         transaction.commit()
-        msg = u"{} in {} seconds".format(msg, delta.seconds)
+        msg = u"{} in {} seconds.".format(msg, delta.seconds)
+        if self.errors:
+            filename = self.render_errors()
+            msg = u"{} Errors summary found at {}".format(msg, filename)
         logger.info(msg)
         return msg
 
-    def import_new_content(self, data):  # noqa: C901
-        portal_workflow = api.portal.get_tool("portal_workflow")
-        added = []
+    def render_errors(self):
+        if config.CENTRAL_DIRECTORY:
+            tmpdir = tempfile.mkdtemp(
+                dir=config.CENTRAL_DIRECTORY,
+                prefix="import-errors-")
+        else:
+            tmpdir = tempfile.mkdtemp()
+        tmpfile = os.path.join(tmpdir,
+                '{}-summary.html'.format(self.context.getId()))
+        with open(tmpfile, 'w') as f:
+            f.write(self.error_template())
+        return tmpfile
 
+    def import_new_content(self, data):  # noqa: C901
+        added = []
         if getattr(data, "len", None):
             logger.info(u"Importing {} items".format(len(data)))
         else:
             logger.info(u"Importing data")
         for index, item in enumerate(data, start=1):
-            if self.limit and len(added) >= self.limit:
-                break
-
-            uuid = item["UID"]
-            if uuid in self.DROP_UIDS:
+            if item["UID"] in self.DROP_UIDS:
                 continue
 
             skip = False
@@ -256,146 +277,153 @@ class ImportContent(BrowserView):
             if not index % 100:
                 logger.info("Imported {} items...".format(index))
 
-            new_id = unquote(item["@id"]).split("/")[-1]
-            if new_id != item["id"]:
-                logger.info(
-                    u"Conflicting ids in url ({}) and id ({}). Using {}".format(
-                        new_id, item["id"], new_id
-                    )
-                )
-                item["id"] = new_id
-
-            self.safe_portal_type = fix_portal_type(item["@type"])
-            item = self.handle_broken(item)
-            if not item:
-                continue
-            item = self.handle_dropped(item)
-            if not item:
-                continue
-            item = self.global_dict_hook(item)
-            if not item:
-                continue
-
-            # portal_type might change during a hook
-            self.safe_portal_type = fix_portal_type(item["@type"])
-            item = self.custom_dict_hook(item)
-            if not item:
-                continue
-
-            self.safe_portal_type = fix_portal_type(item["@type"])
-            container = self.handle_container(item)
-
-            if not container:
-                logger.info(
-                    u"No container (parent was {}) found for {} {}".format(item["parent"]["@type"], item["@type"], item["@id"])
-                )
-                continue
-
-            factory_kwargs = item.get("factory_kwargs", {})
-
-            # Handle existing content
-            self.update_existing = False
-            if new_id in container:
-                if self.handle_existing_content == 0:
-                    # Skip
-                    logger.info(u"{} ({}) already exists. Skipping it.".format(
-                        new_id, item["@id"])
-                    )
-                    continue
-
-                elif self.handle_existing_content == 1:
-                    # Replace content before creating it new
-                    logger.info(u"{} ({}) already exists. Replacing it.".format(
-                        new_id, item["@id"])
-                    )
-                    api.content.delete(container[new_id], check_linkintegrity=False)
-
-                elif self.handle_existing_content == 2:
-                    # Update existing item
-                    logger.info(u"{} ({}) already exists. Updating it.".format(
-                        new_id, item["@id"])
-                    )
-                    self.update_existing = True
-                    new = container[new_id]
-
-                else:
-                    # Create with new id. Speed up by using random id.
-                    duplicate = new_id
-                    new_id = "{}-{}".format(new_id, random.randint(1000, 9999))
-                    item["id"] = new_id
-                    logger.info(
-                        u"{} ({}) already exists. Created as {}".format(
-                            duplicate, item["@id"], new_id
-                        )
-                    )
-
-            if not self.update_existing:
-                # create without checking constrains and permissions
-                new = _createObjectByType(item["@type"], container, item["id"], **factory_kwargs)
-
-            new, item = self.global_obj_hook_before_deserializing(new, item)
-
-            # import using plone.restapi deserializers
-            deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
             try:
-                new = deserializer(validate_all=False, data=item)
+                if self.limit and len(added) >= self.limit:
+                    break
+                self.import_item(index, item, added)
             except Exception as error:
-                logger.warning(
-                    "cannot deserialize {}: {}".format(item["@id"], repr(error))
-                )
-                continue
-
-            # Blobs can be exported as only a path in the blob storage.
-            # It seems difficult to dynamically use a different deserializer,
-            # based on whether or not there is a blob_path somewhere in the item.
-            # So handle this case with a separate method.
-            self.import_blob_paths(new, item)
-            self.import_constrains(new, item)
-
-            self.global_obj_hook(new, item)
-            self.custom_obj_hook(new, item)
-
-            uuid = self.set_uuid(item, new)
-
-            if uuid != item["UID"]:
-                item["UID"] = uuid
-
-            if item["review_state"] and item["review_state"] != "private":
-                if portal_workflow.getChainFor(new):
-                    try:
-                        api.content.transition(to_state=item["review_state"], obj=new)
-                    except InvalidParameterError as e:
-                        logger.info(e)
-
-            # Set modification and creation-date as a custom attribute as last step.
-            # These are reused and dropped in ResetModifiedAndCreatedDate
-            modified = item.get("modified", item.get("modification_date", None))
-            if modified:
-                # Python 2 strptime does not know of %z timezone
-                try:
-                    modified_data = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%S%z")
-                except ValueError:
-                    modified_data = datetime.strptime(modified[:19], "%Y-%m-%dT%H:%M:%S")
-                modification_date = DateTime(modified_data)
-                new.modification_date = modification_date
-                new.aq_base.modification_date_migrated = modification_date
-            created = item.get("created", item.get("creation_date", None))
-            if created:
-                # Python 2 strptime does not know of %z timezone
-                try:
-                    created_data = datetime.strptime(created, "%Y-%m-%dT%H:%M:%S%z")
-                except Exception:
-                    created_data = datetime.strptime(created[:19], "%Y-%m-%dT%H:%M:%S")
-                creation_date = DateTime(created_data)
-                new.creation_date = creation_date
-                new.aq_base.creation_date_migrated = creation_date
-            logger.info("Created item #{}: {} {}".format(index, item["@type"], new.absolute_url()))
-            added.append(new.absolute_url())
-
-            if self.commit and not len(added) % self.commit:
-                self.commit_hook(added, index)
-
+                self.errors.append(
+                    dict(id=item["@id"], uid=item["UID"], error=repr(error)))
         return added
+
+    def import_item(self, index, item, added):
+        new_id = unquote(item["@id"]).split("/")[-1]
+        if new_id != item["id"]:
+            logger.info(
+                u"Conflicting ids in url ({}) and id ({}). Using {}".format(
+                    new_id, item["id"], new_id
+                )
+            )
+            item["id"] = new_id
+
+        self.safe_portal_type = fix_portal_type(item["@type"])
+        item = self.handle_broken(item)
+        if not item:
+            return
+        item = self.handle_dropped(item)
+        if not item:
+            return
+        item = self.global_dict_hook(item)
+        if not item:
+            return
+
+        # portal_type might change during a hook
+        self.safe_portal_type = fix_portal_type(item["@type"])
+        item = self.custom_dict_hook(item)
+        if not item:
+            return
+
+        self.safe_portal_type = fix_portal_type(item["@type"])
+        container = self.handle_container(item)
+
+        if not container:
+            logger.info(
+                u"No container (parent was {}) found for {} {}".format(item["parent"]["@type"], item["@type"], item["@id"])
+            )
+            return
+
+        factory_kwargs = item.get("factory_kwargs", {})
+
+        # Handle existing content
+        self.update_existing = False
+        if new_id in container:
+            if self.handle_existing_content == 0:
+                # Skip
+                logger.info(u"{} ({}) already exists. Skipping it.".format(
+                    new_id, item["@id"])
+                )
+                return
+
+            elif self.handle_existing_content == 1:
+                # Replace content before creating it new
+                logger.info(u"{} ({}) already exists. Replacing it.".format(
+                    new_id, item["@id"])
+                )
+                api.content.delete(container[new_id], check_linkintegrity=False)
+
+            elif self.handle_existing_content == 2:
+                # Update existing item
+                logger.info(u"{} ({}) already exists. Updating it.".format(
+                    new_id, item["@id"])
+                )
+                self.update_existing = True
+                new = container[new_id]
+
+            else:
+                # Create with new id. Speed up by using random id.
+                duplicate = new_id
+                new_id = "{}-{}".format(new_id, random.randint(1000, 9999))
+                item["id"] = new_id
+                logger.info(
+                    u"{} ({}) already exists. Created as {}".format(
+                        duplicate, item["@id"], new_id
+                    )
+                )
+
+        if not self.update_existing:
+            # create without checking constrains and permissions
+            new = _createObjectByType(item["@type"], container, item["id"], **factory_kwargs)
+
+        new, item = self.global_obj_hook_before_deserializing(new, item)
+
+        # import using plone.restapi deserializers
+        deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
+        try:
+            new = deserializer(validate_all=False, data=item)
+        except Exception as error:
+            raise DeserializeError(
+                "cannot deserialize {}: {}".format(item["@id"], repr(error)))
+
+        # Blobs can be exported as only a path in the blob storage.
+        # It seems difficult to dynamically use a different deserializer,
+        # based on whether or not there is a blob_path somewhere in the item.
+        # So handle this case with a separate method.
+        self.import_blob_paths(new, item)
+        self.import_constrains(new, item)
+
+        self.global_obj_hook(new, item)
+        self.custom_obj_hook(new, item)
+
+        uuid = self.set_uuid(item, new)
+
+        if uuid != item["UID"]:
+            item["UID"] = uuid
+
+        if item["review_state"] and item["review_state"] != "private":
+            if self.portal_workflow.getChainFor(new):
+                try:
+                    api.content.transition(to_state=item["review_state"], obj=new)
+                except InvalidParameterError as e:
+                    logger.info(e)
+
+        # Set modification and creation-date as a custom attribute as last step.
+        # These are reused and dropped in ResetModifiedAndCreatedDate
+        modified = item.get("modified", item.get("modification_date", None))
+        if modified:
+            # Python 2 strptime does not know of %z timezone
+            try:
+                modified_data = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%S%z")
+            except ValueError:
+                modified_data = datetime.strptime(modified[:19], "%Y-%m-%dT%H:%M:%S")
+            modification_date = DateTime(modified_data)
+            new.modification_date = modification_date
+            new.aq_base.modification_date_migrated = modification_date
+        created = item.get("created", item.get("creation_date", None))
+        if created:
+            # Python 2 strptime does not know of %z timezone
+            try:
+                created_data = datetime.strptime(created, "%Y-%m-%dT%H:%M:%S%z")
+            except Exception:
+                created_data = datetime.strptime(created[:19], "%Y-%m-%dT%H:%M:%S")
+            creation_date = DateTime(created_data)
+            new.creation_date = creation_date
+            new.aq_base.creation_date_migrated = creation_date
+        logger.info("Created item #{}: {} {}".format(index, item["@type"], new.absolute_url()))
+        added.append(new.absolute_url())
+
+        if self.commit and not len(added) % self.commit:
+            self.commit_hook(added, index)
+
 
     def handle_broken(self, item):
         """Fix some invalid values."""

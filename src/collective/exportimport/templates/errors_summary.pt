@@ -1,0 +1,16 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+  <body>
+    <h1>Errors</h1>
+    <p>Site: <span tal:replace="context/getId" /></p>
+    <table>
+      <p tal:repeat="error view/errors">
+        <div>Path <span tal:content="error/id" /></div>
+        <div>UID <span tal:content="error/uid" /></div>
+        <div><span tal:content="error/error" /></div>
+      </p>
+    </table>
+  </body>
+</html>
