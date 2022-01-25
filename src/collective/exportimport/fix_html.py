@@ -99,9 +99,11 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
         orig = content_link.decode()  # to compare
 
         if attr == "srcset":
-            links = [x.split()[0].strip() for x in origlink.split(",")]
+            links = [x.split(maxsplit=1)[0] for x in origlink.split(",")]
+            addenda = [x.split(maxsplit=1)[1:] for x in origlink.split(",")]
         else:
             links = [origlink]
+            addenda = [[]]
         if not links:
             # Ignore tags with no usable content
             continue
@@ -212,8 +214,8 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
             links[n] = new_href
 
         content_link[attr] = ",".join(
-            " ".join([links[n]] + x.split()[1:])
-            for n, x in enumerate(origlink.split(","))
+            " ".join([link] + addendum)
+            for link, addendum in zip(links, addenda)
         )
 
         if orig != content_link.decode():
