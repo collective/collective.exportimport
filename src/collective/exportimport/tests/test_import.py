@@ -6,6 +6,7 @@ from collective.exportimport.testing import (
 )
 from OFS.interfaces import IOrderedContainer
 from plone import api
+from plone.app.redirector.interfaces import IRedirectionStorage
 from plone.app.textfield.value import RichTextValue
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
@@ -16,6 +17,7 @@ from plone.namedfile.file import NamedBlobImage
 from Products.CMFPlone.interfaces.constrains import ENABLED
 from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.tests import dummy
+from zope.component import getUtility
 
 import json
 import os
@@ -169,6 +171,7 @@ class TestImport(unittest.TestCase):
         self.assertIn("import local roles", lower_contents)
         self.assertIn("import default pages", lower_contents)
         self.assertIn("import object positions", lower_contents)
+        self.assertIn("import redirects", lower_contents)
 
     def test_import_content_document(self):
         # First create some content.
@@ -1030,3 +1033,59 @@ class TestImport(unittest.TestCase):
         new_doc = portal["doc1"]
         # the text should be the same
         self.assertEqual(new_doc.text.raw, old_text)
+
+    def test_import_redirects(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        api.content.rename(obj=portal['doc1'], new_id='doc1-moved')
+        api.content.create(
+            container=portal, type="Document", id="doc2", title="Document 2"
+        )
+        api.content.rename(obj=portal['doc2'], new_id='doc2-moved')
+        transaction.commit()
+
+        # redirects are stored
+        storage = getUtility(IRedirectionStorage, context=portal)
+        self.assertTrue(storage.has_path('/plone/doc1'))
+        self.assertTrue(storage.has_path('/plone/doc2'))
+        self.assertEqual(storage.get('/plone/doc1'), '/plone/doc1-moved')
+        self.assertEqual(storage.get('/plone/doc2'), '/plone/doc2-moved')
+
+        # Export it.
+        browser = self.open_page("@@export_redirects")
+        browser.getForm(action="@@export_redirects").submit(name="form.submitted")
+        raw_data = browser.contents
+        if not browser.contents:
+            raw_data = DATA[-1]
+
+        self.assertTrue(raw_data)
+
+        # Now remove the redirects
+        storage = getUtility(IRedirectionStorage, context=portal)
+        storage.remove('/plone/doc1')
+        storage.remove('/plone/doc2')
+        transaction.commit()
+
+        # redirects are gone
+        storage = getUtility(IRedirectionStorage, context=portal)
+        self.assertFalse(storage.has_path('/plone/doc1'))
+        self.assertFalse(storage.has_path('/plone/doc2'))
+
+        # Now import it.
+        browser = self.open_page("@@import_redirects")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "redirects.json")
+        browser.getForm(action="@@import_redirects").submit(name="form.submitted")
+        self.assertIn("Redirects imported", browser.contents)
+
+        # redirects are back
+        storage = getUtility(IRedirectionStorage, context=portal)
+        self.assertTrue(storage.has_path('/plone/doc1'))
+        self.assertTrue(storage.has_path('/plone/doc2'))
+        self.assertEqual(storage.get('/plone/doc1'), '/plone/doc1-moved')
+        self.assertEqual(storage.get('/plone/doc2'), '/plone/doc2-moved')

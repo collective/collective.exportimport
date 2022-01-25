@@ -9,6 +9,7 @@ from plone import api
 from plone.app.discussion.comment import Comment
 from plone.app.discussion.interfaces import IConversation
 from plone.app.portlets.interfaces import IPortletTypeInterface
+from plone.app.redirector.interfaces import IRedirectionStorage
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletAssignmentSettings
 from plone.portlets.interfaces import ILocalPortletAssignmentManager
@@ -715,3 +716,42 @@ def register_portlets(obj, item):
             assignable.setBlacklistStatus(category, False)
 
     return results
+
+
+def import_plone_redirects(jsondata):
+    storage = getUtility(IRedirectionStorage)
+
+    for key, value in jsondata.items():
+        storage.add(key, value)
+
+
+class ImportRedirects(BrowserView):
+    """Import redirects"""
+
+    def __call__(self, jsonfile=None, return_json=False):
+        if jsonfile:
+            status = "success"
+            try:
+                if isinstance(jsonfile, str):
+                    return_json = True
+                    data = json.loads(jsonfile)
+                elif isinstance(jsonfile, FileUpload):
+                    data = json.loads(jsonfile.read())
+                else:
+                    raise ("Data is neither text nor upload.")
+            except Exception as e:
+                status = "error"
+                logger.error(e)
+                api.portal.show_message(
+                    u"Failure while uploading: {}".format(e),
+                    request=self.request,
+                )
+            else:
+                import_plone_redirects(data)
+                msg = u"Redirects imported"
+                api.portal.show_message(msg, self.request)
+            if return_json:
+                msg = {"state": status, "msg": msg}
+                return json.dumps(msg)
+
+        return self.index()
