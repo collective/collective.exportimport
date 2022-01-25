@@ -99,8 +99,8 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
         orig = content_link.decode()  # to compare
 
         if attr == "srcset":
-            links = [x.split(maxsplit=1)[0] for x in origlink.split(",")]
-            addenda = [x.split(maxsplit=1)[1:] for x in origlink.split(",")]
+            links = [x.split(None, 1)[0] for x in origlink.split(",")]
+            addenda = [x.split(None, 1)[1:] for x in origlink.split(",")]
         else:
             links = [origlink]
             addenda = [[]]
