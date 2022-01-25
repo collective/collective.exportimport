@@ -5,6 +5,7 @@ from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
 from plone.app.discussion.interfaces import IConversation
+from plone.app.redirector.interfaces import IRedirectionStorage
 from plone.app.textfield.value import RichTextValue
 from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
@@ -26,6 +27,7 @@ from plone.portlets.constants import (
     CONTEXT_CATEGORY,
 )
 from zope.component import getUtilitiesFor
+from zope.component import getUtility
 from zope.component import queryMultiAdapter
 from zope.interface import providedBy
 
@@ -628,3 +630,38 @@ def safe_bytes(value, encoding="utf-8"):
     if isinstance(value, six.text_type):
         value = value.encode(encoding)
     return value
+
+
+def export_plone_redirects():
+    """Plone generates redirects after moving an item
+
+    Visiting myfolder/myitem will automatically redirect to otherfolder/myitem
+    after item got moved from myfolder/myitem to otherfolder/myitem
+    """
+
+    storage = getUtility(IRedirectionStorage)
+    redirects = {}
+    for key, value in storage._paths.items():
+        if isinstance(value, tuple) and len(value)==3:
+            value = value[0]
+        redirects[key] = value
+
+    data = json.dumps(redirects, indent=4)
+    return data
+
+
+class ExportRedirects(BrowserView):
+    def __call__(self):
+        self.title = "Export redirects"
+        if not self.request.form.get("form.submitted", False):
+            return self.index()
+
+        data = export_plone_redirects()
+        filename = "redirects.json"
+        self.request.response.setHeader("Content-type", "application/json")
+        self.request.response.setHeader("content-length", len(data))
+        self.request.response.setHeader(
+            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+        )
+        return self.request.response.write(safe_bytes(data))
+

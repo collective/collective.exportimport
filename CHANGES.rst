@@ -5,7 +5,8 @@ Changelog
 1.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Export import of redirect tool data
+  [gotcha, Michael Penninck]
 
 
 1.4 (2022-01-07)

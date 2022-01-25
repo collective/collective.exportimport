@@ -78,6 +78,7 @@ class TestExport(unittest.TestCase):
         self.assertIn("Export members", browser.contents)
         self.assertIn("Export local roles", browser.contents)
         self.assertIn("Export default pages", browser.contents)
+        self.assertIn("Export redirects", browser.contents)
         self.assertIn("Export object positions", browser.contents)
         # We cannot choose a portal_type, because there is no content to export.
         fti = self.layer['portal'].portal_types['Plone Site']
@@ -409,3 +410,40 @@ class TestExport(unittest.TestCase):
         self.assertEqual(data_uuid2order[doc3.UID()], 0)
         self.assertEqual(data_uuid2order[doc1.UID()], 1)
         self.assertEqual(data_uuid2order[doc2.UID()], 2)
+
+    def test_export_redirects_empty(self):
+        browser = self.open_page("@@export_redirects")
+        browser.getForm(action="@@export_redirects").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
+        self.assertDictEqual(data, {})
+
+    def test_export_redirects(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        api.content.rename(obj=portal['doc1'], new_id='doc1-moved')
+        api.content.create(
+            container=portal, type="Document", id="doc2", title="Document 2"
+        )
+        api.content.rename(obj=portal['doc2'], new_id='doc2-moved')
+        transaction.commit()
+
+        browser = self.open_page("@@export_redirects")
+        browser.getForm(action="@@export_redirects").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
+        self.assertDictEqual(
+            data,
+            {u'/plone/doc1': u'/plone/doc1-moved',
+            u'/plone/doc2': u'/plone/doc2-moved'},
+        )
+
