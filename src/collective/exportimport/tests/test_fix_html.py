@@ -208,3 +208,24 @@ class TestFixHTML(unittest.TestCase):
             "Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.",
             html,
         )
+
+    def test_fix_html_does_not_change_normal_links(self):
+        """Test that the content does not change in extraneous ways."""
+        self.create_demo_content()
+        old_text = '<a href="http://www.googlefight.com/cgi-bin/compare.pl?q1=Rudd-O&amp;q2=Andufo&amp;B1=Make a fight%21&amp;compare=1&amp;langue=us">Result for the fight between Rudd-O and Andufo</a>'
+        doc = api.content.create(
+            container=self.about,
+            type="Document",
+            id="doc1",
+            text=RichTextValue(old_text, "text/html", "text/x-html-safe"),
+        )
+        form = self.portal.restrictedTraverse("@@fix_html")
+        html = form()
+        self.request.form.update({
+            "form.submitted": True,
+            "form.commit": False,
+        })
+        html = form()
+        fixed_html = '<a href="http://www.googlefight.com/cgi-bin/compare.pl?q1=Rudd-O&amp;q2=Andufo&amp;B1=Make a fight%21&amp;compare=1&amp;langue=us">Result for the fight between Rudd-O and Andufo</a>'
+        self.assertEqual(fixed_html, doc.text.raw)
+        self.assertIn("Fixed HTML for 0 fields in content items. Fixed HTML for 0 portlets.", html)
