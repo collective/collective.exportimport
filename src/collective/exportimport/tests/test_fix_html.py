@@ -229,3 +229,9 @@ class TestFixHTML(unittest.TestCase):
         fixed_html = '<a href="http://www.googlefight.com/cgi-bin/compare.pl?q1=Rudd-O&amp;q2=Andufo&amp;B1=Make a fight%21&amp;compare=1&amp;langue=us">Result for the fight between Rudd-O and Andufo</a>'
         self.assertEqual(fixed_html, doc.text.raw)
         self.assertIn("Fixed HTML for 0 fields in content items. Fixed HTML for 0 portlets.", html)
+
+    def test_html_fixer_commas_in_href(self):
+        self.create_demo_content()
+        old_text = '<a href="https://en.wikipedia.org/wiki/Embassy_Theatre,_Wellington">Links to uuid</a>'
+        output = html_fixer(old_text, self.team)
+        self.assertEqual(output, old_text)
