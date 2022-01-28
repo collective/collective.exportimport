@@ -214,13 +214,12 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
             links[n] = new_href
 
         content_link[attr] = ",".join(
-            " ".join([link] + addendum)
-            for link, addendum in zip(links, addenda)
+            " ".join([link] + addendum) for link, addendum in zip(links, addenda)
         )
 
         if orig != content_link.decode():
             logger.debug(
-                "Changed {tag} {attr} from {orig} to {content_link}".format(
+                u"Changed {tag} {attr} from {orig} to {content_link}".format(
                     tag=tag, attr=attr, orig=orig, content_link=content_link
                 )
             )
@@ -256,15 +255,15 @@ def find_object(base, path):
     It might be a link to a browser-view, form or script...
     """
     if six.PY2 and isinstance(path, six.text_type):
-        path = path.encode('utf-8')
-    if path.startswith('/'):
+        path = path.encode("utf-8")
+    if path.startswith("/"):
         # Make an absolute path relative to the portal root
         obj = api.portal.get()
-        portal_path = obj.absolute_url_path() + '/'
+        portal_path = obj.absolute_url_path() + "/"
         if path.startswith(portal_path):
-            path = path[len(portal_path):]
+            path = path[len(portal_path) :]
     else:
-        obj = aq_parent(base)   # relative urls start at the parent...
+        obj = aq_parent(base)  # relative urls start at the parent...
 
     try:
         target = obj.unrestrictedTraverse(path)
@@ -334,7 +333,9 @@ def fix_html_in_content_fields(context=None, commit=True):
 
         if results_to_commit >= 1000:
             # Commit every 1000 changes.
-            msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(items_to_commit, round(items_to_commit / total * 100, 2), total, results)
+            msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(
+                items_to_commit, round(items_to_commit / total * 100, 2), total, results
+            )
             logger.info(msg)
             if commit:
                 transaction.get().note(msg)
@@ -344,7 +345,9 @@ def fix_html_in_content_fields(context=None, commit=True):
 
     if results_to_commit > 0:
         # Commit any remaining changes.
-        msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(items_to_commit, round(items_to_commit / total * 100, 2), total, results)
+        msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(
+            items_to_commit, round(items_to_commit / total * 100, 2), total, results
+        )
         logger.info(msg)
         if commit:
             transaction.get().note(msg)
