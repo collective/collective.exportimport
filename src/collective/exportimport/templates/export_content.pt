@@ -130,7 +130,7 @@
                     />
                 Include revisions.
                 <span class="formHelp">
-                  Export all revisions of each exported item. Warning: This can significantly slow down the export!
+                  This exports the content-history (versioning) of each exported item. Warning: This can significantly slow down the export!
                 </span>
               </label>
             </div>
