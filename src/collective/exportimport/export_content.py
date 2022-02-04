@@ -10,6 +10,7 @@ from operator import itemgetter
 from plone import api
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import ISerializeToJson
+from plone.restapi.serializer.converters import json_compatible
 from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.interfaces.constrains import ENABLED
 from Products.Five import BrowserView

@@ -501,7 +501,7 @@ class ImportContent(BrowserView):
         constrains.setImmediatelyAddableTypes(immediately_addable_types)
 
     def import_workflow_history(self, obj, item):
-        workflow_history = item.get("workflow_history")
+        workflow_history = item.get("workflow_history", {})
         result = {}
         for key, value in workflow_history.items():
             # The time needs to be deserialized
