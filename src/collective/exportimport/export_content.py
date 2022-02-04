@@ -8,11 +8,12 @@ from collective.exportimport.interfaces import IPathBlobsMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
 from operator import itemgetter
 from plone import api
+from plone.app.layout.viewlets.content import ContentHistoryViewlet
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
-from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.interfaces.constrains import ENABLED
+from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.component import getMultiAdapter
@@ -106,6 +107,7 @@ class ExportContent(BrowserView):
         include_blobs=1,
         download_to_server=False,
         migration=True,
+        include_revisions=False,
     ):
         self.portal_type = portal_type or []
         if isinstance(self.portal_type, str):
@@ -134,6 +136,7 @@ class ExportContent(BrowserView):
             ("1", "as base-64 encoded strings"),
             ("2", "as blob paths"),
         )
+        self.include_revisions = include_revisions
 
         self.update()
 
@@ -284,6 +287,8 @@ class ExportContent(BrowserView):
                 item = self.fix_url(item, obj)
                 item = self.export_constraints(item, obj)
                 item = self.export_workflow_history(item, obj)
+                item = self.export_revisions(item, obj)
+
                 if self.migration:
                     item = self.update_data_for_migration(item, obj)
                 item = self.global_dict_hook(item, obj)
@@ -448,6 +453,26 @@ class ExportContent(BrowserView):
             results[workflow] = json_compatible(history)
         if results:
             item["workflow_history"] = results
+        return item
+
+    def export_revisions(self, item, obj):
+        if not self.include_revisions:
+            return item
+        serializer = getMultiAdapter((obj, self.request), ISerializeToJson)
+        content_history_viewlet = ContentHistoryViewlet(obj, self.request, None, None)
+        content_history_viewlet.navigation_root_url = ""
+        content_history_viewlet.site_url = ""
+        full_history = content_history_viewlet.fullHistory()
+        history = [i for i in full_history if i["type"] == "versioning"]
+        if not history or len(history) == 1:
+            return item
+        item["exportimport.versions"] = {}
+        # don't export the current version again
+        for history_item in history[1:]:
+            version_id = history_item["version_id"]
+            item_version = serializer(include_items=False, version=version_id)
+            item_version = self.update_data_for_migration(item_version, obj)
+            item["exportimport.versions"][version_id] = item_version
         return item
 
 

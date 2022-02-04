@@ -119,6 +119,23 @@
             </div>
 
             <div class="field mb-3">
+              <label>
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="include_revisions:boolean"
+                    id="include_revisions"
+                    value="1"
+                    tal:attributes="checked python: 'checked' if view.include_revisions else ''"
+                    />
+                Include revisions.
+                <span class="formHelp">
+                  Export all revisions of each exported item. Warning: This can significantly slow down the export!
+                </span>
+              </label>
+            </div>
+
+            <div class="field mb-3">
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="download_to_server:int" value="0" id="download_local" checked="checked">
                 <label for="download_local" class="form-check-label"  i18n:translate="">
