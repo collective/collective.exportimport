@@ -3,6 +3,7 @@ from collective.exportimport import config
 from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
 from DateTime import DateTime
+from Persistence import PersistentMapping
 from plone import api
 from plone.api.exc import InvalidParameterError
 from plone.i18n.normalizer.interfaces import IIDNormalizer
@@ -22,6 +23,7 @@ from zope.component import getUtility
 from zope.interface import alsoProvides
 from ZPublisher.HTTPRequest import FileUpload
 
+import dateutil
 import ijson
 import json
 import logging
@@ -367,6 +369,9 @@ class ImportContent(BrowserView):
                     except InvalidParameterError as e:
                         logger.info(e)
 
+            # Import workflow_history last to drop entries created during import
+            self.import_workflow_history(new, item)
+
             # Set modification and creation-date as a custom attribute as last step.
             # These are reused and dropped in ResetModifiedAndCreatedDate
             modified = item.get("modified", item.get("modification_date", None))
@@ -494,6 +499,17 @@ class ImportContent(BrowserView):
         constrains.setLocallyAllowedTypes(locally_allowed_types)
         immediately_addable_types = item["exportimport.constrains"]["immediately_addable_types"]
         constrains.setImmediatelyAddableTypes(immediately_addable_types)
+
+    def import_workflow_history(self, obj, item):
+        workflow_history = item.get("workflow_history")
+        result = {}
+        for key, value in workflow_history.items():
+            # The time needs to be deserialized
+            for history_item in value:
+                history_item["time"] = DateTime(dateutil.parser.parse(history_item["time"]))
+            result[key] = value
+        if result:
+            obj.workflow_history = PersistentMapping(result.items())
 
     def global_obj_hook_before_deserializing(self, obj, item):
         """Hook to modify the created obj before deserializing the data.
