@@ -699,7 +699,13 @@ def register_portlets(obj, item):
                 # deserialize data (e.g. for RichText)
                 deserializer = queryMultiAdapter((field, obj, request), IFieldDeserializer)
                 if deserializer is not None:
-                    value = deserializer(value)
+                    try:
+                        value = deserializer(value)
+                    except Exception as e:
+                        logger.info(u"Could not import portlet data {} for field {} on {}: {}".format(
+                            value, field, obj.absolute_url(), str(e)
+                        ))
+                        continue
                 field.set(assignment, value)
 
             results += 1
