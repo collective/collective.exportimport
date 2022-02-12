@@ -735,6 +735,60 @@ class TestImport(unittest.TestCase):
                 title=u"Collection 2",
             )
 
+    def test_import_workflow_history(self):
+        """workflow_history is imported last
+        """
+        # First create some content to export.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        self.create_demo_content()
+        # modify a document
+        api.content.transition(to_state="published", obj=self.team)
+        history = self.team.workflow_history["simple_publication_workflow"]
+        self.assertEqual(len(history), 2)
+        self.assertEqual(history[1]["action"], "publish")
+        publish_time = history[1]["time"]
+        transaction.commit()
+
+        # Now export the complete portal.
+        browser = self.open_page("@@export_content")
+        browser.getControl(name="portal_type").value = [
+            "Folder",
+            "Image",
+            "Link",
+            "Document",
+        ]
+        browser.getForm(action="@@export_content").submit(name="submit")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+
+        data = json.loads(contents)
+        self.assertEqual(len(data), 6)
+
+        # Remove the added content.
+        self.remove_demo_content()
+        transaction.commit()
+
+        # Now import it.
+        browser = self.open_page("@@import_content")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(contents, "application/json", "Document.json")
+        browser.getForm(action="@@import_content").submit()
+        self.assertIn("Imported 6 items", browser.contents)
+
+        team = portal["about"]["team"]
+        history = team.workflow_history["simple_publication_workflow"]
+        self.assertEqual(len(history), 2)
+        self.assertEqual(history[1]["action"], "publish")
+        self.assertEqual(
+            history[1]["time"].asdatetime(),
+            publish_time.asdatetime().replace(microsecond=0))
+
+        api.content.transition(transition="retract", obj=team)
+        self.assertEqual(len(team.workflow_history["simple_publication_workflow"]), 3)
+
     def _disabled_test_import_blob_path(self):
         # This test is disabled, because the demo storage
         # has no 'fshelper' from which we can ask the blob path.

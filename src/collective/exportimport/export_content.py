@@ -10,6 +10,7 @@ from operator import itemgetter
 from plone import api
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import ISerializeToJson
+from plone.restapi.serializer.converters import json_compatible
 from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.interfaces.constrains import ENABLED
 from Products.Five import BrowserView
@@ -282,6 +283,7 @@ class ExportContent(BrowserView):
                     item = serializer()
                 item = self.fix_url(item, obj)
                 item = self.export_constraints(item, obj)
+                item = self.export_workflow_history(item, obj)
                 if self.migration:
                     item = self.update_data_for_migration(item, obj)
                 item = self.global_dict_hook(item, obj)
@@ -437,6 +439,15 @@ class ExportContent(BrowserView):
                 "locally_allowed_types": constrains.getLocallyAllowedTypes(),
                 "immediately_addable_types": constrains.getImmediatelyAddableTypes(),
             }
+        return item
+
+    def export_workflow_history(self, item, obj):
+        results = {}
+        workflow_history = getattr(obj.aq_base, "workflow_history", {})
+        for workflow, history in workflow_history.items():
+            results[workflow] = json_compatible(history)
+        if results:
+            item["workflow_history"] = results
         return item
 
 
