@@ -376,22 +376,12 @@ class ImportContent(BrowserView):
             # These are reused and dropped in ResetModifiedAndCreatedDate
             modified = item.get("modified", item.get("modification_date", None))
             if modified:
-                # Python 2 strptime does not know of %z timezone
-                try:
-                    modified_data = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%S%z")
-                except ValueError:
-                    modified_data = datetime.strptime(modified[:19], "%Y-%m-%dT%H:%M:%S")
-                modification_date = DateTime(modified_data)
+                modification_date = DateTime(dateutil.parser.parse(modified))
                 new.modification_date = modification_date
                 new.aq_base.modification_date_migrated = modification_date
             created = item.get("created", item.get("creation_date", None))
             if created:
-                # Python 2 strptime does not know of %z timezone
-                try:
-                    created_data = datetime.strptime(created, "%Y-%m-%dT%H:%M:%S%z")
-                except Exception:
-                    created_data = datetime.strptime(created[:19], "%Y-%m-%dT%H:%M:%S")
-                creation_date = DateTime(created_data)
+                creation_date = DateTime(dateutil.parser.parse(created))
                 new.creation_date = creation_date
                 new.aq_base.creation_date_migrated = creation_date
             logger.info("Created item #{}: {} {}".format(index, item["@type"], new.absolute_url()))
