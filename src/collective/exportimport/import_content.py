@@ -2,6 +2,7 @@
 from collective.exportimport import config
 from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
+from datetime import timedelta
 from DateTime import DateTime
 from Persistence import PersistentMapping
 from plone import api
@@ -108,6 +109,7 @@ class ImportContent(BrowserView):
             ("2", "Update: Reuse and only overwrite imported data"),
             ("3", "Ignore: Create with a new id"),
         )
+        self.import_old_revisions = request.get("import_old_revisions", False)
 
         if not self.request.form.get("form.submitted", False):
             return self.template()
@@ -295,6 +297,11 @@ class ImportContent(BrowserView):
 
             factory_kwargs = item.get("factory_kwargs", {})
 
+            if self.import_old_revisions and item.get("exportimport.versions"):
+                new = self.import_versions(container, item)
+                added.append(new.absolute_url())
+                continue
+
             # Handle existing content
             self.update_existing = False
             if new_id in container:
@@ -391,6 +398,111 @@ class ImportContent(BrowserView):
                 self.commit_hook(added, index)
 
         return added
+
+    def import_versions(self, container, item):
+        """Import one item with all its revisions..
+
+        TODO: Decide if we want to apply hooksfor each version or only for the current object.
+        """
+        portal_workflow = api.portal.get_tool("portal_workflow")
+
+        # Disable automatic versioning!
+        portal_types = api.portal.get_tool("portal_types")
+        fti = portal_types.get(item["@type"])
+        behaviors = list(fti.behaviors)
+        if 'plone.versioning' in behaviors:
+            behaviors.remove('plone.versioning')
+            fti.behaviors = behaviors
+
+        for version in item["exportimport.versions"].values():
+            initial = version["version"] == 0
+            if initial:
+                # initial version
+                new = _createObjectByType(item["@type"], container, item["id"])
+                uuid = self.set_uuid(item, new)
+                if uuid != item["UID"]:
+                    item["UID"] = uuid
+            else:
+                new = container.get(item["id"])
+
+            # import using plone.restapi deserializers
+            deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
+            try:
+                new = deserializer(validate_all=False, data=version)
+            except Exception as error:
+                logger.warning(
+                    "cannot deserialize {}: {}".format(item["@id"], repr(error))
+                )
+                return
+
+            self.save_revision(new, version, initial)
+
+        # Finally create the current version
+        new = container.get(item["id"])
+        deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
+        try:
+            new = deserializer(validate_all=False, data=item)
+        except Exception as error:
+            logger.warning("cannot deserialize {}: {}".format(item["@id"], repr(error)))
+            return
+
+        self.import_blob_paths(new, item)
+        self.import_constrains(new, item)
+        self.global_obj_hook(new, item)
+        self.custom_obj_hook(new, item)
+
+        if item["review_state"] and item["review_state"] != "private":
+            if portal_workflow.getChainFor(new):
+                try:
+                    api.content.transition(to_state=item["review_state"], obj=new)
+                except InvalidParameterError as e:
+                    logger.info(e)
+
+        # Import workflow_history last to drop entries created during import
+        self.import_workflow_history(new, item)
+
+        # Set modification and creation-date as a custom attribute as last step.
+        # These are reused and dropped in ResetModifiedAndCreatedDate
+        modified = item.get("modified", item.get("modification_date", None))
+        if modified:
+            modification_date = DateTime(dateutil.parser.parse(modified))
+            new.modification_date = modification_date
+            new.aq_base.modification_date_migrated = modification_date
+        created = item.get("created", item.get("creation_date", None))
+        if created:
+            creation_date = DateTime(dateutil.parser.parse(created))
+            new.creation_date = creation_date
+            new.aq_base.creation_date_migrated = creation_date
+
+        self.save_revision(new, item)
+        logger.info("Created item: {} {} with {} old versions".format(item["@type"], new.absolute_url(), len(item["exportimport.versions"])))
+
+        # TODO: Maybe reset versioning?
+        # if is_versioned:
+        #     behaviors = list(fti.behaviors)
+        #     behaviors.append('plone.versioning')
+        #     fti.behaviors = behaviors
+        return new
+
+    def save_revision(self, obj, item, initial=False):
+        """Save revision manually to set dates and changenote from exported data."""
+        rt = api.portal.get_tool("portal_repository")
+
+        modified = dateutil.parser.parse(item["modified"])
+        # add one millisecond to prevent created being before first revision
+        modified  = modified + timedelta(milliseconds=1)
+        timestamp = datetime.timestamp(modified)
+        from plone.app.versioningbehavior import _ as PAV
+        if initial:
+            comment = PAV(u'initial_version_changeNote', default=u'Initial version')
+        else:
+            comment = item["changeNote"]
+        sys_metadata = {
+            "comment": comment,
+            "timestamp": timestamp,
+            "originator": None,
+        }
+        rt._recursiveSave(obj, app_metadata={}, sys_metadata=sys_metadata, autoapply=True)
 
     def handle_broken(self, item):
         """Fix some invalid values."""
