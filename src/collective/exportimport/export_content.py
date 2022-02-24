@@ -458,6 +458,8 @@ class ExportContent(BrowserView):
     def export_revisions(self, item, obj):
         if not self.include_revisions:
             return item
+        repo_tool = api.portal.get_tool("portal_repository")
+        history_metadata = repo_tool.getHistoryMetadata(obj)
         serializer = getMultiAdapter((obj, self.request), ISerializeToJson)
         content_history_viewlet = ContentHistoryViewlet(obj, self.request, None, None)
         content_history_viewlet.navigation_root_url = ""
@@ -473,6 +475,12 @@ class ExportContent(BrowserView):
             item_version = serializer(include_items=False, version=version_id)
             item_version = self.update_data_for_migration(item_version, obj)
             item["exportimport.versions"][version_id] = item_version
+            # inject metadata (missing for Archetypes content):
+            comment = history_metadata.retrieve(version_id)["metadata"]["sys_metadata"]["comment"]
+            if comment and comment != item["exportimport.versions"][version_id].get("changeNote"):
+                item["exportimport.versions"][version_id]["changeNote"] = comment
+        # current changenote
+        item["changeNote"] = history_metadata.retrieve(-1)["metadata"]["sys_metadata"]["comment"]
         return item
 
 
