@@ -297,11 +297,6 @@ class ImportContent(BrowserView):
 
             factory_kwargs = item.get("factory_kwargs", {})
 
-            if self.import_old_revisions and item.get("exportimport.versions"):
-                new = self.import_versions(container, item)
-                added.append(new.absolute_url())
-                continue
-
             # Handle existing content
             self.update_existing = False
             if new_id in container:
@@ -337,6 +332,12 @@ class ImportContent(BrowserView):
                             duplicate, item["@id"], new_id
                         )
                     )
+
+            if self.import_old_revisions and item.get("exportimport.versions"):
+                new = self.import_versions(container, item)
+                if new:
+                    added.append(new.absolute_url())
+                continue
 
             if not self.update_existing:
                 # create without checking constrains and permissions
@@ -414,9 +415,18 @@ class ImportContent(BrowserView):
             behaviors.remove('plone.versioning')
             fti.behaviors = behaviors
 
-        for version in item["exportimport.versions"].values():
-            initial = version["version"] == 0
-            if initial:
+        for index, version in enumerate(item["exportimport.versions"].values()):
+            initial = index == 0
+            version = self.global_dict_hook(version)
+            if not version:
+                continue
+
+            # portal_type might change during a hook
+            version = self.custom_dict_hook(version)
+            if not version:
+                continue
+
+            if initial and not self.update_existing:
                 # initial version
                 new = _createObjectByType(item["@type"], container, item["id"])
                 uuid = self.set_uuid(item, new)
@@ -496,7 +506,7 @@ class ImportContent(BrowserView):
         if initial:
             comment = PAV(u'initial_version_changeNote', default=u'Initial version')
         else:
-            comment = item["changeNote"]
+            comment = item.get("changeNote")
         sys_metadata = {
             "comment": comment,
             "timestamp": timestamp,
