@@ -161,7 +161,7 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
             if not uuid:
                 target = find_object(obj, path)
                 if not target:
-                    logger.debug("Cannot find target obj for {path}".format(path=path))
+                    u"Cannot find target obj for {path}".format(path=path)
                     continue
                 uuid = IUUID(target, None)
 
