@@ -19,6 +19,7 @@ from Products.Five import BrowserView
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getUtility
+from zope.component import queryUtility
 from zope.component import queryMultiAdapter
 from zope.component.interfaces import IFactory
 from zope.container.interfaces import INameChooser
@@ -665,7 +666,10 @@ def register_portlets(obj, item):
     request = getRequest()
     results = 0
     for manager_name, portlets in item.get("portlets", {}).items():
-        manager = getUtility(IPortletManager, manager_name)
+        manager = queryUtility(IPortletManager, manager_name)
+        if not manager:
+            logger.info("No portlet manager {}".format(manager_name))
+            continue
         mapping = queryMultiAdapter((obj, manager), IPortletAssignmentMapping)
         namechooser = INameChooser(mapping)
 
@@ -673,7 +677,11 @@ def register_portlets(obj, item):
             # 1. Create the assignment
             assignment_data = portlet_data["assignment"]
             portlet_type = portlet_data["type"]
-            portlet_factory = getUtility(IFactory, name=portlet_type)
+            portlet_factory = queryUtility(IFactory, name=portlet_type)
+            if not portlet_factory:
+                logger.info("No factory for portlet {}".format(portlet_type))
+                continue
+
             assignment = portlet_factory()
 
             name = namechooser.chooseName(None, assignment)
@@ -714,7 +722,10 @@ def register_portlets(obj, item):
         status = blacklist_status["status"]
         manager_name = blacklist_status["manager"]
         category = blacklist_status["category"]
-        manager = getUtility(IPortletManager, manager_name)
+        manager = queryUtility(IPortletManager, manager_name)
+        if not manager:
+            logger.info("No portlet manager {}".format(manager_name))
+            continue
         assignable = queryMultiAdapter((obj, manager), ILocalPortletAssignmentManager)
         if status.lower() == "block":
             assignable.setBlacklistStatus(category, True)
