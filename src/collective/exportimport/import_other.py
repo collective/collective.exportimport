@@ -668,7 +668,7 @@ def register_portlets(obj, item):
     for manager_name, portlets in item.get("portlets", {}).items():
         manager = queryUtility(IPortletManager, manager_name)
         if not manager:
-            logger.info("No portlet manager {}".format(manager_name))
+            logger.info(u"No portlet manager {}".format(manager_name))
             continue
         mapping = queryMultiAdapter((obj, manager), IPortletAssignmentMapping)
         namechooser = INameChooser(mapping)
@@ -679,14 +679,13 @@ def register_portlets(obj, item):
             portlet_type = portlet_data["type"]
             portlet_factory = queryUtility(IFactory, name=portlet_type)
             if not portlet_factory:
-                logger.info("No factory for portlet {}".format(portlet_type))
+                logger.info(u"No factory for portlet {}".format(portlet_type))
                 continue
 
             assignment = portlet_factory()
 
             name = namechooser.chooseName(None, assignment)
             mapping[name] = assignment
-            logger.info("Added portlet {} to {}".format(name, obj.absolute_url()))
 
             # aq-wrap it so that complex fields will work
             assignment = assignment.__of__(site)
@@ -716,6 +715,8 @@ def register_portlets(obj, item):
                         continue
                 field.set(assignment, value)
 
+            logger.info(u"Added {} '{}' to {} of {}".format(
+                portlet_type, name, manager_name, obj.absolute_url()))
             results += 1
 
     for blacklist_status in item.get("blacklist_status", []):
