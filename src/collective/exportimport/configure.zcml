@@ -98,6 +98,10 @@
       factory=".serializer.ATImageFieldSerializer" />
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATImageFieldSerializerForBlobPaths" />
+  
+  <adapter zcml:condition="installed Products.Archetypes"
+      factory=".serializer.ATTalesFieldSerializer" />
+      
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATTextFieldSerializer" />
   <configure zcml:condition="installed Products.Archetypes">
