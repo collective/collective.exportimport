@@ -7,6 +7,9 @@ Changelog
 
 - Export import of redirect tool data
   [gotcha, Michael Penninck]
+- Serialize Products.TALESField fields as raw instead of evaluated expression 
+  (useful to export PFG overrides)
+  [sauzher]
 
 
 1.4 (2022-01-07)
