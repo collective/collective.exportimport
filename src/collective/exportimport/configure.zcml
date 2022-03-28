@@ -99,7 +99,7 @@
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATImageFieldSerializerForBlobPaths" />
   
-  <adapter zcml:condition="installed Products.Archetypes"
+  <adapter zcml:condition="installed Products.TALESField"
       factory=".serializer.ATTalesFieldSerializer" />
       
   <adapter zcml:condition="installed Products.Archetypes"

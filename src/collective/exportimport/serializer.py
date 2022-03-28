@@ -32,6 +32,14 @@ else:
 
 
 try:
+    pkg_resources.get_distribution("Products.TALESField")
+except pkg_resources.DistributionNotFound:
+    HAS_TALES = False
+else:
+    HAS_TALES = True
+
+
+try:
     pkg_resources.get_distribution("plone.app.blob")
 except pkg_resources.DistributionNotFound:
     HAS_BLOB = False
@@ -138,20 +146,21 @@ if HAS_AT:
     from Products.Archetypes.interfaces.field import IImageField
     from Products.Archetypes.interfaces.field import ITextField
 
-    from zope.interface import classImplements
-    from Products.TALESField._field import TALESString
+    if HAS_TALES:
+        from zope.interface import classImplements
+        from Products.TALESField._field import TALESString
+        
+        # Products.TalesField does not implements any interface
+        # we mark the field class to let queryMultiAdapter intercept
+        # this in place of the default one that would returns 
+        # the evaluated expression instead of the raw expression itself
+        classImplements(TALESString, ITalesField)
     
-    # Products.TalesField does not implements any interface
-    # we mark the field class to let queryMultiAdapter intercept
-    # this in place of the default one that would returns 
-    # the evaluated expression instead of the raw expression itself
-    classImplements(TALESString, ITalesField)
-
-    @adapter(ITalesField, IBaseObject, Interface)
-    @implementer(IFieldSerializer)
-    class ATTalesFieldSerializer(ATDefaultFieldSerializer):
-        def __call__(self):
-            return json_compatible(self.field.getRaw(self.context))
+        @adapter(ITalesField, IBaseObject, Interface)
+        @implementer(IFieldSerializer)
+        class ATTalesFieldSerializer(ATDefaultFieldSerializer):
+            def __call__(self):
+                return json_compatible(self.field.getRaw(self.context))
 
 
     @adapter(IImageField, IBaseObject, IBase64BlobsMarker)
