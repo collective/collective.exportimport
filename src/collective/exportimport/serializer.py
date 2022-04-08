@@ -2,6 +2,7 @@
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IPathBlobsMarker
+from collective.exportimport.interfaces import ITalesField
 from collective.exportimport.interfaces import IRawRichTextMarker
 from hurry.filesize import size
 from plone.app.textfield.interfaces import IRichText
@@ -15,6 +16,7 @@ from Products.CMFCore.utils import getToolByName
 from zope.component import adapter
 from zope.component import getUtility
 from zope.interface import implementer
+from zope.interface import Interface
 
 import base64
 import logging
@@ -27,6 +29,14 @@ except pkg_resources.DistributionNotFound:
     HAS_AT = False
 else:
     HAS_AT = True
+
+
+try:
+    pkg_resources.get_distribution("Products.TALESField")
+except pkg_resources.DistributionNotFound:
+    HAS_TALES = False
+else:
+    HAS_TALES = True
 
 
 try:
@@ -135,6 +145,23 @@ if HAS_AT:
     from Products.Archetypes.interfaces.field import IFileField
     from Products.Archetypes.interfaces.field import IImageField
     from Products.Archetypes.interfaces.field import ITextField
+
+    if HAS_TALES:
+        from zope.interface import classImplements
+        from Products.TALESField._field import TALESString
+        
+        # Products.TalesField does not implements any interface
+        # we mark the field class to let queryMultiAdapter intercept
+        # this in place of the default one that would returns 
+        # the evaluated expression instead of the raw expression itself
+        classImplements(TALESString, ITalesField)
+    
+        @adapter(ITalesField, IBaseObject, Interface)
+        @implementer(IFieldSerializer)
+        class ATTalesFieldSerializer(ATDefaultFieldSerializer):
+            def __call__(self):
+                return json_compatible(self.field.getRaw(self.context))
+
 
     @adapter(IImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -318,7 +345,7 @@ if HAS_AT and HAS_PAC:
     from plone.restapi.interfaces import ISerializeToJson
     from plone.restapi.serializer.atcontent import SerializeToJson
     from Products.ATContentTypes.interfaces.topic import IATTopic
-
+    
     @implementer(ISerializeToJson)
     @adapter(IATTopic, IMigrationMarker)
     class SerializeTopicToJson(SerializeToJson):

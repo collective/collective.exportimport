@@ -17,3 +17,7 @@ class IRawRichTextMarker(Interface):
 
 class IMigrationMarker(Interface):
     """A marker interface to override default serializers when data is used for migrations."""
+
+
+class ITalesField(Interface):
+    """a marker interface to export TalesField """
