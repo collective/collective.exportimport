@@ -10,6 +10,10 @@ Changelog
 - Serialize Products.TALESField fields as raw instead of evaluated expression 
   (useful to export PFG overrides)
   [sauzher]
+- optional support for saving the JSON exports from export_others to the 
+  local filesystem by specifying a `write_to` parameter on the _call__ 
+  level of each exporter browser view
+  [ajung]
 
 
 1.4 (2022-01-07)
