@@ -65,20 +65,24 @@ logger = logging.getLogger(__name__)
 class ExportRelations(BrowserView):
     """Export all relations"""
 
-    def __call__(self, debug=False):
+    def __call__(self, debug=False, write_to=None):
         self.title = "Export relations"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         all_stored_relations = self.get_all_references(debug)
-        data = json.dumps(all_stored_relations, indent=4)
-        filename = "relations.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        if write_to:
+            with open(write_to, "wb") as fp:
+                json.dump(all_stored_relations, fp, indent=4)
+        else:
+            filename = "relations.json"
+            data = json.dumps(all_stored_relations, indent=4)
+            self.request.response.setHeader("Content-type", "application/json")
+            self.request.response.setHeader("content-length", len(data))
+            self.request.response.setHeader(
+                "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+            )
+            return self.request.response.write(safe_bytes(data))
 
     def get_all_references(self, debug=False):
         results = []
@@ -172,7 +176,7 @@ class ExportMembers(BrowserView):
         self.title = "Export members, groups and roles"
         self.group_roles = {}
 
-    def __call__(self):
+    def __call__(self, write_to=None):
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -183,12 +187,17 @@ class ExportMembers(BrowserView):
             len(data["groups"]), len(data["members"])
         )
         logger.info(msg)
-        data = json.dumps(data, sort_keys=True, indent=4)
-        response = self.request.response
-        response.setHeader("content-type", "application/json")
-        response.setHeader("content-length", len(data))
-        response.setHeader("content-disposition", 'attachment; filename="members.json"')
-        return response.write(safe_bytes(data))
+        
+        if write_to:
+            with open(write_to, "wb") as fp:
+                json.dump(data, fp, indent=4)
+        else:
+            data = json.dumps(data, sort_keys=True, indent=4)
+            response = self.request.response
+            response.setHeader("content-type", "application/json")
+            response.setHeader("content-length", len(data))
+            response.setHeader("content-disposition", 'attachment; filename="members.json"')
+            return response.write(safe_bytes(data))
 
     def export_groups(self):
         data = []
@@ -266,20 +275,24 @@ class ExportTranslations(BrowserView):
 
     DROP_PATH = []
 
-    def __call__(self):
+    def __call__(self, write_to=None):
         self.title = "Export translations"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         all_translations = self.all_translations()
-        data = json.dumps(all_translations, indent=4)
-        filename = "translations.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        if write_to:
+            with open(write_to, "wb") as fp:
+                json.dump(all_translations, fp, indent=4)
+        else:
+            filename = "translations.json"
+            data = json.dumps(all_translations, indent=4)
+            self.request.response.setHeader("Content-type", "application/json")
+            self.request.response.setHeader("content-length", len(data))
+            self.request.response.setHeader(
+                "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+            )
+            return self.request.response.write(safe_bytes(data))
 
     def all_translations(self):  # noqa: C901
         results = []
@@ -350,20 +363,24 @@ class ExportTranslations(BrowserView):
 class ExportLocalRoles(BrowserView):
     """Export all local roles"""
 
-    def __call__(self):
+    def __call__(self, write_to=None):
         self.title = "Export local roles"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         all_localroles = self.all_localroles()
-        data = json.dumps(all_localroles, indent=4)
-        filename = "localroles.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        if write_to:
+            with open(write_to, "wb") as fp:
+                json.dump(all_localroles, fp, indent=4)
+        else:
+            filename = "localroles.json"
+            data = json.dumps(all_localroles, indent=4)
+            self.request.response.setHeader("Content-type", "application/json")
+            self.request.response.setHeader("content-length", len(data))
+            self.request.response.setHeader(
+                "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+            )
+            return self.request.response.write(safe_bytes(data))
 
     def all_localroles(self):
         self.results = []
@@ -401,20 +418,24 @@ class ExportLocalRoles(BrowserView):
 class ExportOrdering(BrowserView):
     """Export all local roles"""
 
-    def __call__(self):
+    def __call__(self, write_to=None):
         self.title = "Export ordering"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         all_orders = self.all_orders()
-        data = json.dumps(all_orders, indent=4)
-        filename = "ordering.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        if write_to:
+            with open(write_to, "wb") as fp:
+                json.dump(all_orders, fp, indent=4)
+        else:
+            filename = "ordering.json"
+            data = json.dumps(all_orders, indent=4)
+            self.request.response.setHeader("Content-type", "application/json")
+            self.request.response.setHeader("content-length", len(data))
+            self.request.response.setHeader(
+                "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+            )
+            return self.request.response.write(safe_bytes(data))
 
     def all_orders(self):
         results = []
@@ -441,20 +462,24 @@ class ExportOrdering(BrowserView):
 class ExportDefaultPages(BrowserView):
     """Export all default_page settings."""
 
-    def __call__(self):
+    def __call__(self, write_to=None):
         self.title = "Export default pages"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         all_default_pages = self.all_default_pages()
-        data = json.dumps(all_default_pages, indent=4)
-        filename = "defaultpages.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        if write_to:
+            with open(write_to, "wb") as fp:
+                json.dump(all_default_pages, fp, indent=4)
+        else:
+            data = json.dumps(all_default_pages, indent=4)
+            filename = "defaultpages.json"
+            self.request.response.setHeader("Content-type", "application/json")
+            self.request.response.setHeader("content-length", len(data))
+            self.request.response.setHeader(
+                "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+            )
+            return self.request.response.write(safe_bytes(data))
 
     def all_default_pages(self):
         results = []
@@ -463,7 +488,10 @@ class ExportDefaultPages(BrowserView):
             uid = IUUID(obj, None)
             if not uid:
                 return
-            default_page = obj.getDefaultPage()
+            try:
+                default_page = obj.getDefaultPage()
+            except:
+                default_page = None
             if default_page:
                 results.append({"uuid": uid, "default_page": default_page})
             return
@@ -477,20 +505,24 @@ class ExportDefaultPages(BrowserView):
 
 
 class ExportDiscussion(BrowserView):
-    def __call__(self):
+    def __call__(self, write_to=None):
         self.title = "Export comments"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         all_discussions = self.all_discussions()
-        data = json.dumps(all_discussions, indent=4)
-        filename = "discussions.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        if write_to:
+            with open(write_to, "wb") as fp:
+                json.dump(all_discussions, fp, indent=4)
+        else:
+            data = json.dumps(all_discussions, indent=4)
+            filename = "discussions.json"
+            self.request.response.setHeader("Content-type", "application/json")
+            self.request.response.setHeader("content-length", len(data))
+            self.request.response.setHeader(
+                "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+            )
+            return self.request.response.write(safe_bytes(data))
 
     def all_discussions(self):
         results = []
@@ -511,20 +543,24 @@ class ExportDiscussion(BrowserView):
 
 
 class ExportPortlets(BrowserView):
-    def __call__(self):
+    def __call__(self, write_to=None):
         self.title = "Export portlets"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         all_portlets = self.all_portlets()
-        data = json.dumps(all_portlets, indent=4)
-        filename = "portlets.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        if write_to:
+            with open(write_to, "wb") as fp:
+                json.dump(all_portlets, fp, indent=4)
+        else:
+            data = json.dumps(all_portlets, indent=4)
+            filename = "portlets.json"
+            self.request.response.setHeader("Content-type", "application/json")
+            self.request.response.setHeader("content-length", len(data))
+            self.request.response.setHeader(
+                "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+            )
+            return self.request.response.write(safe_bytes(data))
 
     def all_portlets(context=None):
         results = []
@@ -651,17 +687,22 @@ def export_plone_redirects():
 
 
 class ExportRedirects(BrowserView):
-    def __call__(self):
+    def __call__(self, write_to=None):
         self.title = "Export redirects"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         data = export_plone_redirects()
-        filename = "redirects.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        if write_to:
+            with open(write_to, "wb") as fp:
+                json.dump(data, fp, indent=4)
+        else:
+            filename = "redirects.json"
+            data = json.dumps(data, indent=4)
+            self.request.response.setHeader("Content-type", "application/json")
+            self.request.response.setHeader("content-length", len(data))
+            self.request.response.setHeader(
+                "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
+            )
+            return self.request.response.write(safe_bytes(data))
 
