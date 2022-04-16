@@ -14,6 +14,7 @@ from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from Products.CMFPlone.interfaces.constrains import ENABLED
 from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.component import getMultiAdapter
@@ -320,7 +321,7 @@ class ExportContent(BrowserView):
                         "number": number,
                         "value": fti.id,
                         "title": translate(
-                            fti.title, domain="plone", context=self.request
+                            safe_unicode(fti.title), domain="plone", context=self.request
                         ),
                     }
                 )
