@@ -10,6 +10,7 @@ from plone.dexterity.interfaces import IDexterityContent
 from plone.namedfile.interfaces import INamedFileField
 from plone.namedfile.interfaces import INamedImageField
 from plone.restapi.interfaces import IFieldSerializer
+from plone.restapi.interfaces import IJsonCompatible
 from plone.restapi.serializer.converters import json_compatible
 from plone.restapi.serializer.dxfields import DefaultFieldSerializer
 from Products.CMFCore.utils import getToolByName
@@ -22,6 +23,7 @@ import base64
 import logging
 import os
 import pkg_resources
+import six
 
 try:
     pkg_resources.get_distribution("Products.Archetypes")
@@ -451,3 +453,17 @@ class ImageFieldSerializerWithBlobPaths(DefaultFieldSerializer):
             "blob_path": blobfilepath,
         }
         return json_compatible(result)
+
+
+if six.PY2:
+    @adapter(long)
+    @implementer(IJsonCompatible)
+    def long_converter(value):
+        # convert long (py2 only)
+        return int(str(value))
+else:
+    @adapter(int)
+    @implementer(IJsonCompatible)
+    def long_converter(value):
+        # same as default_converter for py3
+        return value

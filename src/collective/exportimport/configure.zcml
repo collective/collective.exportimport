@@ -123,6 +123,7 @@
   <adapter factory=".serializer.ImageFieldSerializerWithBlobs" />
   <adapter factory=".serializer.ImageFieldSerializerWithBlobPaths" />
   <adapter factory=".serializer.RichttextFieldSerializerWithRawText" />
+  <adapter factory=".serializer.long_converter" />
 
   <!-- Deserializers -->
   <adapter factory=".deserializer.RichTextFieldDeserializerWithoutUnescape" />
