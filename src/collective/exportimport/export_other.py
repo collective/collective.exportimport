@@ -13,6 +13,7 @@ from plone.uuid.interfaces import IUUID
 from plone.app.uuid.utils import uuidToObject
 from Products.CMFCore.interfaces import IContentish
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.interfaces import IPloneSiteRoot
 from Products.Five import BrowserView
 from zope.component import getMultiAdapter
 from zope.component import queryUtility
@@ -464,9 +465,13 @@ class ExportDefaultPages(BrowserView):
         results = []
         catalog = api.portal.get_tool("portal_catalog")
         for brain in catalog.unrestrictedSearchResults(is_folderish=True, sort_on="path"):
-            uid = brain.UID
             try:
                 obj = brain.getObject()
+                if IPloneSiteRoot.providedBy(obj):
+                    # Plone 6
+                    continue
+                uid = brain.UID
+
                 # We use a simplified method to only get index_html
                 # and the property default_page on the object.
                 # We don't care about other cases
