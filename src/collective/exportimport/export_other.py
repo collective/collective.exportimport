@@ -65,12 +65,12 @@ logger = logging.getLogger(__name__)
 class ExportRelations(BrowserView):
     """Export all relations"""
 
-    def __call__(self, debug=False):
+    def __call__(self, debug=False, include_linkintegrity=False):
         self.title = "Export relations"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        all_stored_relations = self.get_all_references(debug)
+        all_stored_relations = self.get_all_references(debug, include_linkintegrity)
         data = json.dumps(all_stored_relations, indent=4)
         filename = "relations.json"
         self.request.response.setHeader("Content-type", "application/json")
@@ -80,7 +80,7 @@ class ExportRelations(BrowserView):
         )
         return self.request.response.write(safe_bytes(data))
 
-    def get_all_references(self, debug=False):
+    def get_all_references(self, debug=False, include_linkintegrity=False):
         results = []
 
         if HAS_AT:
@@ -93,6 +93,8 @@ class ExportRelations(BrowserView):
                 ref_catalog = reference_catalog._catalog
                 for rid in ref_catalog.data:
                     rel = ref_catalog[rid]
+                    if not include_linkintegrity and rel.relationship == "isReferencing":
+                        continue
                     source = uuidToObject(rel.sourceUID)
                     target = uuidToObject(rel.targetUID)
                     if not source or not target:
@@ -119,6 +121,8 @@ class ExportRelations(BrowserView):
             if relation_catalog:
                 portal_catalog = getToolByName(self.context, "portal_catalog")
                 for rel in relation_catalog.findRelations():
+                    if not include_linkintegrity and rel.from_attribute == "isReferencing":
+                        continue
                     try:
                         rel_from_path_and_rel_to_path = rel.from_path and rel.to_path
                     except ValueError:
@@ -307,7 +311,6 @@ class ExportTranslations(BrowserView):
                         translations = source.getTranslations()
                         for lang in translations:
                             if not lang:
-                                logger.info(u"Skip translation: {}".format(lang))
                                 continue
                             uuid = IUUID(translations[lang][0], None)
                             if uuid:
@@ -463,7 +466,11 @@ class ExportDefaultPages(BrowserView):
             uid = IUUID(obj, None)
             if not uid:
                 return
-            default_page = obj.getDefaultPage()
+            try:
+                default_page = obj.getDefaultPage()
+            except Exception as e:
+                logger.warning(e)
+                default_page = getattr(obj.aq_base, 'default_page', None)
             if default_page:
                 results.append({"uuid": uid, "default_page": default_page})
             return
