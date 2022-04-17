@@ -491,9 +491,16 @@ class ExportDefaultPages(BrowserView):
                 continue
 
         portal = api.portal.get()
-        portal_default_page = getattr(portal, 'default_page', [])
-        if portal_default_page:
-            results.append({"uuid": config.SITE_ROOT, "default_page": portal_default_page})
+        default_page = getattr(portal, 'default_page', [])
+        if default_page and default_page in portal:
+            default_page_obj = portal.get(default_page)
+            if default_page_obj:
+                default_page_uid = IUUID(default_page_obj, None)
+                results.append({
+                    "uuid": config.SITE_ROOT,
+                    "default_page": default_page,
+                    "default_page_uuid": default_page_uid,
+                })
         return results
 
 
