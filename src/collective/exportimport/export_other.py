@@ -462,23 +462,36 @@ class ExportDefaultPages(BrowserView):
 
     def all_default_pages(self):
         results = []
-
-        def get_default_page(obj, path):
-            uid = IUUID(obj, None)
-            if not uid:
-                return
+        catalog = api.portal.get_tool("portal_catalog")
+        for brain in catalog.unrestrictedSearchResults(is_folderish=True, sort_on="path"):
+            uid = brain.UID
             try:
-                default_page = obj.getDefaultPage()
+                obj = brain.getObject()
+                # We use a simplified method to only get index_html
+                # and the property default_page on the object.
+                # We don't care about other cases
+                # 1. obj is folderish, check for a index_html in it
+                if 'index_html' in obj:
+                    default_page = 'index_html'
+                else:
+                    # 2. Check attribute 'default_page'
+                    default_page = getattr(aq_base(obj), 'default_page', [])
+
+                if default_page and default_page in obj:
+                    default_page_obj = obj.get(default_page)
+                    if default_page_obj:
+                        default_page_uid = IUUID(default_page_obj, None)
+                        results.append({
+                            "uuid": uid,
+                            "default_page": default_page,
+                            "default_page_uuid": default_page_uid,
+                        })
             except Exception as e:
-                logger.warning(e)
-                default_page = getattr(obj.aq_base, 'default_page', None)
-            if default_page:
-                results.append({"uuid": uid, "default_page": default_page})
-            return
+                logger.info("Error exporting default_page for %s", brain.getURL(), exc_info=True)
+                continue
 
         portal = api.portal.get()
-        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_default_page)
-        portal_default_page = portal.getDefaultPage()
+        portal_default_page = getattr(portal, 'default_page', [])
         if portal_default_page:
             results.append({"uuid": config.SITE_ROOT, "default_page": portal_default_page})
         return results
