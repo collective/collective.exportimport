@@ -7,9 +7,41 @@ Changelog
 
 - Export import of redirect tool data
   [gotcha, Michael Penninck]
-- Serialize Products.TALESField fields as raw instead of evaluated expression 
+
+- Serialize Products.TALESField fields as raw instead of evaluated expression
   (useful to export PFG overrides)
   [sauzher]
+
+- Make sure we never change a acquired modification_date or creation_date..
+  [pbauer]
+
+- Export and import workflow_history
+  [pbauer]
+
+- Fail gracefully on errors during importing portlets.
+  [pbauer]
+
+- Ignore containers where content should be imported to that are non-folderish.
+  [pbauer]
+
+- Use catalog instead of ZopeFindAndApply and better logging for export_discussion.
+  [pbauer]
+
+- Add converter for long ints (py2 only)
+  [pbauer]
+
+- By default no not export linkintegrity relations.
+  [pbauer]
+
+- Log exec_info when exporting content fails.
+  [pbauer]
+
+- Add start and finish hooks for export of content.
+  [pbauer]
+
+- Rewrite export/import of default pages: Use uuid of default-page instread id.
+  Simplify getting default_page to fix various issues with translated content.
+  [pbauer]
 
 
 1.4 (2022-01-07)

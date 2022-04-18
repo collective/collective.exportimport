@@ -33,24 +33,19 @@
           <pre>
 [
     {
-        "uuid": "af553734a2e94b2b8d37fab0ea44f633",
+        "default_page_uuid": "a8e20cec90104700beae7f1cfbad76e6",
         "default_page": "some-page"
+        "uuid": "af553734a2e94b2b8d37fab0ea44f633",
     },
     {
-        "uuid": "20dc2f0b3097dd98dee533f3b537b42b",
-        "default_page": "about-us"
+        "default_page_uuid": "6cc4123222014fe0a5852dacfa28b49a",
+        "default_page": "courses",
+        "uuid": "3ce46e3626764bca80375dfb7e31b31b"
     },
     {
-        "uuid": "651a58b887d344c02c4ce689251f4a85",
-        "default_page": "background-infos"
-    },
-    {
-        "uuid": "fff6deb0b812dd80f9366de68a868ae2",
-        "default_page": "history"
-    },
-    {
+        "default_page_uuid": "d06303d343f64537b8c090fc31834b86",
+        "default_page": "my-frontpage"
         "uuid": "plone_site_root",
-        "default_page": "another-page"
     }
 ]
           </pre>
