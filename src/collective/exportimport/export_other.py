@@ -11,6 +11,7 @@ from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
 from plone.app.uuid.utils import uuidToObject
+from Products.CMFCore.interfaces import IContentish
 from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
 from zope.component import getMultiAdapter
@@ -494,19 +495,19 @@ class ExportDiscussion(BrowserView):
 
     def all_discussions(self):
         results = []
-
-        def get_discussion(obj, path):
-            conversation = IConversation(obj, None)
-            if not conversation:
-                return
-            serializer = getMultiAdapter((conversation, self.request), ISerializeToJson)
-            output = serializer()
-            if output:
-                results.append({"uuid": IUUID(obj), "conversation": output})
-            return
-
-        portal = api.portal.get()
-        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_discussion)
+        for brain in api.content.find(object_provides=IContentish.__identifier__, sort_on="path"):
+            try:
+                obj = brain.getObject()
+                conversation = IConversation(obj, None)
+                if not conversation:
+                    continue
+                serializer = getMultiAdapter((conversation, self.request), ISerializeToJson)
+                output = serializer()
+                if output:
+                    results.append({"uuid": IUUID(obj), "conversation": output})
+            except Exception as e:
+                logger.info("Error exporting comments for %s", brain.getURL(), exc_info=True)
+                continue
         return results
 
 

@@ -270,7 +270,11 @@ class ExportContent(BrowserView):
 
             if not index % 100:
                 logger.info(u"Handled {} items...".format(index))
-            obj = brain.getObject()
+            try:
+                obj = brain.getObject()
+            except Exception as e:
+                logger.exception(u"Error getting brain %s", brain.getPath(), exc_info=True)
+                continue
             obj = self.global_obj_hook(obj)
             if not obj:
                 continue
@@ -298,7 +302,7 @@ class ExportContent(BrowserView):
 
                 yield item
             except Exception as e:
-                logger.exception(u"Error exporting {}".format(obj.absolute_url()))
+                logger.exception(u"Error exporting %s", obj.absolute_url(), exc_info=True)
 
     def portal_types(self):
         """A list with info on all content types with existing items."""
