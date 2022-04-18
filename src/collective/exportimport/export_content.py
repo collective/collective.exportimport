@@ -180,6 +180,7 @@ class ExportContent(BrowserView):
                 directory = cfg.clienthome
             filepath = os.path.join(directory, filename)
             with open(filepath, "w") as f:
+                self.start()
                 for number, datum in enumerate(content_generator, start=1):
                     if number == 1:
                         f.write("[")
@@ -199,9 +200,11 @@ class ExportContent(BrowserView):
                 noLongerProvides(self.request, IBase64BlobsMarker)
             elif self.include_blobs == 2:
                 noLongerProvides(self.request, IPathBlobsMarker)
+            self.finish()
             self.request.response.redirect(self.request["ACTUAL_URL"])
         else:
             with tempfile.TemporaryFile(mode="w+") as f:
+                self.start()
                 for number, datum in enumerate(content_generator, start=1):
                     if number == 1:
                         f.write("[")
@@ -226,10 +229,17 @@ class ExportContent(BrowserView):
                 elif self.include_blobs == 2:
                     noLongerProvides(self.request, IPathBlobsMarker)
                 f.seek(0)
+                self.finish()
                 return response.write(safe_bytes(f.read()))
 
     def update(self):
         """Hook to do something before export."""
+
+    def start(self):
+        """Hook to do something before export starts."""
+
+    def finish(self):
+        """Hook to do something after export finishes."""
 
     def build_query(self):
         query = {
