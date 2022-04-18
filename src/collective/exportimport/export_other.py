@@ -467,46 +467,56 @@ class ExportDefaultPages(BrowserView):
         for brain in catalog.unrestrictedSearchResults(is_folderish=True, sort_on="path"):
             try:
                 obj = brain.getObject()
-                if IPloneSiteRoot.providedBy(obj):
-                    # Plone 6
-                    continue
-                uid = brain.UID
-
-                # We use a simplified method to only get index_html
-                # and the property default_page on the object.
-                # We don't care about other cases
-                # 1. obj is folderish, check for a index_html in it
-                if 'index_html' in obj:
-                    default_page = 'index_html'
-                else:
-                    # 2. Check attribute 'default_page'
-                    default_page = getattr(aq_base(obj), 'default_page', [])
-
-                if default_page and default_page in obj:
-                    default_page_obj = obj.get(default_page)
-                    if default_page_obj:
-                        default_page_uid = IUUID(default_page_obj, None)
-                        results.append({
-                            "uuid": uid,
-                            "default_page": default_page,
-                            "default_page_uuid": default_page_uid,
-                        })
             except Exception as e:
-                logger.info("Error exporting default_page for %s", brain.getURL(), exc_info=True)
+                logger.info(u"Error getting obj for %s", brain.getURL(), exc_info=True)
+                continue
+            if IPloneSiteRoot.providedBy(obj):
+                # Site root is handled below (in Plone 6 it is returned by a catalog search)
                 continue
 
+            try:
+                data = self.get_default_page_info(obj)
+            except Exception as e:
+                logger.info(u"Error exporting default_page for %s", obj.absolute_url(), exc_info=True)
+                continue
+
+            if data:
+                results.append(data)
+
+        # handle portal
         portal = api.portal.get()
-        default_page = getattr(portal, 'default_page', [])
-        if default_page and default_page in portal:
-            default_page_obj = portal.get(default_page)
+        try:
+            data = self.get_default_page_info(portal)
+            if data:
+                data["uuid"] = config.SITE_ROOT
+                results.append(data)
+        except Exception as e:
+            logger.info(u"Error exporting default_page for portal", exc_info=True)
+
+        return results
+
+    def get_default_page_info(self, obj):
+        uid = IUUID(obj, None)
+
+        # We use a simplified method to only get index_html
+        # and the property default_page on the object.
+        # We don't care about other cases
+        # 1. obj is folderish, check for a index_html in it
+        if 'index_html' in obj:
+            default_page = 'index_html'
+        else:
+            # 2. Check attribute 'default_page'
+            default_page = getattr(aq_base(obj), 'default_page', [])
+
+        if default_page and default_page in obj:
+            default_page_obj = obj.get(default_page)
             if default_page_obj:
                 default_page_uid = IUUID(default_page_obj, None)
-                results.append({
-                    "uuid": config.SITE_ROOT,
+                return {
+                    "uuid": uid,
                     "default_page": default_page,
                     "default_page_uuid": default_page_uid,
-                })
-        return results
+                }
 
 
 class ExportDiscussion(BrowserView):
