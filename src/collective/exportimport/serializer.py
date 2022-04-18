@@ -2,6 +2,7 @@
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IPathBlobsMarker
+from collective.exportimport.interfaces import ITalesField
 from collective.exportimport.interfaces import IRawRichTextMarker
 from hurry.filesize import size
 from plone.app.textfield.interfaces import IRichText
@@ -9,17 +10,20 @@ from plone.dexterity.interfaces import IDexterityContent
 from plone.namedfile.interfaces import INamedFileField
 from plone.namedfile.interfaces import INamedImageField
 from plone.restapi.interfaces import IFieldSerializer
+from plone.restapi.interfaces import IJsonCompatible
 from plone.restapi.serializer.converters import json_compatible
 from plone.restapi.serializer.dxfields import DefaultFieldSerializer
 from Products.CMFCore.utils import getToolByName
 from zope.component import adapter
 from zope.component import getUtility
 from zope.interface import implementer
+from zope.interface import Interface
 
 import base64
 import logging
 import os
 import pkg_resources
+import six
 
 try:
     pkg_resources.get_distribution("Products.Archetypes")
@@ -27,6 +31,14 @@ except pkg_resources.DistributionNotFound:
     HAS_AT = False
 else:
     HAS_AT = True
+
+
+try:
+    pkg_resources.get_distribution("Products.TALESField")
+except pkg_resources.DistributionNotFound:
+    HAS_TALES = False
+else:
+    HAS_TALES = True
 
 
 try:
@@ -135,6 +147,23 @@ if HAS_AT:
     from Products.Archetypes.interfaces.field import IFileField
     from Products.Archetypes.interfaces.field import IImageField
     from Products.Archetypes.interfaces.field import ITextField
+
+    if HAS_TALES:
+        from zope.interface import classImplements
+        from Products.TALESField._field import TALESString
+        
+        # Products.TalesField does not implements any interface
+        # we mark the field class to let queryMultiAdapter intercept
+        # this in place of the default one that would returns 
+        # the evaluated expression instead of the raw expression itself
+        classImplements(TALESString, ITalesField)
+    
+        @adapter(ITalesField, IBaseObject, Interface)
+        @implementer(IFieldSerializer)
+        class ATTalesFieldSerializer(ATDefaultFieldSerializer):
+            def __call__(self):
+                return json_compatible(self.field.getRaw(self.context))
+
 
     @adapter(IImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -318,7 +347,7 @@ if HAS_AT and HAS_PAC:
     from plone.restapi.interfaces import ISerializeToJson
     from plone.restapi.serializer.atcontent import SerializeToJson
     from Products.ATContentTypes.interfaces.topic import IATTopic
-
+    
     @implementer(ISerializeToJson)
     @adapter(IATTopic, IMigrationMarker)
     class SerializeTopicToJson(SerializeToJson):
@@ -424,3 +453,17 @@ class ImageFieldSerializerWithBlobPaths(DefaultFieldSerializer):
             "blob_path": blobfilepath,
         }
         return json_compatible(result)
+
+
+if six.PY2:
+    @adapter(long)
+    @implementer(IJsonCompatible)
+    def long_converter(value):
+        # convert long (py2 only)
+        return int(str(value))
+else:
+    @adapter(int)
+    @implementer(IJsonCompatible)
+    def long_converter(value):
+        # same as default_converter for py3
+        return value

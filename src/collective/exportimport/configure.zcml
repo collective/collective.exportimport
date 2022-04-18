@@ -98,6 +98,10 @@
       factory=".serializer.ATImageFieldSerializer" />
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATImageFieldSerializerForBlobPaths" />
+  
+  <adapter zcml:condition="installed Products.TALESField"
+      factory=".serializer.ATTalesFieldSerializer" />
+      
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATTextFieldSerializer" />
   <configure zcml:condition="installed Products.Archetypes">
@@ -119,6 +123,7 @@
   <adapter factory=".serializer.ImageFieldSerializerWithBlobs" />
   <adapter factory=".serializer.ImageFieldSerializerWithBlobPaths" />
   <adapter factory=".serializer.RichttextFieldSerializerWithRawText" />
+  <adapter factory=".serializer.long_converter" />
 
   <!-- Deserializers -->
   <adapter factory=".deserializer.RichTextFieldDeserializerWithoutUnescape" />

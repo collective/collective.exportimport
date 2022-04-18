@@ -11,7 +11,9 @@ from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
 from plone.app.uuid.utils import uuidToObject
+from Products.CMFCore.interfaces import IContentish
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.interfaces import IPloneSiteRoot
 from Products.Five import BrowserView
 from zope.component import getMultiAdapter
 from zope.component import queryUtility
@@ -65,12 +67,12 @@ logger = logging.getLogger(__name__)
 class ExportRelations(BrowserView):
     """Export all relations"""
 
-    def __call__(self, debug=False):
+    def __call__(self, debug=False, include_linkintegrity=False):
         self.title = "Export relations"
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        all_stored_relations = self.get_all_references(debug)
+        all_stored_relations = self.get_all_references(debug, include_linkintegrity)
         data = json.dumps(all_stored_relations, indent=4)
         filename = "relations.json"
         self.request.response.setHeader("Content-type", "application/json")
@@ -80,7 +82,7 @@ class ExportRelations(BrowserView):
         )
         return self.request.response.write(safe_bytes(data))
 
-    def get_all_references(self, debug=False):
+    def get_all_references(self, debug=False, include_linkintegrity=False):
         results = []
 
         if HAS_AT:
@@ -93,6 +95,8 @@ class ExportRelations(BrowserView):
                 ref_catalog = reference_catalog._catalog
                 for rid in ref_catalog.data:
                     rel = ref_catalog[rid]
+                    if not include_linkintegrity and rel.relationship == "isReferencing":
+                        continue
                     source = uuidToObject(rel.sourceUID)
                     target = uuidToObject(rel.targetUID)
                     if not source or not target:
@@ -119,6 +123,8 @@ class ExportRelations(BrowserView):
             if relation_catalog:
                 portal_catalog = getToolByName(self.context, "portal_catalog")
                 for rel in relation_catalog.findRelations():
+                    if not include_linkintegrity and rel.from_attribute == "isReferencing":
+                        continue
                     try:
                         rel_from_path_and_rel_to_path = rel.from_path and rel.to_path
                     except ValueError:
@@ -307,7 +313,6 @@ class ExportTranslations(BrowserView):
                         translations = source.getTranslations()
                         for lang in translations:
                             if not lang:
-                                logger.info(u"Skip translation: {}".format(lang))
                                 continue
                             uuid = IUUID(translations[lang][0], None)
                             if uuid:
@@ -458,22 +463,60 @@ class ExportDefaultPages(BrowserView):
 
     def all_default_pages(self):
         results = []
+        catalog = api.portal.get_tool("portal_catalog")
+        for brain in catalog.unrestrictedSearchResults(is_folderish=True, sort_on="path"):
+            try:
+                obj = brain.getObject()
+            except Exception as e:
+                logger.info(u"Error getting obj for %s", brain.getURL(), exc_info=True)
+                continue
+            if IPloneSiteRoot.providedBy(obj):
+                # Site root is handled below (in Plone 6 it is returned by a catalog search)
+                continue
 
-        def get_default_page(obj, path):
-            uid = IUUID(obj, None)
-            if not uid:
-                return
-            default_page = obj.getDefaultPage()
-            if default_page:
-                results.append({"uuid": uid, "default_page": default_page})
-            return
+            try:
+                data = self.get_default_page_info(obj)
+            except Exception as e:
+                logger.info(u"Error exporting default_page for %s", obj.absolute_url(), exc_info=True)
+                continue
 
+            if data:
+                results.append(data)
+
+        # handle portal
         portal = api.portal.get()
-        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_default_page)
-        portal_default_page = portal.getDefaultPage()
-        if portal_default_page:
-            results.append({"uuid": config.SITE_ROOT, "default_page": portal_default_page})
+        try:
+            data = self.get_default_page_info(portal)
+            if data:
+                data["uuid"] = config.SITE_ROOT
+                results.append(data)
+        except Exception as e:
+            logger.info(u"Error exporting default_page for portal", exc_info=True)
+
         return results
+
+    def get_default_page_info(self, obj):
+        uid = IUUID(obj, None)
+
+        # We use a simplified method to only get index_html
+        # and the property default_page on the object.
+        # We don't care about other cases
+        # 1. obj is folderish, check for a index_html in it
+        if 'index_html' in obj:
+            default_page = 'index_html'
+        else:
+            # 2. Check attribute 'default_page'
+            default_page = getattr(aq_base(obj), 'default_page', [])
+
+        if default_page and default_page in obj:
+            default_page_obj = obj.get(default_page)
+            if default_page_obj:
+                default_page_uid = IUUID(default_page_obj, None)
+                return {
+                    "uuid": uid,
+                    "default_page": default_page,
+                    "default_page_uuid": default_page_uid,
+                }
 
 
 class ExportDiscussion(BrowserView):
@@ -494,19 +537,19 @@ class ExportDiscussion(BrowserView):
 
     def all_discussions(self):
         results = []
-
-        def get_discussion(obj, path):
-            conversation = IConversation(obj, None)
-            if not conversation:
-                return
-            serializer = getMultiAdapter((conversation, self.request), ISerializeToJson)
-            output = serializer()
-            if output:
-                results.append({"uuid": IUUID(obj), "conversation": output})
-            return
-
-        portal = api.portal.get()
-        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_discussion)
+        for brain in api.content.find(object_provides=IContentish.__identifier__, sort_on="path"):
+            try:
+                obj = brain.getObject()
+                conversation = IConversation(obj, None)
+                if not conversation:
+                    continue
+                serializer = getMultiAdapter((conversation, self.request), ISerializeToJson)
+                output = serializer()
+                if output:
+                    results.append({"uuid": IUUID(obj), "conversation": output})
+            except Exception as e:
+                logger.info("Error exporting comments for %s", brain.getURL(), exc_info=True)
+                continue
         return results
 
 

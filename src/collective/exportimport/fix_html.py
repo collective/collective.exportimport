@@ -351,7 +351,6 @@ def fix_html_in_content_fields(context=None, commit=True):
                 transaction.get().note(msg)
                 transaction.commit()
             results_to_commit = 0
-            items_to_commit = 0
 
     if results_to_commit > 0:
         # Commit any remaining changes.

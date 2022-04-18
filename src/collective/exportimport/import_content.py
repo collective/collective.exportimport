@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from Acquisition import aq_base
 from collective.exportimport import config
 from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
@@ -292,6 +293,12 @@ class ImportContent(BrowserView):
             if not container:
                 logger.info(
                     u"No container (parent was {}) found for {} {}".format(item["parent"]["@type"], item["@type"], item["@id"])
+                )
+                continue
+
+            if not getattr(aq_base(container), "isPrincipiaFolderish", False):
+                logger.info(
+                    u"Container {} for {} is not folderish".format(container.absolute_url(), item["@id"])
                 )
                 continue
 

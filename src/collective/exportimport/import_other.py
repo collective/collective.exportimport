@@ -19,6 +19,7 @@ from Products.Five import BrowserView
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getUtility
+from zope.component import queryUtility
 from zope.component import queryMultiAdapter
 from zope.component.interfaces import IFactory
 from zope.container.interfaces import INameChooser
@@ -505,14 +506,29 @@ class ImportDefaultPages(BrowserView):
                     obj = api.portal.get()
                 else:
                     continue
-            old = obj.getDefaultPage()
-            if six.PY2:
-                obj.setDefaultPage(item["default_page"].encode("utf-8"))
+            if "default_page_uuid" in item:
+                default_page_obj = api.content.get(UID=item["default_page_uuid"])
+                if not default_page_obj:
+                    logger.info("Default page missing: %s", item["default_page_uuid"])
+                    continue
+                default_page = default_page_obj.id
             else:
-                obj.setDefaultPage(item["default_page"])
-            if old != obj.getDefaultPage():
-                logger.debug(u"Set {} as default page for {}".format(item["default_page"], obj.absolute_url()))
-                results += 1
+                # fallback for old export versions
+                default_page = item["default_page"]
+            if default_page not in obj:
+                logger.info(u"Default page not a child: %s not in %s", default_page, obj.absolute_url())
+                continue
+
+            if default_page == "index_html":
+                # index_html is automatically used as default page
+                continue
+
+            if six.PY2:
+                obj.setDefaultPage(default_page.encode("utf-8"))
+            else:
+                obj.setDefaultPage(default_page)
+            logger.debug(u"Set %s as default page for %s", default_page, obj.absolute_url())
+            results += 1
         return results
 
 
@@ -665,7 +681,10 @@ def register_portlets(obj, item):
     request = getRequest()
     results = 0
     for manager_name, portlets in item.get("portlets", {}).items():
-        manager = getUtility(IPortletManager, manager_name)
+        manager = queryUtility(IPortletManager, manager_name)
+        if not manager:
+            logger.info(u"No portlet manager {}".format(manager_name))
+            continue
         mapping = queryMultiAdapter((obj, manager), IPortletAssignmentMapping)
         namechooser = INameChooser(mapping)
 
@@ -673,12 +692,15 @@ def register_portlets(obj, item):
             # 1. Create the assignment
             assignment_data = portlet_data["assignment"]
             portlet_type = portlet_data["type"]
-            portlet_factory = getUtility(IFactory, name=portlet_type)
+            portlet_factory = queryUtility(IFactory, name=portlet_type)
+            if not portlet_factory:
+                logger.info(u"No factory for portlet {}".format(portlet_type))
+                continue
+
             assignment = portlet_factory()
 
             name = namechooser.chooseName(None, assignment)
             mapping[name] = assignment
-            logger.info("Added portlet {} to {}".format(name, obj.absolute_url()))
 
             # aq-wrap it so that complex fields will work
             assignment = assignment.__of__(site)
@@ -708,13 +730,18 @@ def register_portlets(obj, item):
                         continue
                 field.set(assignment, value)
 
+            logger.info(u"Added {} '{}' to {} of {}".format(
+                portlet_type, name, manager_name, obj.absolute_url()))
             results += 1
 
     for blacklist_status in item.get("blacklist_status", []):
         status = blacklist_status["status"]
         manager_name = blacklist_status["manager"]
         category = blacklist_status["category"]
-        manager = getUtility(IPortletManager, manager_name)
+        manager = queryUtility(IPortletManager, manager_name)
+        if not manager:
+            logger.info("No portlet manager {}".format(manager_name))
+            continue
         assignable = queryMultiAdapter((obj, manager), ILocalPortletAssignmentManager)
         if status.lower() == "block":
             assignable.setBlacklistStatus(category, True)
