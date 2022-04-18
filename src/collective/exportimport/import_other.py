@@ -506,14 +506,29 @@ class ImportDefaultPages(BrowserView):
                     obj = api.portal.get()
                 else:
                     continue
-            old = obj.getDefaultPage()
-            if six.PY2:
-                obj.setDefaultPage(item["default_page"].encode("utf-8"))
+            if "default_page_uuid" in item:
+                default_page_obj = api.content.get(UID=item["default_page_uuid"])
+                if not default_page_obj:
+                    logger.info("Default page missing: %s", item["default_page_uuid"])
+                    continue
+                default_page = default_page_obj.id
             else:
-                obj.setDefaultPage(item["default_page"])
-            if old != obj.getDefaultPage():
-                logger.debug(u"Set {} as default page for {}".format(item["default_page"], obj.absolute_url()))
-                results += 1
+                # fallback for old export versions
+                default_page = item["default_page"]
+            if default_page not in obj:
+                logger.info(u"Default page not a child: %s not in %s", default_page, obj.absolute_url())
+                continue
+
+            if default_page == "index_html":
+                # index_html is automatically used as default page
+                continue
+
+            if six.PY2:
+                obj.setDefaultPage(default_page.encode("utf-8"))
+            else:
+                obj.setDefaultPage(default_page)
+            logger.debug(u"Set %s as default page for %s", default_page, obj.absolute_url())
+            results += 1
         return results
 
 

@@ -311,7 +311,7 @@ class TestExport(unittest.TestCase):
         folder1 = api.content.create(
             container=portal, type="Folder", id="folder1", title="Folder 1"
         )
-        api.content.create(
+        doc1 = api.content.create(
             container=folder1, type="Document", id="doc1", title="Document 1"
         )
         folder1._setProperty("default_page", "doc1")
@@ -325,7 +325,7 @@ class TestExport(unittest.TestCase):
         data = json.loads(contents)
         self.assertListEqual(
             data,
-            [{"default_page": "doc1", "uuid": folder1.UID()}],
+            [{"default_page": "doc1", "uuid": folder1.UID(), 'default_page_uuid': doc1.UID()}],
         )
 
     def test_export_defaultpage_for_site(self):
@@ -333,7 +333,7 @@ class TestExport(unittest.TestCase):
         app = self.layer["app"]
         portal = self.layer["portal"]
         login(app, SITE_OWNER_NAME)
-        api.content.create(
+        doc1 = api.content.create(
             container=portal, type="Document", id="doc1", title="Document 1"
         )
         portal._setProperty("default_page", "doc1")
@@ -347,7 +347,7 @@ class TestExport(unittest.TestCase):
         data = json.loads(contents)
         self.assertListEqual(
             data,
-            [{"default_page": "doc1", "uuid": config.SITE_ROOT}],
+            [{"default_page": "doc1", "uuid": config.SITE_ROOT, "default_page_uuid": doc1.UID()}],
         )
 
     def test_export_ordering(self):
