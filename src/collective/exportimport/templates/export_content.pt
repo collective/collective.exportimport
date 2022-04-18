@@ -125,7 +125,6 @@
                     class="form-check-input"
                     name="include_revisions:boolean"
                     id="include_revisions"
-                    value="1"
                     tal:attributes="checked python: 'checked' if view.include_revisions else ''"
                     />
                 Include revisions.

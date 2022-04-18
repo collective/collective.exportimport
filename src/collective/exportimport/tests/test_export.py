@@ -9,6 +9,8 @@ from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
+from zope.annotation.interfaces import IAnnotations
+from zope.lifecycleevent import modified
 
 import json
 import transaction
@@ -447,3 +449,95 @@ class TestExport(unittest.TestCase):
             u'/plone/doc2': u'/plone/doc2-moved'},
         )
 
+    def test_export_versions(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        request = self.layer["request"]
+        login(app, SITE_OWNER_NAME)
+        doc1 = api.content.create(
+            container=portal,
+            type="Document",
+            id="doc1",
+            title="Document 1",
+            description="A Description",
+        )
+        folder1 = api.content.create(
+            container=portal,
+            type="Folder",
+            id="folder1",
+            title="Folder 1",
+        )
+        doc2 = api.content.create(
+            container=folder1,
+            type="Document",
+            id="doc2",
+            title="Document 2",
+            description="A Description",
+        )
+        doc3 = api.content.create(
+            container=folder1, type="Document", id="doc3", title="Document 3"
+        )
+
+        doc1.title= u"Document 1 with changed title"
+        modified(doc1)
+        doc2.title= u"Document 2 with changed title"
+        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"Föö bar"
+        modified(doc2)
+
+        doc2.description= u"New description in revision 3"
+        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"I am new!"
+        modified(doc2)
+        folder1.title = u"Folder 1 with changed title"
+        modified(folder1)
+
+        transaction.commit()
+
+        # Now export complete portal.
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        self.assertEqual(portal_type.value, [])
+        portal_type.value = ["Folder", "Document"]
+
+        depth = browser.getControl(name="depth")
+        self.assertEqual(depth.value, ["-1"])
+
+        revisions = browser.getControl(label="Include revisions")
+        self.assertEqual(revisions.selected, False)
+        revisions.selected = True
+
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
+
+        # We should have gotten json.
+        data = json.loads(contents)
+        self.assertEqual(len(data), 4)
+
+        item = data[2]
+        self.assertEqual(item["@id"], portal.absolute_url() + "/folder1/doc2")
+
+        # check versions
+        self.assertIn("exportimport.versions", item)
+        versions = item["exportimport.versions"]
+        self.assertEqual(len(versions), 2)
+
+        # check first version
+        self.assertEqual(versions["0"]["title"], u"Document 2")
+        self.assertEqual(versions["0"]["description"], u"A Description")
+        self.assertEqual(versions["0"]["changeNote"], u"initial_version_changeNote")
+
+        # check version 2
+        self.assertEqual(versions["1"]["title"], u"Document 2 with changed title")
+        self.assertEqual(versions["1"]["description"], u"A Description")
+        self.assertEqual(versions["1"]["changeNote"], u"Föö bar")
+
+        # final/current version is the item itself
+        self.assertEqual(item["title"], u"Document 2 with changed title")
+        self.assertEqual(item["description"], u"New description in revision 3")
+        self.assertEqual(item["changeNote"], u"I am new!")
