@@ -13,6 +13,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.lifecycleevent import modified
 
 import json
+import six
 import transaction
 import unittest
 
@@ -454,6 +455,9 @@ class TestExport(unittest.TestCase):
         portal = self.layer["portal"]
         request = self.layer["request"]
         login(app, SITE_OWNER_NAME)
+        if six.PY2:
+            # in Plone 4.3 this is somehow not set...
+            IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"initial_version_changeNote"
         doc1 = api.content.create(
             container=portal,
             type="Document",
@@ -473,9 +477,6 @@ class TestExport(unittest.TestCase):
             id="doc2",
             title="Document 2",
             description="A Description",
-        )
-        doc3 = api.content.create(
-            container=folder1, type="Document", id="doc3", title="Document 3"
         )
 
         doc1.title= u"Document 1 with changed title"
@@ -517,7 +518,7 @@ class TestExport(unittest.TestCase):
 
         # We should have gotten json.
         data = json.loads(contents)
-        self.assertEqual(len(data), 4)
+        self.assertEqual(len(data), 3)
 
         item = data[2]
         self.assertEqual(item["@id"], portal.absolute_url() + "/folder1/doc2")
