@@ -8,6 +8,7 @@ from DateTime import DateTime
 from Persistence import PersistentMapping
 from plone import api
 from plone.api.exc import InvalidParameterError
+from plone.dexterity.interfaces import IDexterityFTI
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
@@ -31,6 +32,7 @@ import json
 import logging
 import os
 import random
+import six
 import transaction
 
 try:
@@ -417,10 +419,11 @@ class ImportContent(BrowserView):
         # Disable automatic versioning!
         portal_types = api.portal.get_tool("portal_types")
         fti = portal_types.get(item["@type"])
-        behaviors = list(fti.behaviors)
-        if 'plone.versioning' in behaviors:
-            behaviors.remove('plone.versioning')
-            fti.behaviors = behaviors
+        if IDexterityFTI.providedBy(fti):
+            behaviors = list(fti.behaviors)
+            if 'plone.versioning' in behaviors:
+                behaviors.remove('plone.versioning')
+                fti.behaviors = behaviors
 
         for index, version in enumerate(item["exportimport.versions"].values()):
             initial = index == 0
@@ -508,7 +511,11 @@ class ImportContent(BrowserView):
         modified = dateutil.parser.parse(item["modified"])
         # add one millisecond to prevent created being before first revision
         modified  = modified + timedelta(milliseconds=1)
-        timestamp = datetime.timestamp(modified)
+        if six.PY2:
+            import time
+            timestamp = time.mktime(modified.timetuple())
+        else:
+            timestamp = datetime.timestamp(modified)
         from plone.app.versioningbehavior import _ as PAV
         if initial:
             comment = PAV(u'initial_version_changeNote', default=u'Initial version')
