@@ -29,6 +29,7 @@ if sys.version_info[0] < 3:
     # plone.restapi depends on plone.schema, which depends on jsonschema,
     # which has a Py3-only release since September 2021.
     install_requires.append("jsonschema < 4")
+    install_requires.append("pyrsistent < 0.16.0")
 else:
     install_requires.append("plone.restapi")
     install_requires.append("beautifulsoup4")
