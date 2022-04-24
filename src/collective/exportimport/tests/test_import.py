@@ -17,11 +17,14 @@ from plone.namedfile.file import NamedBlobImage
 from Products.CMFPlone.interfaces.constrains import ENABLED
 from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.tests import dummy
+from zope.annotation.interfaces import IAnnotations
 from zope.component import getUtility
+from zope.lifecycleevent import modified
 
 import json
 import os
 import shutil
+import six
 import tempfile
 import transaction
 import unittest
@@ -1143,3 +1146,119 @@ class TestImport(unittest.TestCase):
         self.assertTrue(storage.has_path('/plone/doc2'))
         self.assertEqual(storage.get('/plone/doc1'), '/plone/doc1-moved')
         self.assertEqual(storage.get('/plone/doc2'), '/plone/doc2-moved')
+
+    def test_import_versions(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        request = self.layer["request"]
+        login(app, SITE_OWNER_NAME)
+        if six.PY2:
+            # in Plone 4.3 this is somehow not set...
+            IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"initial_version_changeNote"
+        doc1 = api.content.create(
+            container=portal,
+            type="Document",
+            id="doc1",
+            title=u"Document 1",
+            description=u"A Description",
+        )
+        folder1 = api.content.create(
+            container=portal,
+            type="Folder",
+            id="folder1",
+            title=u"Folder 1",
+        )
+        doc2 = api.content.create(
+            container=folder1,
+            type="Document",
+            id="doc2",
+            title=u"Document 2",
+            description=u"A Description",
+        )
+        modified(doc1)
+        modified(folder1)
+        modified(doc2)
+
+        doc1.title= u"Document 1 with changed title"
+        modified(doc1)
+        doc2.title= u"Document 2 with changed title"
+        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"Föö bar"
+        modified(doc2)
+
+        doc2.description= u"New description in revision 3"
+        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"I am new!"
+        modified(doc2)
+        folder1.title = u"Folder 1 with changed title"
+        modified(folder1)
+
+        transaction.commit()
+
+        repo_tool = api.portal.get_tool("portal_repository")
+        oldest = repo_tool.getHistory(doc2)._retrieve(doc2, 0, preserve=[], countPurged=False)
+        self.assertEqual(oldest.object.title, u"Document 2")
+
+        # Now export complete portal.
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        self.assertEqual(portal_type.value, [])
+        portal_type.value = ["Folder", "Document"]
+
+        depth = browser.getControl(name="depth")
+        self.assertEqual(depth.value, ["-1"])
+
+        revisions = browser.getControl(label="Include revisions")
+        self.assertEqual(revisions.selected, False)
+        revisions.selected = True
+
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
+
+        # We should have gotten json.
+        data = json.loads(contents)
+        self.assertEqual(len(data), 3)
+
+        # Remove the added content.
+        api.content.delete(doc1)
+        api.content.delete(doc2)
+        api.content.delete(folder1)
+
+        transaction.commit()
+        self.assertNotIn("doc1", portal.contentIds())
+        self.assertNotIn("folder1", portal.contentIds())
+
+        # Now import it.
+        browser = self.open_page("@@import_content")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(contents, "application/json", "plone.json")
+        form = browser.getForm(action="@@import_content")
+        self.assertFalse(form.getControl("Import all old revisions").selected)
+        form.getControl("Import all old revisions").selected = True
+        form.submit()
+        self.assertIn("Imported 3 items", browser.contents)
+
+        # The content should be back.
+        self.assertIn("doc1", portal.contentIds())
+        self.assertEqual(portal["folder1"].portal_type, "Folder")
+        doc2 = portal["folder1"]["doc2"]
+        self.assertEqual(doc2.title, u"Document 2 with changed title")
+        self.assertEqual(doc2.description, u"New description in revision 3")
+
+        history = repo_tool.getHistoryMetadata(doc2)
+        self.assertEqual(history.getLength(countPurged=True), 4)
+        history_meta = history.retrieve(2)
+        self.assertEqual(history_meta["metadata"]["sys_metadata"]["comment"], u'Föö bar')
+
+        oldest = repo_tool.getHistory(doc2)._retrieve(doc2, 0, preserve=[], countPurged=False)
+        self.assertEqual(oldest.object.title, u"Document 2")
+
+        repo_tool.revert(portal["folder1"]["doc2"], 0)
+        doc2 = portal["folder1"]["doc2"]
+        self.assertEqual(doc2.title, u'Document 2')
+        self.assertEqual(doc2.description, u"A Description")
