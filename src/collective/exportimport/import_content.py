@@ -256,7 +256,7 @@ class ImportContent(BrowserView):
             for drop in self.DROP_PATHS:
                 if drop in item["@id"]:
                     skip = True
-                    logger.info(u"Skipping {}".format(item['@id']))
+                    logger.info(u"Skipping {}".format(item["@id"]))
             if skip:
                 continue
 
@@ -419,11 +419,25 @@ class ImportContent(BrowserView):
         # Disable automatic versioning!
         portal_types = api.portal.get_tool("portal_types")
         fti = portal_types.get(item["@type"])
+        repo_tool = api.portal.get_tool("portal_repository")
+        policy = None
+        policies = repo_tool._version_policy_mapping.get(item["@type"], [])
+        versioning_behavior = None
         if IDexterityFTI.providedBy(fti):
-            behaviors = list(fti.behaviors)
-            if 'plone.versioning' in behaviors:
-                behaviors.remove('plone.versioning')
-                fti.behaviors = behaviors
+            fti_behaviors = list(fti.behaviors)
+            versioning_behaviors = [
+                "plone.versioning",
+                "plone.app.versioningbehavior.behaviors.IVersionable",
+            ]
+            for behavior in versioning_behaviors:
+                if behavior in fti_behaviors:
+                    versioning_behavior = behavior
+                    fti_behaviors.remove(behavior)
+                    fti.manage_changeProperties(behaviors=tuple(fti_behaviors))
+
+        if "at_edit_autoversion" in policies:
+            policy = "at_edit_autoversion"
+            repo_tool.removePolicyFromContentType(item["@type"], policy)
 
         for index, version in enumerate(item["exportimport.versions"].values()):
             initial = index == 0
@@ -497,11 +511,12 @@ class ImportContent(BrowserView):
         self.save_revision(new, item)
         logger.info("Created item: {} {} with {} old versions".format(item["@type"], new.absolute_url(), len(item["exportimport.versions"])))
 
-        # TODO: Maybe reset versioning?
-        # if is_versioned:
-        #     behaviors = list(fti.behaviors)
-        #     behaviors.append('plone.versioning')
-        #     fti.behaviors = behaviors
+        if policy:
+            repo_tool.addPolicyForContentType(item["@type"], policy)
+        if versioning_behavior:
+            fti_behaviors = list(fti.behaviors)
+            fti_behaviors.append(versioning_behavior)
+            fti.manage_changeProperties(behaviors=tuple(fti_behaviors))
         return new
 
     def save_revision(self, obj, item, initial=False):
@@ -518,7 +533,7 @@ class ImportContent(BrowserView):
             timestamp = datetime.timestamp(modified)
         from plone.app.versioningbehavior import _ as PAV
         if initial:
-            comment = PAV(u'initial_version_changeNote', default=u'Initial version')
+            comment = PAV(u"initial_version_changeNote", default=u"Initial version")
         else:
             comment = item.get("changeNote")
         sys_metadata = {
@@ -663,7 +678,7 @@ class ImportContent(BrowserView):
 
     def handle_container(self, item):
         """Specify a container per item and type using custom methods
-        Example for content_type 'Document:
+        Example for content_type Document:
 
         def handle_document_container(self, item):
             lang = item['language']['token'] if item['language'] else ''
