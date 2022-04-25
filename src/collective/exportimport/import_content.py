@@ -343,9 +343,12 @@ class ImportContent(BrowserView):
                     )
 
             if self.import_old_revisions and item.get("exportimport.versions"):
+                # TODO: refactor into import_item to prevent duplicattion
                 new = self.import_versions(container, item)
                 if new:
                     added.append(new.absolute_url())
+                if self.commit and not len(added) % self.commit:
+                    self.commit_hook(added, index)
                 continue
 
             if not self.update_existing:
@@ -411,17 +414,16 @@ class ImportContent(BrowserView):
 
     def import_versions(self, container, item):
         """Import one item with all its revisions..
-
-        TODO: Decide if we want to apply hooksfor each version or only for the current object.
+        We only apply hooks for the current object not for each version.
+        TODO: refactor into import_item to prevent duplicattion
         """
         portal_workflow = api.portal.get_tool("portal_workflow")
 
         # Disable automatic versioning!
         portal_types = api.portal.get_tool("portal_types")
         fti = portal_types.get(item["@type"])
-        repo_tool = api.portal.get_tool("portal_repository")
-        policy = None
-        policies = repo_tool._version_policy_mapping.get(item["@type"], [])
+
+        # disable versioning behavior to re-enable it after import
         versioning_behavior = None
         if IDexterityFTI.providedBy(fti):
             fti_behaviors = list(fti.behaviors)
@@ -435,6 +437,10 @@ class ImportContent(BrowserView):
                     fti_behaviors.remove(behavior)
                     fti.manage_changeProperties(behaviors=tuple(fti_behaviors))
 
+        # disable default versioning policy to re-enable it after import
+        repo_tool = api.portal.get_tool("portal_repository")
+        policy = None
+        policies = repo_tool._version_policy_mapping.get(item["@type"], [])
         if "at_edit_autoversion" in policies:
             policy = "at_edit_autoversion"
             repo_tool.removePolicyFromContentType(item["@type"], policy)
