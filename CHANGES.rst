@@ -5,6 +5,8 @@ Changelog
 1.5 (unreleased)
 ----------------
 
+- Fix AttributeError for getPhysicalPath when checking parent, issue 123.  [maurits]
+
 - Export import of redirect tool data
   [gotcha, Michael Penninck]
 
