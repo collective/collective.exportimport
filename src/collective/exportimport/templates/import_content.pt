@@ -72,6 +72,21 @@
               </label>
             </div>
 
+            <div class="field">
+              <label>
+                <input
+                    type="checkbox"
+                    name="import_old_revisions:boolean"
+                    id="import_old_revisions"
+                    tal:attributes="checked python:view.import_old_revisions"
+                    />
+                Import all old revisions
+                <span class="formHelp">
+                  This will import the content-history (versioning) for each item that has revisions. Warning: This can significantly slow down the import!
+                </span>
+              </label>
+            </div>
+
             <div class="formControls" class="form-group">
                 <input type="hidden" name="form.submitted" value="1"/>
                 <button class="btn btn-primary submit-widget button-field context"

@@ -33,6 +33,8 @@ Features
 * Export & Import local roles
 * Export & Import order (position in parent)
 * Export & Import discussions/comments
+* Export & Import versioned content
+* Export & Import redirects
 
 Export supports:
 
@@ -186,6 +188,13 @@ You can choose between four options how to deal with content that already exists
 Imported content is initially created with ``invokeFactory`` using portal_type and id of the exported item before deserialing the rest of the data.
 You can set additional values by specifying a dict ``factory_kwargs`` that will be passed to the facory.
 Like this you can set values on the imported object that are expected to be there by subscribers to IObjectAddedEvent.
+
+
+Export versioned content
+------------------------
+
+Exporting versions of Archetypes content will not work because of a bug in plone.restapi (https://github.com/plone/plone.restapi/issues/1335).
+For export to work you need to use a version between 7.7.0 and 8.0.0 (if released) or a source-checkout of the branch 7.x.x.
 
 
 Notes on speed and large migrations

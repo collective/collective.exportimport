@@ -3,10 +3,12 @@ from Acquisition import aq_base
 from collective.exportimport import config
 from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
+from datetime import timedelta
 from DateTime import DateTime
 from Persistence import PersistentMapping
 from plone import api
 from plone.api.exc import InvalidParameterError
+from plone.dexterity.interfaces import IDexterityFTI
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
@@ -30,6 +32,7 @@ import json
 import logging
 import os
 import random
+import six
 import transaction
 
 try:
@@ -109,6 +112,7 @@ class ImportContent(BrowserView):
             ("2", "Update: Reuse and only overwrite imported data"),
             ("3", "Ignore: Create with a new id"),
         )
+        self.import_old_revisions = request.get("import_old_revisions", False)
 
         if not self.request.form.get("form.submitted", False):
             return self.template()
@@ -252,7 +256,7 @@ class ImportContent(BrowserView):
             for drop in self.DROP_PATHS:
                 if drop in item["@id"]:
                     skip = True
-                    logger.info(u"Skipping {}".format(item['@id']))
+                    logger.info(u"Skipping {}".format(item["@id"]))
             if skip:
                 continue
 
@@ -338,6 +342,15 @@ class ImportContent(BrowserView):
                         )
                     )
 
+            if self.import_old_revisions and item.get("exportimport.versions"):
+                # TODO: refactor into import_item to prevent duplicattion
+                new = self.import_versions(container, item)
+                if new:
+                    added.append(new.absolute_url())
+                if self.commit and not len(added) % self.commit:
+                    self.commit_hook(added, index)
+                continue
+
             if not self.update_existing:
                 # create without checking constrains and permissions
                 new = _createObjectByType(item["@type"], container, item["id"], **factory_kwargs)
@@ -398,6 +411,143 @@ class ImportContent(BrowserView):
                 self.commit_hook(added, index)
 
         return added
+
+    def import_versions(self, container, item):
+        """Import one item with all its revisions..
+        We only apply hooks for the current object not for each version.
+        TODO: refactor into import_item to prevent duplicattion
+        """
+        portal_workflow = api.portal.get_tool("portal_workflow")
+
+        # Disable automatic versioning!
+        portal_types = api.portal.get_tool("portal_types")
+        fti = portal_types.get(item["@type"])
+
+        # disable versioning behavior to re-enable it after import
+        versioning_behavior = None
+        if IDexterityFTI.providedBy(fti):
+            fti_behaviors = list(fti.behaviors)
+            versioning_behaviors = [
+                "plone.versioning",
+                "plone.app.versioningbehavior.behaviors.IVersionable",
+            ]
+            for behavior in versioning_behaviors:
+                if behavior in fti_behaviors:
+                    versioning_behavior = behavior
+                    fti_behaviors.remove(behavior)
+                    fti.manage_changeProperties(behaviors=tuple(fti_behaviors))
+
+        # disable default versioning policy to re-enable it after import
+        repo_tool = api.portal.get_tool("portal_repository")
+        policy = None
+        policies = repo_tool._version_policy_mapping.get(item["@type"], [])
+        if "at_edit_autoversion" in policies:
+            policy = "at_edit_autoversion"
+            repo_tool.removePolicyFromContentType(item["@type"], policy)
+
+        for index, version in enumerate(item["exportimport.versions"].values()):
+            initial = index == 0
+            version = self.global_dict_hook(version)
+            if not version:
+                continue
+
+            # portal_type might change during a hook
+            version = self.custom_dict_hook(version)
+            if not version:
+                continue
+
+            if initial and not self.update_existing:
+                # initial version
+                new = _createObjectByType(item["@type"], container, item["id"])
+                uuid = self.set_uuid(item, new)
+                if uuid != item["UID"]:
+                    item["UID"] = uuid
+            else:
+                new = container.get(item["id"])
+
+            # import using plone.restapi deserializers
+            deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
+            try:
+                new = deserializer(validate_all=False, data=version)
+            except Exception as error:
+                logger.warning(
+                    "cannot deserialize {}: {}".format(item["@id"], repr(error))
+                )
+                return
+
+            self.save_revision(new, version, initial)
+
+        # Finally create the current version
+        new = container.get(item["id"])
+        deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
+        try:
+            new = deserializer(validate_all=False, data=item)
+        except Exception as error:
+            logger.warning("cannot deserialize {}: {}".format(item["@id"], repr(error)))
+            return
+
+        self.import_blob_paths(new, item)
+        self.import_constrains(new, item)
+        self.global_obj_hook(new, item)
+        self.custom_obj_hook(new, item)
+
+        if item["review_state"] and item["review_state"] != "private":
+            if portal_workflow.getChainFor(new):
+                try:
+                    api.content.transition(to_state=item["review_state"], obj=new)
+                except InvalidParameterError as e:
+                    logger.info(e)
+
+        # Import workflow_history last to drop entries created during import
+        self.import_workflow_history(new, item)
+
+        # Set modification and creation-date as a custom attribute as last step.
+        # These are reused and dropped in ResetModifiedAndCreatedDate
+        modified = item.get("modified", item.get("modification_date", None))
+        if modified:
+            modification_date = DateTime(dateutil.parser.parse(modified))
+            new.modification_date = modification_date
+            new.aq_base.modification_date_migrated = modification_date
+        created = item.get("created", item.get("creation_date", None))
+        if created:
+            creation_date = DateTime(dateutil.parser.parse(created))
+            new.creation_date = creation_date
+            new.aq_base.creation_date_migrated = creation_date
+
+        self.save_revision(new, item)
+        logger.info("Created item: {} {} with {} old versions".format(item["@type"], new.absolute_url(), len(item["exportimport.versions"])))
+
+        if policy:
+            repo_tool.addPolicyForContentType(item["@type"], policy)
+        if versioning_behavior:
+            fti_behaviors = list(fti.behaviors)
+            fti_behaviors.append(versioning_behavior)
+            fti.manage_changeProperties(behaviors=tuple(fti_behaviors))
+        return new
+
+    def save_revision(self, obj, item, initial=False):
+        """Save revision manually to set dates and changenote from exported data."""
+        rt = api.portal.get_tool("portal_repository")
+
+        modified = dateutil.parser.parse(item["modified"])
+        # add one millisecond to prevent created being before first revision
+        modified  = modified + timedelta(milliseconds=1)
+        if six.PY2:
+            import time
+            timestamp = time.mktime(modified.timetuple())
+        else:
+            timestamp = datetime.timestamp(modified)
+        from plone.app.versioningbehavior import _ as PAV
+        if initial:
+            comment = PAV(u"initial_version_changeNote", default=u"Initial version")
+        else:
+            comment = item.get("changeNote")
+        sys_metadata = {
+            "comment": comment,
+            "timestamp": timestamp,
+            "originator": None,
+        }
+        rt._recursiveSave(obj, app_metadata={}, sys_metadata=sys_metadata, autoapply=True)
 
     def handle_broken(self, item):
         """Fix some invalid values."""
@@ -534,7 +684,7 @@ class ImportContent(BrowserView):
 
     def handle_container(self, item):
         """Specify a container per item and type using custom methods
-        Example for content_type 'Document:
+        Example for content_type Document:
 
         def handle_document_container(self, item):
             lang = item['language']['token'] if item['language'] else ''
