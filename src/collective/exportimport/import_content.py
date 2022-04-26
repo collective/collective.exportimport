@@ -655,7 +655,7 @@ class ImportContent(BrowserView):
             parent = api.content.get(path=parent_path)
         except NotFound:
             parent = None
-        if parent:
+        if parent and hasattr(parent, "getPhysicalPath"):
             # Check that we did not traverse to content outside of the portal.
             # Actually, we probably should not go outside the navigation root either,
             # especially with multilingual, although most likely
