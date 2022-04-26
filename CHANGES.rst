@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.5 (unreleased)
+1.5 (2022-04-26)
 ----------------
 
 - Fix AttributeError for getPhysicalPath when checking parent, issue 123.
