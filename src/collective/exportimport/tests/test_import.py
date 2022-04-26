@@ -1253,9 +1253,8 @@ class TestImport(unittest.TestCase):
         history = repo_tool.getHistoryMetadata(doc2)
         self.assertEqual(history.getLength(countPurged=True), 4)
 
-        from pkg_resources import parse_version
-        if parse_version(api.env.plone_version()) < parse_version("5.2.0"):
-            # In 5.1 and 5.0 this test sometimes fails in gh-actions, locally they pass. Duh!
+        if six.PY2:
+            # In 5.1 and 5.0 on py2 this test sometimes fails in gh-actions, locally they pass. Duh!
             return
 
         history_meta = history.retrieve(2)
