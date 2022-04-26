@@ -5,19 +5,20 @@ Changelog
 1.5 (unreleased)
 ----------------
 
-- Fix AttributeError for getPhysicalPath when checking parent, issue 123.  [maurits]
+- Fix AttributeError for getPhysicalPath when checking parent, issue 123.
+  [maurits]
 
-- Export import of redirect tool data
+- Export and import redirection tool data.
   [gotcha, Michael Penninck]
 
-- Serialize Products.TALESField fields as raw instead of evaluated expression
+- Serialize Products.TALESField fields as raw instead of evaluated expression.
   (useful to export PFG overrides)
   [sauzher]
 
-- Make sure we never change a acquired modification_date or creation_date..
+- Make sure we never change a acquired modification_date or creation_date.
   [pbauer]
 
-- Export and import workflow_history
+- Export and import workflow_history.
   [pbauer]
 
 - Fail gracefully on errors during importing portlets.
@@ -29,20 +30,23 @@ Changelog
 - Use catalog instead of ZopeFindAndApply and better logging for export_discussion.
   [pbauer]
 
-- Add converter for long ints (py2 only)
+- Add converter for long ints (py2 only).
   [pbauer]
 
 - By default no not export linkintegrity relations.
   [pbauer]
 
-- Log exec_info when exporting content fails.
+- Log detailed exception when exporting content fails.
   [pbauer]
 
 - Add start and finish hooks for export of content.
   [pbauer]
 
-- Rewrite export/import of default pages: Use uuid of default-page instread id.
-  Simplify getting default_page to fix various issues with translated content.
+- Rewrite export/import of default pages: Use uuid of default-page instead of id.
+  Rewrite getting default_page to fix various issues with translated content.
+  [pbauer]
+
+- Add export and import of versions/revisions of content (#105).
   [pbauer]
 
 
