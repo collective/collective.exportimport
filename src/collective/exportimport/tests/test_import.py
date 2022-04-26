@@ -1252,10 +1252,14 @@ class TestImport(unittest.TestCase):
 
         history = repo_tool.getHistoryMetadata(doc2)
         self.assertEqual(history.getLength(countPurged=True), 4)
-        # This test weirdly fails on Plone 5.1 in gh-actions, locally not - duh!
-        # In 5.1 the comment seems to be "initial_version_changeNote".
-        # history_meta = history.retrieve(2)
-        # self.assertEqual(history_meta["metadata"]["sys_metadata"]["comment"], u'Föö bar')
+
+        from pkg_resources import parse_version
+        if parse_version(api.env.plone_version()) < parse_version("5.2.0"):
+            # In 5.1 and 5.0 this test sometimes fails in gh-actions, locally they pass. Duh!
+            return
+
+        history_meta = history.retrieve(2)
+        self.assertEqual(history_meta["metadata"]["sys_metadata"]["comment"], u'Föö bar')
 
         oldest = repo_tool.getHistory(doc2)._retrieve(doc2, 0, preserve=[], countPurged=False)
         self.assertEqual(oldest.object.title, u"Document 2")
