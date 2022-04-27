@@ -28,7 +28,7 @@
          </a></li>
 
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_ordering'">Export object positions in parent
+            tal:attributes="href python: portal_url + '/@@export_ordering'">Export ordering
          </a></li>
 
          <li><a class=""
@@ -71,7 +71,7 @@
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@import_ordering'">Import object positions in parent
+         tal:attributes="href python: portal_url + '/@@import_ordering'">Import ordering
       </a></li>
 
       <li><a class=""
@@ -85,9 +85,13 @@
       <li><a class=""
          tal:attributes="href python: portal_url + '/@@import_redirects'">Import redirects
       </a></li>
+      </ul>
 
+      <b>Fixes to run after all imports</b>
+
+      <ul>
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@reset_dates'">Reset created and modified dates
+         tal:attributes="href python: portal_url + '/@@updateLinkIntegrityInformation'">Update / Re-add Link Integrity relations
       </a></li>
 
       <li><a class=""
@@ -97,6 +101,11 @@
       <li><a class=""
          tal:attributes="href python: portal_url + '/@@fix_html'">Fix links to content and images in richtext
       </a></li>
+
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@reset_dates'">Reset created and modified dates
+      </a> <i>(Run this as the very last step, otherwise these dates will change again)</i> </li>
+
    </ul>
    </div>
 

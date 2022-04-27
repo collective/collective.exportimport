@@ -5,8 +5,10 @@ Changelog
 1.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
-
+- Convenience: Add @@updateLinkIntegrityInformation to links, rename 'object position in
+  parent' step to 'ordering' like the json export file is called, add warning/help to
+  'Reset created and modified dates' step to always run it as last step.
+  [fredvd]
 
 1.5 (2022-04-26)
 ----------------
