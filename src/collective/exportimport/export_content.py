@@ -12,6 +12,7 @@ from plone.app.layout.viewlets.content import ContentHistoryViewlet
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
+from plone.uuid.interfaces import IUUID
 from Products.CMFPlone.interfaces.constrains import ENABLED
 from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.utils import safe_unicode
@@ -299,22 +300,7 @@ class ExportContent(BrowserView):
                     item = serializer(include_items=False)
                 else:
                     item = serializer()
-                item = self.fix_url(item, obj)
-                item = self.export_constraints(item, obj)
-                item = self.export_workflow_history(item, obj)
-                item = self.export_revisions(item, obj)
-
-                if self.migration:
-                    item = self.update_data_for_migration(item, obj)
-                item = self.global_dict_hook(item, obj)
-                if not item:
-                    logger.info(u"Skipping {}".format(brain.getURL()))
-                    continue
-
-                item = self.custom_dict_hook(item, obj)
-                if not item:
-                    logger.info(u"Skipping {}".format(brain.getURL()))
-                    continue
+                item = self.update_export_data(item, obj)
 
                 yield item
             except Exception as e:
@@ -348,6 +334,33 @@ class ExportContent(BrowserView):
         """
         return obj
 
+    def update_export_data(self, item, obj):
+        """Extend and modify serialized data to make importing easier."""
+
+        # Add uuid of parent to simplify getting parent during import
+        parent = obj.__parent__
+        item["parent"]["UID"] = IUUID(parent, None)
+
+        item = self.fix_url(item, obj)
+        item = self.export_constraints(item, obj)
+        item = self.export_workflow_history(item, obj)
+        item = self.export_revisions(item, obj)
+
+        if self.migration:
+            item = self.update_data_for_migration(item, obj)
+
+        item = self.global_dict_hook(item, obj)
+        if not item:
+            logger.info(u"Skipping %s", obj.absolute_url())
+            return
+
+        item = self.custom_dict_hook(item, obj)
+        if not item:
+            logger.info(u"Skipping %s", obj.absolute_url())
+            return
+
+        return item
+
     def global_dict_hook(self, item, obj):
         """Use this to modify or skip the serialized data.
         Return None if you want to skip this particular object.
@@ -370,10 +383,7 @@ class ExportContent(BrowserView):
         1. Drop unused data
         2. Remove all relationfields (done with the serializer relationvalue_converter)
         3. Change some default-fieldnames (AT to DX)
-        4. Fix issue with AT Text fields
-        5. Fix collection-criteria
-        6. Fix image links and scales
-        7. Fix view names on Folder, Collection, Topic CT's
+        4. Fix view names on Folder, Collection, Topic CT's
 
         """
         # 1. Drop unused data
@@ -420,20 +430,21 @@ class ExportContent(BrowserView):
         item = migrate_field(item, "contactName", "contact_name")
         item = migrate_field(item, "contactPhone", "contact_phone")
 
-        # 4. Fix issue with AT Text fields
-        # This is done in the ATTextFieldSerializer
-
-        # 5. Fix collection-criteria
-        # TODO
-
-        # 6. Fix image links and scales
-        # TODO
-
-        # 7. Fix view names on Folders and Collection
+        # 4. Fix view names on Folders and Collection
         if self.safe_portal_type in ("collection", "topic", "folder"):
             old_layout = item.get("layout", "does_not_exist")
             if old_layout in LISTING_VIEW_MAPPING:
                 item["layout"] = LISTING_VIEW_MAPPING[old_layout]
+
+        # The following fixes are happeing in other places:
+        # 5. Fix issue with AT Text fields
+        # This is done in the ATTextFieldSerializer
+
+        # 6. Fix collection-criteria
+        # This is done during export and in @@fix_collection_queries
+
+        # 7. Fix image links and scales
+        # This is done in @@fix_html
 
         return item
 
