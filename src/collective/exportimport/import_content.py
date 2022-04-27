@@ -687,61 +687,33 @@ class ImportContent(BrowserView):
         Example for content_type Document:
 
         def handle_document_container(self, item):
-            lang = item['language']['token'] if item['language'] else ''
-            base_path = self.CONTAINER[item["@type"]][item['language']['token']]
-            folder = api.content.get(path=base_path)
-            if not folder:
-                raise RuntimeError(
-                    f'Target folder {base_path} for type {item["@type"]} is missing'
-                )
-            parent_url = item['parent']['@id']
-            parent_path = '/'.join(parent_url.split('/')[5:])
-            if not parent_path:
-                # handle elements in the language root
-                return folder
-
-            # create original structure for imported content
-            for element in parent_path.split('/'):
-                if element not in folder:
-                    folder = api.content.create(
-                        container=folder,
-                        type='Folder',
-                        id=element,
-                        title=element,
-                        language=lang,
-                    )
-                    logger.debug(
-                        f'Created container {folder.absolute_url()} to hold {item["@id"]}'
-                    )
+            lang = item['language']['token'] if item.get('language') else ''
+            if lang:
+                base_path = self.CONTAINER["Document"][lang]
+                folder = api.content.get(path=base_path)
+                if folder:
+                    return folder
                 else:
-                    folder = folder[element]
-
-            return folder
+                    raise RuntimeError(f'Target folder {base_path} is missing')
 
         Example for Images:
 
         def handle_image_container(self, item):
-            if '/produkt-bilder/' in item['@id']:
-                return self.portal['produkt-bilder']
-
             if '/de/extranet/' in item['@id']:
                 return self.portal['extranet']['de']['images']
             if '/en/extranet/' in item['@id']:
                 return self.portal['extranet']['en']['images']
-            if '/fr/extranet/' in item['@id']:
-                return self.portal['extranet']['fr']['images']
             if '/de/' in item['@id']:
                 return self.portal['de']['images']
             if '/en/' in item['@id']:
                 return self.portal['en']['images']
-            if '/fr/' in item['@id']:
-                return self.portal['fr']['images']
 
             return self.portal['images']
         """
         if self.import_to_current_folder:
             return self.context
 
+        # Use dict-based config in self.CONTAINER if it exists
         container_path = self.CONTAINER.get(item["@type"], None)
         if container_path:
             container = api.content.get(path=container_path)
@@ -752,20 +724,22 @@ class ImportContent(BrowserView):
                     )
                 )
 
+        # Run custom container hooks if they exist
         method = getattr(
             self, "handle_{}_container".format(self.safe_portal_type), None
         )
         if method and callable(method):
             return method(item)
-        else:
-            # Default is to use the original containers is they exist
-            return self.get_parent_as_container(item)
+
+        # Default is to use the original containers is they exist
+        return self.get_parent_as_container(item)
 
     def get_parent_as_container(self, item):
         """The default is to generate a folder-structure exactly as the original.
+        By default we use the UID of the parent to foind it in the new site.
 
-        There is some trickyness that probably only happens during local
-        development, and not in production sites.
+        During fallback to a path-based lookup there is some trickyness that probably
+        only happens during local development, and not in production sites.
         Situation:
 
         - localhost:8080/nl is a Dutch Plone Site
@@ -795,6 +769,14 @@ class ImportContent(BrowserView):
            Expected result: fr/folder/page
 
         """
+        # The default is to use the UUID of the old parent to find it
+        if item["parent"].get("UID"):
+            # For some reason api.content.get(UID=xxx) does not work sometimes...
+            brains = api.content.find(UID=item["parent"]["UID"])
+            if brains:
+                return brains[0].getObject()
+
+        # If the item is missing look for a item with the path of the old parent
         parent_url = unquote(item["parent"]["@id"])
         parent_path = urlparse(parent_url).path
         # physical path is bytes in Zope 2 (not in Zope 4)
@@ -819,6 +801,7 @@ class ImportContent(BrowserView):
             logger.info(
                 "Ignoring existing container outside of navigation root: %s", found_path
             )
+        # As a final fallback we create the folder-structure required by the path
         return self.create_container(item)
 
     def create_container(self, item):

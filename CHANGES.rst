@@ -5,7 +5,11 @@ Changelog
 1.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Export parent UID and use it to find the container to import.
+  [pbauer]
+
+- Move the various export-hooks into update_export_data for readability.
+  [pbauer]
 
 
 1.5 (2022-04-26)

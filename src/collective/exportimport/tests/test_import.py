@@ -644,6 +644,8 @@ class TestImport(unittest.TestCase):
 
         data = json.loads(contents)
         self.assertEqual(len(data), 6)
+        # uuid of parents is exported
+        self.assertEqual(data[1]["parent"]["UID"], portal["about"].UID())
 
         # Remove the added content.
         self.remove_demo_content()
