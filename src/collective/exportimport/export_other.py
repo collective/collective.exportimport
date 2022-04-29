@@ -117,8 +117,13 @@ class ExportRelations(BaseExport):
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
-        data = self.get_all_references(debug, include_linkintegrity)
+        logger.info(u"Exporting relations...")
+        data = self.data(debug, include_linkintegrity)
+        logger.info(u"Exported %s relations", len(data))
         self.download(data)
+
+    def get_data(self, debug, include_linkintegrity):
+        return self.get_all_references(debug, include_linkintegrity)
 
     def get_all_references(self, debug=False, include_linkintegrity=False):
         results = []
@@ -222,6 +227,7 @@ class ExportMembers(BaseExport):
             return self.index()
 
         data = {}
+        logger.info(u"Exporting groups and users...")
         data["groups"] = self.export_groups()
         data["members"] = [i for i in self.export_members()]
         msg = u"Exported {} groups and {} members".format(
@@ -312,7 +318,9 @@ class ExportTranslations(BaseExport):
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
+        logger.info(u"Exporting translations...")
         data = self.all_translations()
+        logger.info(u"Exported %s groups of translations", len(data))
         self.download(data)
 
     def all_translations(self):  # noqa: C901
@@ -389,7 +397,9 @@ class ExportLocalRoles(BaseExport):
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
+        logger.info(u"Exporting local roles...")
         data = self.all_localroles()
+        logger.info(u"Exported local roles for %s items", len(data))
         self.download(data)
 
     def all_localroles(self):
@@ -434,7 +444,9 @@ class ExportOrdering(BaseExport):
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
+        logger.info(u"Exporting positions in parent...")
         data = self.all_orders()
+        logger.info(u"Exported %s positions in parent", len(data))
         self.download(data)
 
     def all_orders(self):
@@ -468,7 +480,9 @@ class ExportDefaultPages(BaseExport):
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
+        logger.info(u"Exporting default pages...")
         data = self.all_default_pages()
+        logger.info(u"Exported %s default pages", len(data))
         self.download(data)
 
     def all_default_pages(self):
@@ -536,7 +550,9 @@ class ExportDiscussion(BaseExport):
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
+        logger.info(u"Exporting discussions...")
         data = self.all_discussions()
+        logger.info(u"Exported %s discussions", len(data))
         self.download(data)
 
     def all_discussions(self):
@@ -564,7 +580,9 @@ class ExportPortlets(BaseExport):
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
+        logger.info(u"Exporting portlets...")
         data = self.all_portlets()
+        logger.info(u"Exported info for %s items with portlets", len(data))
         self.download(data)
 
     def all_portlets(context=None):
@@ -697,5 +715,7 @@ class ExportRedirects(BaseExport):
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
+        logger.info(u"Exporting redirects...")
         data = export_plone_redirects()
+        logger.info(u"Exported %s redirects", len(data))
         self.download(data)
