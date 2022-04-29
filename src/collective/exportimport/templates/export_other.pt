@@ -13,6 +13,21 @@
        </h1>
 
         <form action="@@export_other" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
+            <div class="field mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="download_to_server:int" value="0" id="download_local" checked="checked">
+                <label for="download_local" class="form-check-label"  i18n:translate="">
+                  Download to local machine
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="download_to_server:int" value="1" id="download_server">
+                <label for="download_server" class="form-check-label" i18n:translate="">
+                  Save to file on server
+                </label>
+              </div>
+            </div>
+
             <div class="formControls" class="form-group">
                 <button class="btn btn-primary submit-widget button-field context"
                         type="submit" name="form.submitted" value="Export" tal:content="python: view.title" i18n:translate="">Export

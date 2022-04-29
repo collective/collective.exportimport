@@ -5,15 +5,23 @@ from collective.exportimport.testing import (
 )
 from OFS.interfaces import IOrderedContainer
 from plone import api
+from plone.app.discussion.interfaces import IConversation
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
+from z3c.relationfield import RelationValue
 from zope.annotation.interfaces import IAnnotations
+from zope.component import createObject
+from zope.component import getUtility
+from zope.intid.interfaces import IIntIds
 from zope.lifecycleevent import modified
 
 import json
+import os
+import shutil
 import six
+import tempfile
 import transaction
 import unittest
 
@@ -300,11 +308,7 @@ class TestExport(unittest.TestCase):
     def test_export_defaultpages_empty(self):
         browser = self.open_page("@@export_defaultpages")
         browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
-        contents = browser.contents
-        if not browser.contents:
-            contents = DATA[-1]
-        data = json.loads(contents)
-        self.assertListEqual(data, [])
+        self.assertIn("No data to export for export_defaultpages", browser.contents)
 
     def test_export_defaultpages(self):
         # First create some content.
@@ -331,6 +335,39 @@ class TestExport(unittest.TestCase):
             [{"default_page": "doc1", "uuid": folder1.UID(), 'default_page_uuid': doc1.UID()}],
         )
 
+    def test_export_defaultpages_download_to_server(self):
+        # First create some content. (same as above)
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        doc1 = api.content.create(
+            container=folder1, type="Document", id="doc1", title="Document 1"
+        )
+        folder1._setProperty("default_page", "doc1")
+        transaction.commit()
+
+        browser = self.open_page("@@export_defaultpages")
+        browser.getControl("Save to file on server").selected = True
+        original_central_directory = config.CENTRAL_DIRECTORY
+        try:
+            config.CENTRAL_DIRECTORY = tempfile.mkdtemp()
+            browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
+            msg = "Exported to {}/export_defaultpages.json".format(config.CENTRAL_DIRECTORY)
+            self.assertIn(msg, browser.contents)
+            path = os.path.join(config.CENTRAL_DIRECTORY, "export_defaultpages.json")
+            with open(path, "rb") as f:
+                data = json.load(f)
+                self.assertListEqual(
+                    data,
+                    [{"default_page": "doc1", "uuid": folder1.UID(), 'default_page_uuid': doc1.UID()}],
+                )
+        finally:
+            shutil.rmtree(config.CENTRAL_DIRECTORY)
+            config.CENTRAL_DIRECTORY = original_central_directory
+
     def test_export_defaultpage_for_site(self):
         # First create some content.
         app = self.layer["app"]
@@ -352,6 +389,54 @@ class TestExport(unittest.TestCase):
             data,
             [{"default_page": "doc1", "uuid": config.SITE_ROOT, "default_page_uuid": doc1.UID()}],
         )
+
+    def test_export_relations(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        doc1 = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        doc2 = api.content.create(
+            container=portal, type="Document", id="doc2", title="Document 2"
+        )
+        intids = getUtility(IIntIds)
+        doc1.relatedItems = [RelationValue(intids.getId(doc2))]
+        modified(doc1)
+        transaction.commit()
+
+        browser = self.open_page("@@export_relations")
+        browser.getForm(action="@@export_relations").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
+        self.assertListEqual(
+            data,
+            [{u'to_uuid': doc2.UID(), u'relationship': u'relatedItems', u'from_uuid': doc1.UID()}],
+        )
+
+    def test_export_discussion(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        doc1 = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        conversation = IConversation(doc1)
+        comment = createObject("plone.Comment")
+        comment.text = u"Comment text"
+        conversation.addComment(comment)
+        transaction.commit()
+
+        browser = self.open_page("@@export_discussion")
+        browser.getForm(action="@@export_discussion").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
+        self.assertEqual(data[0]["uuid"], doc1.UID())
+        self.assertEqual(data[0]["conversation"]["items"][0]["text"]["data"], "Comment text")
 
     def test_export_ordering(self):
         # First create some content.
@@ -417,11 +502,7 @@ class TestExport(unittest.TestCase):
     def test_export_redirects_empty(self):
         browser = self.open_page("@@export_redirects")
         browser.getForm(action="@@export_redirects").submit(name="form.submitted")
-        contents = browser.contents
-        if not browser.contents:
-            contents = DATA[-1]
-        data = json.loads(contents)
-        self.assertDictEqual(data, {})
+        self.assertIn("No data to export for export_redirects", browser.contents)
 
     def test_export_redirects(self):
         # First create some content.
