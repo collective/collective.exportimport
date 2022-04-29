@@ -118,12 +118,9 @@ class ExportRelations(BaseExport):
         if not self.request.form.get("form.submitted", False):
             return self.index()
         logger.info(u"Exporting relations...")
-        data = self.data(debug, include_linkintegrity)
+        data = self.get_all_references(debug, include_linkintegrity)
         logger.info(u"Exported %s relations", len(data))
         self.download(data)
-
-    def get_data(self, debug, include_linkintegrity):
-        return self.get_all_references(debug, include_linkintegrity)
 
     def get_all_references(self, debug=False, include_linkintegrity=False):
         results = []
