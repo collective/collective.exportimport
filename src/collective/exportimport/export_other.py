@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
+from App.config import getConfiguration
 from collective.exportimport import config
+from collective.exportimport.export_content import safe_bytes
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
@@ -34,8 +36,10 @@ from zope.component import queryMultiAdapter
 from zope.interface import providedBy
 
 import json
+import os
 import pkg_resources
 import six
+import tempfile
 import logging
 
 try:
@@ -64,23 +68,57 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class ExportRelations(BrowserView):
+class BaseExport(BrowserView):
+    """Just DRY"""
+
+    def download(self, data):
+        filename = u"{}.json".format(self.__name__)
+        if not data:
+            msg = u"No data to export for {}".format(self.__name__)
+            logger.info(msg)
+            api.portal.show_message(msg, self.request)
+            return self.request.response.redirect(self.request["ACTUAL_URL"])
+
+        if self.download_to_server:
+            directory = config.CENTRAL_DIRECTORY
+            if directory:
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                    logger.info("Created central export/import directory %s", directory)
+            else:
+                cfg = getConfiguration()
+                directory = cfg.clienthome
+            filepath = os.path.join(directory, filename)
+            with open(filepath, "w") as f:
+                json.dump(data, f, sort_keys=True, indent=4)
+            msg = u"Exported to {}".format(filepath)
+            logger.info(msg)
+            api.portal.show_message(msg, self.request)
+            return self.request.response.redirect(self.request["ACTUAL_URL"])
+
+        else:
+            data = json.dumps(data, sort_keys=True, indent=4)
+            data = safe_bytes(data)
+            response = self.request.response
+            response.setHeader("content-type", "application/json")
+            response.setHeader("content-length", len(data))
+            response.setHeader(
+                "content-disposition",
+                'attachment; filename="{0}"'.format(filename),
+            )
+            return response.write(data)
+
+
+class ExportRelations(BaseExport):
     """Export all relations"""
 
-    def __call__(self, debug=False, include_linkintegrity=False):
+    def __call__(self, download_to_server=False, debug=False, include_linkintegrity=False):
         self.title = "Export relations"
+        self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
-
-        all_stored_relations = self.get_all_references(debug, include_linkintegrity)
-        data = json.dumps(all_stored_relations, indent=4)
-        filename = "relations.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        data = self.get_all_references(debug, include_linkintegrity)
+        self.download(data)
 
     def get_all_references(self, debug=False, include_linkintegrity=False):
         results = []
@@ -155,7 +193,7 @@ class ExportRelations(BrowserView):
         return item
 
 
-class ExportMembers(BrowserView):
+class ExportMembers(BaseExport):
     """Export plone groups and members"""
 
     MEMBER_PROPERTIES = [
@@ -178,7 +216,8 @@ class ExportMembers(BrowserView):
         self.title = "Export members, groups and roles"
         self.group_roles = {}
 
-    def __call__(self):
+    def __call__(self, download_to_server=False):
+        self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -189,12 +228,7 @@ class ExportMembers(BrowserView):
             len(data["groups"]), len(data["members"])
         )
         logger.info(msg)
-        data = json.dumps(data, sort_keys=True, indent=4)
-        response = self.request.response
-        response.setHeader("content-type", "application/json")
-        response.setHeader("content-length", len(data))
-        response.setHeader("content-disposition", 'attachment; filename="members.json"')
-        return response.write(safe_bytes(data))
+        self.download(data)
 
     def export_groups(self):
         data = []
@@ -268,24 +302,18 @@ class ExportMembers(BrowserView):
         return props
 
 
-class ExportTranslations(BrowserView):
+class ExportTranslations(BaseExport):
 
     DROP_PATH = []
 
-    def __call__(self):
+    def __call__(self, download_to_server=False):
         self.title = "Export translations"
+        self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        all_translations = self.all_translations()
-        data = json.dumps(all_translations, indent=4)
-        filename = "translations.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        data = self.all_translations()
+        self.download(data)
 
     def all_translations(self):  # noqa: C901
         results = []
@@ -352,23 +380,17 @@ class ExportTranslations(BrowserView):
         return results
 
 
-class ExportLocalRoles(BrowserView):
+class ExportLocalRoles(BaseExport):
     """Export all local roles"""
 
-    def __call__(self):
+    def __call__(self, download_to_server=False):
         self.title = "Export local roles"
+        self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        all_localroles = self.all_localroles()
-        data = json.dumps(all_localroles, indent=4)
-        filename = "localroles.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        data = self.all_localroles()
+        self.download(data)
 
     def all_localroles(self):
         self.results = []
@@ -403,23 +425,17 @@ class ExportLocalRoles(BrowserView):
         return item
 
 
-class ExportOrdering(BrowserView):
+class ExportOrdering(BaseExport):
     """Export all local roles"""
 
-    def __call__(self):
+    def __call__(self, download_to_server=False):
         self.title = "Export ordering"
+        self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        all_orders = self.all_orders()
-        data = json.dumps(all_orders, indent=4)
-        filename = "ordering.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        data = self.all_orders()
+        self.download(data)
 
     def all_orders(self):
         results = []
@@ -443,23 +459,17 @@ class ExportOrdering(BrowserView):
         return sorted(results, key=itemgetter("order"))
 
 
-class ExportDefaultPages(BrowserView):
+class ExportDefaultPages(BaseExport):
     """Export all default_page settings."""
 
-    def __call__(self):
+    def __call__(self, download_to_server=False):
         self.title = "Export default pages"
+        self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        all_default_pages = self.all_default_pages()
-        data = json.dumps(all_default_pages, indent=4)
-        filename = "defaultpages.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        data = self.all_default_pages()
+        self.download(data)
 
     def all_default_pages(self):
         results = []
@@ -519,21 +529,15 @@ class ExportDefaultPages(BrowserView):
                 }
 
 
-class ExportDiscussion(BrowserView):
-    def __call__(self):
+class ExportDiscussion(BaseExport):
+    def __call__(self, download_to_server=False):
         self.title = "Export comments"
+        self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        all_discussions = self.all_discussions()
-        data = json.dumps(all_discussions, indent=4)
-        filename = "discussions.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        data = self.all_discussions()
+        self.download(data)
 
     def all_discussions(self):
         results = []
@@ -553,21 +557,15 @@ class ExportDiscussion(BrowserView):
         return results
 
 
-class ExportPortlets(BrowserView):
-    def __call__(self):
+class ExportPortlets(BaseExport):
+    def __call__(self, download_to_server=False):
         self.title = "Export portlets"
+        self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        all_portlets = self.all_portlets()
-        data = json.dumps(all_portlets, indent=4)
-        filename = "portlets.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
+        data = self.all_portlets()
+        self.download(data)
 
     def all_portlets(context=None):
         results = []
@@ -689,22 +687,15 @@ def export_plone_redirects():
             value = value[0]
         redirects[key] = value
 
-    data = json.dumps(redirects, indent=4)
-    return data
+    return redirects
 
 
-class ExportRedirects(BrowserView):
-    def __call__(self):
+class ExportRedirects(BaseExport):
+    def __call__(self, download_to_server=False):
         self.title = "Export redirects"
+        self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         data = export_plone_redirects()
-        filename = "redirects.json"
-        self.request.response.setHeader("Content-type", "application/json")
-        self.request.response.setHeader("content-length", len(data))
-        self.request.response.setHeader(
-            "Content-Disposition", 'attachment; filename="{0}"'.format(filename)
-        )
-        return self.request.response.write(safe_bytes(data))
-
+        self.download(data)

@@ -300,11 +300,7 @@ class TestExport(unittest.TestCase):
     def test_export_defaultpages_empty(self):
         browser = self.open_page("@@export_defaultpages")
         browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
-        contents = browser.contents
-        if not browser.contents:
-            contents = DATA[-1]
-        data = json.loads(contents)
-        self.assertListEqual(data, [])
+        self.assertIn(u"No data to export for export_defaultpages", browser.contents)
 
     def test_export_defaultpages(self):
         # First create some content.
@@ -417,11 +413,7 @@ class TestExport(unittest.TestCase):
     def test_export_redirects_empty(self):
         browser = self.open_page("@@export_redirects")
         browser.getForm(action="@@export_redirects").submit(name="form.submitted")
-        contents = browser.contents
-        if not browser.contents:
-            contents = DATA[-1]
-        data = json.loads(contents)
-        self.assertDictEqual(data, {})
+        self.assertIn(u"No data to export for export_redirects", browser.contents)
 
     def test_export_redirects(self):
         # First create some content.
