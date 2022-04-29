@@ -13,7 +13,10 @@ from zope.annotation.interfaces import IAnnotations
 from zope.lifecycleevent import modified
 
 import json
+import os
+import shutil
 import six
+import tempfile
 import transaction
 import unittest
 
@@ -300,7 +303,7 @@ class TestExport(unittest.TestCase):
     def test_export_defaultpages_empty(self):
         browser = self.open_page("@@export_defaultpages")
         browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
-        self.assertIn(u"No data to export for export_defaultpages", browser.contents)
+        self.assertIn("No data to export for export_defaultpages", browser.contents)
 
     def test_export_defaultpages(self):
         # First create some content.
@@ -326,6 +329,39 @@ class TestExport(unittest.TestCase):
             data,
             [{"default_page": "doc1", "uuid": folder1.UID(), 'default_page_uuid': doc1.UID()}],
         )
+
+    def test_export_defaultpages_download_to_server(self):
+        # First create some content. (same as above)
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        doc1 = api.content.create(
+            container=folder1, type="Document", id="doc1", title="Document 1"
+        )
+        folder1._setProperty("default_page", "doc1")
+        transaction.commit()
+
+        browser = self.open_page("@@export_defaultpages")
+        browser.getControl("Save to file on server").selected = True
+        original_central_directory = config.CENTRAL_DIRECTORY
+        try:
+            config.CENTRAL_DIRECTORY = tempfile.mkdtemp()
+            browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
+            msg = "Exported to {}/export_defaultpages.json".format(config.CENTRAL_DIRECTORY)
+            self.assertIn(msg, browser.contents)
+            path = os.path.join(config.CENTRAL_DIRECTORY, "export_defaultpages.json")
+            with open(path, "rb") as f:
+                data = json.load(f)
+                self.assertListEqual(
+                    data,
+                    [{"default_page": "doc1", "uuid": folder1.UID(), 'default_page_uuid': doc1.UID()}],
+                )
+        finally:
+            shutil.rmtree(config.CENTRAL_DIRECTORY)
+            config.CENTRAL_DIRECTORY = original_central_directory
 
     def test_export_defaultpage_for_site(self):
         # First create some content.
@@ -413,7 +449,7 @@ class TestExport(unittest.TestCase):
     def test_export_redirects_empty(self):
         browser = self.open_page("@@export_redirects")
         browser.getForm(action="@@export_redirects").submit(name="form.submitted")
-        self.assertIn(u"No data to export for export_redirects", browser.contents)
+        self.assertIn("No data to export for export_redirects", browser.contents)
 
     def test_export_redirects(self):
         # First create some content.
