@@ -39,7 +39,6 @@ import json
 import os
 import pkg_resources
 import six
-import tempfile
 import logging
 
 try:

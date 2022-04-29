@@ -11,6 +11,9 @@ Changelog
 - Move the various export-hooks into update_export_data for readability.
   [pbauer]
 
+- Support export to server by passing ``download_to_server=True`` for all exports (#115).
+  [pbauer]
+
 
 1.5 (2022-04-26)
 ----------------
