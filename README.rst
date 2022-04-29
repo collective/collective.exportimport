@@ -246,9 +246,14 @@ Export Example
         ]
 
         def update(self):
-            """Use this to override stuff befor ethe export starts
+            """Use this to override stuff before the export starts
             (e.g. force a specific language in the request)."""
-            return
+
+        def start(self):
+            """Hook to do something before export."""
+
+        def finish(self):
+            """Hook to do something after export."""
 
         def global_obj_hook(self, obj):
             """Inspect the content item before serialisation data.
@@ -345,49 +350,10 @@ Register it:
       />
 
 
-Use in code
------------
+Automate export and import
+--------------------------
 
-It is possible to import data in a setuphandler or upgrade-step:
-
-.. code-block:: python
-
-    from pathlib import Path
-    from plone import api
-
-    def full_import():
-        portal = api.portal.get()
-        request = aq_get(portal, 'REQUEST')
-
-        import_content = api.content.get_view('import_content', portal, request)
-        path = Path(os.path.dirname(__file__)) / 'mydata.json'
-        import_content(jsonfile=path.read_text(), return_json=True)
-
-        import_translations = api.content.get_view('import_translations', portal, request)
-        path = Path(os.path.dirname(__file__)) / 'translations.json'
-        import_translations(jsonfile=path.read_text())
-
-        import_relations = api.content.get_view('import_relations', portal, request)
-        path = Path(os.path.dirname(__file__)) / 'relations.json'
-        import_relations(jsonfile=path.read_text())
-
-        import_members = api.content.get_view('import_members', portal, request)
-        path = Path(os.path.dirname(__file__)) / 'members.json'
-        import_members(jsonfile=path.read_text())
-
-        import_ordering = api.content.get_view('import_ordering', portal, request)
-        path = Path(os.path.dirname(__file__)) / 'ordering.json'
-        import_ordering(jsonfile=path.read_text())
-
-        import_defaultpages = api.content.get_view('import_defaultpages', portal, request)
-        path = Path(os.path.dirname(__file__)) / 'defaultpages.json'
-        import_defaultpages(jsonfile=path.read_text())
-
-        reset_modified = api.content.get_view('reset_modified_date', portal, request)
-        reset_modified()
-
-
-Save all content to ``var/instance/``:
+Run all exports and save all data in ``var/instance/``:
 
 .. code-block:: python
 
@@ -397,34 +363,88 @@ Save all content to ``var/instance/``:
     class ExportAll(BrowserView):
 
         def __call__(self):
-            export_content = api.content.get_view('export_content', self.context, self.request)
-            self.request.form['form.submitted'] = True
-            export_content(portal_type=['Folder', 'Document', 'Event'], include_blobs=2, download_to_server=True)
+            export_content = api.content.get_view("export_content", self.context, self.request)
+            self.request.form["form.submitted"] = True
+            export_content(
+                portal_type=["Folder", "Document", "News Item", "File", "Image"],  # only export these
+                include_blobs=2,  # Export files and images as blob paths
+                download_to_server=True)
+
+            other_exports = [
+                "export_relations",
+                "export_members",
+                "export_translations",
+                "export_localroles",
+                "export_ordering",
+                "export_defaultpages",
+                "export_discussion",
+                "export_portlets",
+                "export_redirects",
+            ]
+            for name in other_exports:
+                view = api.content.get_view(name, portal, request)
+                # This saves each export in var/instance/export_xxx.json
+                view(download_to_server=True)
+
             # Important! Redirect to prevent infinite export loop :)
             return self.request.response.redirect(self.context.absolute_url())
 
-Import all content from ``var/instance/import/``:
+Run all imports using the data exported in the example above:
 
 .. code-block:: python
 
-    from App.config import getConfiguration
+    from collective.exportimport.fix_html import fix_html_in_content_fields
+    from collective.exportimport.fix_html import fix_html_in_portlets
     from pathlib import Path
     from plone import api
-    from plone.protect.interfaces import IDisableCSRFProtection
     from Products.Five import BrowserView
-    from zope.interface import alsoProvides
 
-    import os
 
     class ImportAll(BrowserView):
 
         def __call__(self):
-            alsoProvides(self.request, IDisableCSRFProtection)
-            instance_path = getConfiguration().clienthome
-            import_content = api.content.get_view('import_content', self.context, self.request)
-            self.request.form['form.submitted'] = True
-            path = Path(instance_path) / 'import/my_data.json'
-            import_content(jsonfile=path.read_text(), return_json=True)
+            portal = api.portal.get()
+
+            # Import content
+            view = api.content.get_view("import_content", portal, request)
+            request.form["form.submitted"] = True
+            request.form["commit"] = 500
+            view(server_file="Plone.json", return_json=True)
+            transaction.commit()
+
+            # Run all other imports
+            other_imports = [
+                "relations",
+                "members",
+                "translations",
+                "localroles",
+                "ordering",
+                "defaultpages",
+                "discussion",
+                "portlets",
+                "redirects",
+            ]
+            cfg = getConfiguration()
+            directory = Path(cfg.clienthome) / "import"
+            for name in other_imports:
+                view = api.content.get_view(f"import_{name}", portal, request)
+                path = Path(directory) / f"export_{name}.json"
+                results = view(jsonfile=path.read_text(), return_json=True)
+                logger.info(results)
+                transaction.commit()
+
+            # Run cleanup steps
+            results = fix_html_in_content_fields()
+            logger.info("Fixed html for %s content items", results)
+            transaction.commit()
+
+            results = fix_html_in_portlets()
+            logger.info("Fixed html for %s portlets", results)
+            transaction.commit()
+
+            reset_dates = api.content.get_view("reset_dates", portal, request)
+            reset_dates()
+            transaction.commit()
 
 
 Written by
