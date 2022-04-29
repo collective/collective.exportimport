@@ -5,11 +5,16 @@ from collective.exportimport.testing import (
 )
 from OFS.interfaces import IOrderedContainer
 from plone import api
+from plone.app.discussion.interfaces import IConversation
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
+from z3c.relationfield import RelationValue
 from zope.annotation.interfaces import IAnnotations
+from zope.component import createObject
+from zope.component import getUtility
+from zope.intid.interfaces import IIntIds
 from zope.lifecycleevent import modified
 
 import json
@@ -384,6 +389,54 @@ class TestExport(unittest.TestCase):
             data,
             [{"default_page": "doc1", "uuid": config.SITE_ROOT, "default_page_uuid": doc1.UID()}],
         )
+
+    def test_export_relations(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        doc1 = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        doc2 = api.content.create(
+            container=portal, type="Document", id="doc2", title="Document 2"
+        )
+        intids = getUtility(IIntIds)
+        doc1.relatedItems = [RelationValue(intids.getId(doc2))]
+        modified(doc1)
+        transaction.commit()
+
+        browser = self.open_page("@@export_relations")
+        browser.getForm(action="@@export_relations").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
+        self.assertListEqual(
+            data,
+            [{u'to_uuid': doc2.UID(), u'relationship': u'relatedItems', u'from_uuid': doc1.UID()}],
+        )
+
+    def test_export_discussion(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        doc1 = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        conversation = IConversation(doc1)
+        comment = createObject("plone.Comment")
+        comment.text = u"Comment text"
+        conversation.addComment(comment)
+        transaction.commit()
+
+        browser = self.open_page("@@export_discussion")
+        browser.getForm(action="@@export_discussion").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
+        self.assertEqual(data[0]["uuid"], doc1.UID())
+        self.assertEqual(data[0]["conversation"]["items"][0]["text"]["data"], "Comment text")
 
     def test_export_ordering(self):
         # First create some content.
