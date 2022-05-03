@@ -42,6 +42,10 @@
          <li><a class=""
             tal:attributes="href python: portal_url + '/@@export_redirects'">Export redirects
          </a></li>
+
+         <li><a class=""
+            tal:attributes="href python: portal_url + '/@@export_registry'">Export registry settings
+         </a></li>
       </ul>
 
       <h3>Imports</h3>
@@ -84,6 +88,10 @@
 
       <li><a class=""
          tal:attributes="href python: portal_url + '/@@import_redirects'">Import redirects
+      </a></li>
+
+      <li><a class=""
+         tal:attributes="href python: portal_url + '/@@import_registry'">Import registry settings
       </a></li>
 
       <li><a class=""

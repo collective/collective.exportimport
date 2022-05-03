@@ -91,6 +91,14 @@
       permission="cmf.ManagePortal"
       />
 
+  <browser:page
+      name="export_registry"
+      for="zope.interface.Interface"
+      class=".export_registry.ExportRegistry"
+      template="templates/export_registry.pt"
+      permission="cmf.ManagePortal"
+      />
+
   <!-- Serializers -->
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATFileFieldSerializer" />
@@ -230,6 +238,14 @@
       for="zope.interface.Interface"
       class=".import_other.ImportRedirects"
       template="templates/import_redirects.pt"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
+      name="import_registry"
+      for="zope.interface.Interface"
+      class=".import_registry.ImportRegistry"
+      template="templates/import_registry.pt"
       permission="cmf.ManagePortal"
       />
 
