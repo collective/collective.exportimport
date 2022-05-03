@@ -108,8 +108,7 @@
                     class="form-check-input"
                     name="migration:boolean"
                     id="migration"
-                    value="1"
-                    checked
+                    tal:attributes="checked python: 'checked' if view.migration else None"
                     />
                 Modify exported data for migrations.
                 <span class="formHelp">
@@ -125,7 +124,7 @@
                     class="form-check-input"
                     name="include_revisions:boolean"
                     id="include_revisions"
-                    tal:attributes="checked python: 'checked' if view.include_revisions else ''"
+                    tal:attributes="checked python: 'checked' if view.include_revisions else None"
                     />
                 Include revisions.
                 <span class="formHelp">

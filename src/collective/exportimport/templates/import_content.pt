@@ -66,7 +66,7 @@
                     type="checkbox"
                     name="import_to_current_folder:boolean"
                     id="import_to_current_folder"
-                    tal:attributes="checked python:view.import_to_current_folder"
+                    tal:attributes="checked python:'checked' if view.import_to_current_folder else None"
                     />
                 Import all items into the current folder
               </label>
@@ -78,7 +78,7 @@
                     type="checkbox"
                     name="import_old_revisions:boolean"
                     id="import_old_revisions"
-                    tal:attributes="checked python:view.import_old_revisions"
+                    tal:attributes="checked python:'checked' if view.import_old_revisions else None"
                     />
                 Import all old revisions
                 <span class="formHelp">
