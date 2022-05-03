@@ -68,8 +68,7 @@
                     class="form-check-input"
                     name="skip_defaults:boolean"
                     id="skip_defaults"
-                    value="1"
-                    checked
+                    tal:attributes="checked python:'checked' if view.skip_defaults else None"
                     />
                 Skip default values
                 <span class="formHelp">

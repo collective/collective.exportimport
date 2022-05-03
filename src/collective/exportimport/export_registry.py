@@ -29,7 +29,7 @@ class ExportRegistry(BaseExport):
         self.interfaces = self.request.form.get("interfaces", [])
         if not isinstance(self.interfaces, list):
             self.interfaces = [self.interfaces]
-        self.skip_defaults = self.request.form.get("skip_defaults", False)
+        self.skip_defaults = self.request.form.get("skip_defaults", True)
         self.all_interfacenames_with_prefix = self.get_all_interfacenames_with_prefix()
         if not self.request.form.get("form.submitted", False):
             return self.index()
