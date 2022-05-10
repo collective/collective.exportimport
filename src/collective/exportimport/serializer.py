@@ -120,7 +120,7 @@ def get_relative_blob_path(obj, full_path):
     base_dir = db._storage.fshelper.base_dir
     if not full_path.startswith(base_dir):
         return full_path
-    return full_path[len(base_dir):]
+    return full_path[len(base_dir) :]
 
 
 if HAS_AT:
@@ -340,6 +340,8 @@ if HAS_AT and HAS_PAC:
                     # Sort order and direction are now stored in the Collection.
                     self._collection_sort_reversed = criterion.getReversed()
                     self._collection_sort_on = criterion.Field()
+                    topic_metadata["sort_on"] = criterion.Field()
+                    topic_metadata["sort_reversed"] = criterion.getReversed()
                     logger.debug(
                         "Sort on %r, reverse: %s.",
                         self._collection_sort_on,
@@ -376,7 +378,6 @@ def get_dx_blob_path(obj):
 @adapter(INamedFileField, IDexterityContent, IPathBlobsMarker)
 @implementer(IFieldSerializer)
 class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
-
     def __call__(self):
         namedfile = self.field.get(self.context)
         if namedfile is None:
@@ -401,7 +402,6 @@ class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
 @adapter(INamedImageField, IDexterityContent, IPathBlobsMarker)
 @implementer(IFieldSerializer)
 class ImageFieldSerializerWithBlobPaths(DefaultFieldSerializer):
-
     def __call__(self):
         image = self.field.get(self.context)
         if image is None:
