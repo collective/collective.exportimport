@@ -391,6 +391,10 @@ if HAS_AT and HAS_PAC:
             if self.context.itemCount:
                 topic_metadata["b_size"] = self.context.itemCount
 
+            if hasattr(self, "_collection_sort_on"):
+                topic_metadata["sort_on"] = self._collection_sort_on
+                topic_metadata["sort_reversed"] = self._collection_sort_reversed
+
             return topic_metadata
 
 
