@@ -148,8 +148,7 @@ class ImportContent(BrowserView):
                         break
             else:
                 msg = "File '{}' not found on server.".format(server_file)
-                api.portal.show_message(
-                    msg, request=self.request, type="warn")
+                api.portal.show_message(msg, request=self.request, type="warn")
                 server_file = None
                 status = "error"
         if jsonfile:
@@ -193,7 +192,9 @@ class ImportContent(BrowserView):
 
     def commit_hook(self, added, index):
         """Hook to do something after importing every x items."""
-        msg = u"Committing after creating {} of {} handled items...".format(len(added), index)
+        msg = u"Committing after creating {} of {} handled items...".format(
+            len(added), index
+        )
         logger.info(msg)
         transaction.get().note(msg)
         transaction.commit()
@@ -309,13 +310,17 @@ class ImportContent(BrowserView):
 
             if not container:
                 logger.info(
-                    u"No container (parent was {}) found for {} {}".format(item["parent"]["@type"], item["@type"], item["@id"])
+                    u"No container (parent was {}) found for {} {}".format(
+                        item["parent"]["@type"], item["@type"], item["@id"]
+                    )
                 )
                 continue
 
             if not getattr(aq_base(container), "isPrincipiaFolderish", False):
                 logger.info(
-                    u"Container {} for {} is not folderish".format(container.absolute_url(), item["@id"])
+                    u"Container {} for {} is not folderish".format(
+                        container.absolute_url(), item["@id"]
+                    )
                 )
                 continue
 
@@ -326,22 +331,28 @@ class ImportContent(BrowserView):
             if new_id in container:
                 if self.handle_existing_content == 0:
                     # Skip
-                    logger.info(u"{} ({}) already exists. Skipping it.".format(
-                        new_id, item["@id"])
+                    logger.info(
+                        u"{} ({}) already exists. Skipping it.".format(
+                            new_id, item["@id"]
+                        )
                     )
                     continue
 
                 elif self.handle_existing_content == 1:
                     # Replace content before creating it new
-                    logger.info(u"{} ({}) already exists. Replacing it.".format(
-                        new_id, item["@id"])
+                    logger.info(
+                        u"{} ({}) already exists. Replacing it.".format(
+                            new_id, item["@id"]
+                        )
                     )
                     api.content.delete(container[new_id], check_linkintegrity=False)
 
                 elif self.handle_existing_content == 2:
                     # Update existing item
-                    logger.info(u"{} ({}) already exists. Updating it.".format(
-                        new_id, item["@id"])
+                    logger.info(
+                        u"{} ({}) already exists. Updating it.".format(
+                            new_id, item["@id"]
+                        )
                     )
                     self.update_existing = True
                     new = container[new_id]
@@ -368,7 +379,9 @@ class ImportContent(BrowserView):
 
             if not self.update_existing:
                 # create without checking constrains and permissions
-                new = _createObjectByType(item["@type"], container, item["id"], **factory_kwargs)
+                new = _createObjectByType(
+                    item["@type"], container, item["id"], **factory_kwargs
+                )
 
             new, item = self.global_obj_hook_before_deserializing(new, item)
 
@@ -413,7 +426,11 @@ class ImportContent(BrowserView):
                 creation_date = DateTime(dateutil.parser.parse(created))
                 new.creation_date = creation_date
                 new.aq_base.creation_date_migrated = creation_date
-            logger.info("Created item #{}: {} {}".format(index, item["@type"], new.absolute_url()))
+            logger.info(
+                "Created item #{}: {} {}".format(
+                    index, item["@type"], new.absolute_url()
+                )
+            )
             added.append(new.absolute_url())
 
             if self.commit and not len(added) % self.commit:
@@ -522,7 +539,11 @@ class ImportContent(BrowserView):
             new.aq_base.creation_date_migrated = creation_date
 
         self.save_revision(new, item)
-        logger.info("Created item: {} {} with {} old versions".format(item["@type"], new.absolute_url(), len(item["exportimport.versions"])))
+        logger.info(
+            "Created item: {} {} with {} old versions".format(
+                item["@type"], new.absolute_url(), len(item["exportimport.versions"])
+            )
+        )
 
         if policy:
             repo_tool.addPolicyForContentType(item["@type"], policy)
@@ -541,10 +562,12 @@ class ImportContent(BrowserView):
         modified = modified + timedelta(milliseconds=1)
         if six.PY2:
             import time
+
             timestamp = time.mktime(modified.timetuple())
         else:
             timestamp = datetime.timestamp(modified)
         from plone.app.versioningbehavior import _ as PAV
+
         if initial:
             comment = PAV(u"initial_version_changeNote", default=u"Initial version")
         else:
@@ -554,7 +577,9 @@ class ImportContent(BrowserView):
             "timestamp": timestamp,
             "originator": None,
         }
-        rt._recursiveSave(obj, app_metadata={}, sys_metadata=sys_metadata, autoapply=True)
+        rt._recursiveSave(
+            obj, app_metadata={}, sys_metadata=sys_metadata, autoapply=True
+        )
 
     def handle_broken(self, item):
         """Fix some invalid values."""
@@ -651,7 +676,9 @@ class ImportContent(BrowserView):
         constrains.setConstrainTypesMode(ENABLED)
         locally_allowed_types = item["exportimport.constrains"]["locally_allowed_types"]
         constrains.setLocallyAllowedTypes(locally_allowed_types)
-        immediately_addable_types = item["exportimport.constrains"]["immediately_addable_types"]
+        immediately_addable_types = item["exportimport.constrains"][
+            "immediately_addable_types"
+        ]
         constrains.setImmediatelyAddableTypes(immediately_addable_types)
 
     def import_review_state(self, obj, item):
@@ -670,7 +697,9 @@ class ImportContent(BrowserView):
         for key, value in workflow_history.items():
             # The time needs to be deserialized
             for history_item in value:
-                history_item["time"] = DateTime(dateutil.parser.parse(history_item["time"]))
+                history_item["time"] = DateTime(
+                    dateutil.parser.parse(history_item["time"])
+                )
             result[key] = value
         if result:
             obj.workflow_history = PersistentMapping(result.items())
