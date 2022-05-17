@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import imp
 from App.config import getConfiguration
 from collective.exportimport import config
 from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
@@ -1013,8 +1014,15 @@ class TestImport(unittest.TestCase):
             password="verysecret",
             roles=("Member",),
         )
+        api.user.create(
+            username="jane",
+            email="jane@example.org",
+            password="veryverysecret",
+            roles=("Member",),
+        )
         api.user.grant_roles(username="peter", obj=doc1, roles=["Reviewer"])
         api.user.grant_roles(username="peter", obj=doc2, roles=["Owner"])
+        api.user.grant_roles(username="jane", obj=portal, roles=["Reviewer", "Editor"])
         transaction.commit()
 
         # Export.
@@ -1041,21 +1049,52 @@ class TestImport(unittest.TestCase):
         api.user.revoke_roles(username="peter", obj=doc1, roles=["Reviewer"])
         api.user.revoke_roles(username="peter", obj=doc2, roles=["Owner"])
         self.assertEqual(doc1.__ac_local_roles__, {"admin": ["Owner"]})
+        api.user.revoke_roles(username="jane", obj=portal, roles=["Reviewer", "Editor"])
+        self.assertEqual(doc1.__ac_local_roles__, {"admin": ["Owner"]})
         folder.reindexObjectSecurity()
         doc1.reindexObjectSecurity()
         doc2.reindexObjectSecurity()
+        portal.reindexObjectSecurity()
+
+        self.assertEqual(
+            portal.__ac_local_roles__,
+            {"admin": ["Owner"]},
+        )
+
+        self.assertFalse(
+            api.user.has_permission(
+                "Review portal content", username="jane", obj=portal
+            )
+        )
+        self.assertFalse(
+            api.user.has_permission(
+                "Modify portal content", username="jane", obj=portal
+            )
+        )
 
         # Import and check.
         browser = self.open_page("@@import_localroles")
         upload = browser.getControl(name="jsonfile")
         upload.add_file(raw_data, "application/json", "localroles.json")
         browser.getForm(action="@@import_localroles").submit()
-        self.assertIn("Imported 3 localroles", browser.contents)
+
         # The documents have the original local roles again.
         self.assertEqual(folder.__ac_local_roles_block__, 1)
         self.assertEqual(
             doc1.__ac_local_roles__, {"admin": ["Owner"], "peter": ["Reviewer"]}
         )
+
+        self.assertTrue("Owner" in doc1.__ac_local_roles__["admin"])
+        self.assertTrue("Reviewer" in doc1.__ac_local_roles__["peter"])
+
+        self.assertTrue("Owner" in portal.__ac_local_roles__["admin"])
+        self.assertTrue("Reviewer" in portal.__ac_local_roles__["jane"])
+        self.assertTrue("Editor" in portal.__ac_local_roles__["jane"])
+
+        # remove annotations on request as they are used to cache local roles
+        # previous access to local roles has populated the cache
+        IAnnotations(self.layer["request"]).clear()
+
         # permissions are reindexed
         self.assertTrue(
             api.user.has_permission("Review portal content", username="peter", obj=doc1)
@@ -1068,6 +1107,16 @@ class TestImport(unittest.TestCase):
         )
         self.assertTrue(
             api.user.has_permission("Modify portal content", username="peter", obj=doc2)
+        )
+        self.assertTrue(
+            api.user.has_permission(
+                "Modify portal content", username="jane", obj=portal
+            )
+        )
+        self.assertTrue(
+            api.user.has_permission(
+                "Review portal content", username="jane", obj=portal
+            )
         )
 
     def test_import_richtext_with_html_entities(self):

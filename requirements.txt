@@ -1,3 +1,3 @@
 # For Buildout related packages, it is easiest to keep them at the same version for all environments.
 # Keep these in sync with base.cfg please:
-zc.buildout==3.0.0rc3
+zc.buildout==3.0.1

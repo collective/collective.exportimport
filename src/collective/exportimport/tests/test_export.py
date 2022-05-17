@@ -563,6 +563,36 @@ class TestExport(unittest.TestCase):
             },
         )
 
+    def test_export_local_roles(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        doc1 = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        doc2 = api.content.create(
+            container=portal, type="Document", id="doc2", title="Document 2"
+        )
+        intids = getUtility(IIntIds)
+        doc1.relatedItems = [RelationValue(intids.getId(doc2))]
+        modified(doc1)
+        transaction.commit()
+
+        browser = self.open_page("@@export_localroles")
+        browser.getForm(action="@@export_localroles").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
+        self.assertListEqual(
+            data,
+            [
+                {"uuid": doc1.UID(), "localroles": {"admin": ["Owner"]}},
+                {"uuid": doc2.UID(), "localroles": {"admin": ["Owner"]}},
+                {"uuid": "<Portal>", "localroles": {"admin": ["Owner"]}},
+            ],
+        )
+
     def test_export_versions(self):
         app = self.layer["app"]
         portal = self.layer["portal"]
