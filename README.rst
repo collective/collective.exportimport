@@ -21,7 +21,14 @@
 collective.exportimport
 =======================
 
-Export and import content, members, relations, translations and localroles
+Export and import content, members, relations, translations, localroles and much more.
+
+Export and import all kinds of data from and to Plone sites using a intermediate json-format.
+The main use-case is migrations since it enables you to for example migrate from Plone 4 with Archetypes and Python 2 to Plone 6 with Dexterity and Python 3 in one step.
+Most features use `plone.restapi` to serialize and deserialize data.
+
+.. contents:: Contents
+    :local:
 
 Features
 ========
@@ -447,8 +454,266 @@ Run all imports using the data exported in the example above:
             transaction.commit()
 
 
+FAQ, Tips and Tricks
+====================
+
+This section covers frequent use-cases and examples for features that are not required for all migrations.
+
+
+Export/Import Annotations
+-------------------------
+
+Some core-features of Plone (e.g. comments) use annotations to store data.
+The core features are already covered but your custom code or community addons may use annotations as well.
+Here is how you can migrate them.
+
+**Export**: Only export those Annotations that your really need.
+
+.. code-block:: python
+
+    from zope.annotation.interfaces import IAnnotations
+    ANNOTATIONS_TO_EXPORT = [
+        "syndication_settings",
+    ]
+    ANNOTATIONS_KEY = 'exportimport.annotations'
+
+    class ExportContent(ExportContent)
+
+        def global_dict_hook(self, item, obj):
+            item = self.export_annotations(item, obj)
+            return item
+
+        def export_annotations(self, item, obj):
+            results = {}
+            annotations = IAnnotations(obj)
+            for key in ANNOTATIONS_TO_EXPORT:
+                data = annotations.get(key)
+                if data:
+                    results[key] = IJsonCompatible(data, None)
+            if results:
+                item[ANNOTATIONS_KEY] = results
+            return item
+
+**Import**:
+
+.. code-block:: python
+
+    from zope.annotation.interfaces import IAnnotations
+    ANNOTATIONS_KEY = "exportimport.annotations"
+
+    class ImportContent(ImportContent):
+
+        def global_obj_hook(self, obj, item):
+            item = self.import_annotations(obj, item)
+            return item
+
+        def import_annotations(self, obj, item):
+            annotations = IAnnotations(obj)
+            for key in item.get(ANNOTATIONS_KEY, []):
+                annotations[key] = item[ANNOTATIONS_KEY][key]
+            return item
+
+Some features also store data in annotations on the portal, e.g. `plone.contentrules.localassignments`, `plone.portlets.categoryblackliststatus`, `plone.portlets.contextassignments`, `syndication_settings`.
+Depending on your requirements you may want to export and import those as well.
+
+
+Export/Import Marker Interfaces
+-------------------------------
+
+**Export**: You may only want to export the marker-interfaces you need.
+It is a good idea to inspect a list of all used marker interfaces in a portal before deciding what to migrate.
+
+.. code-block:: python
+
+    from zope.interface import directlyProvidedBy
+
+    MARKER_INTERFACES_TO_EXPORT = [
+        "collective.easyslider.interfaces.ISliderPage",
+        "plone.app.layout.navigation.interfaces.INavigationRoot",
+    ]
+    MARKER_INTERFACES_KEY = "exportimport.marker_interfaces"
+
+    class ExportContent(ExportContent)
+
+        def global_dict_hook(self, item, obj):
+            item = self.export_marker_interfaces(item, obj)
+            return item
+
+        def export_marker_interfaces(self, item, obj):
+            interfaces = [i.__identifier__ for i in directlyProvidedBy(obj)]
+            interfaces = [i for i in interfaces if i in MARKER_INTERFACES_TO_EXPORT]
+            if interfaces:
+                item[MARKER_INTERFACES_KEY] = interfaces
+            return item
+
+**Import**:
+
+.. code-block:: python
+
+    from plone.dexterity.utils import resolveDottedName
+    from zope.interface import alsoProvides
+
+    MARKER_INTERFACES_KEY = "exportimport.marker_interfaces"
+
+    class ImportContent(ImportContent):
+
+        def global_obj_hook_before_deserializing(self, obj, item):
+            """Apply marker interfaces before deserializing."""
+            for iface_name in item.pop(MARKER_INTERFACES_KEY, []):
+                try:
+                    iface = resolveDottedName(iface_name)
+                    if not iface.providedBy(obj):
+                        alsoProvides(obj, iface)
+                        logger.info("Applied marker interface %s to %s", iface_name, obj.absolute_url())
+                except ModuleNotFoundError:
+                    pass
+            return obj, item
+
+
+Defer imports
+-------------
+
+Some content types may have fields with options that are generated from content in the site.
+In these cases you cannot be sure that all options already exist in the portal while importing the content.
+This would lead to a validation-errors.
+You can defer setting the values on these fields until all content is imported.
+For relationfields this is not necessary since relations are imported after content anyway.
+
+The export does not need to change, only the import.
+
+.. code-block:: python
+
+    from plone.restapi.interfaces import IDeserializeFromJson
+    from zope.annotation.interfaces import IAnnotations
+    from zope.component import getMultiAdapter
+
+    DEFERRED_KEY = "exportimport.deferred"
+    DEFERRED_FIELD_MAPPING = {
+        "talk": ["somefield"],
+        "speaker": [
+            "custom_field",
+            "another_field",
+        ]
+    }
+    SIMPLE_SETTER_FIELDS = {"custom_type": ["another_field"]}
+
+    class ImportContent(ImportContent):
+
+        def global_dict_hook(self, item):
+            # Move deferred values to a different key to not deserialize.
+            # This could also be done during export.
+            item[DEFERRED_KEY] = {}
+            for fieldname in DEFERRED_FIELD_MAPPING.get(item["@type"], []):
+                if item.get(fieldname):
+                    item[DEFERRED_KEY][fieldname] = item.pop(fieldname)
+            return item
+
+        def global_obj_hook(self, obj, item):
+            # Store deferred data in an annotation.
+            deferred = item.get(DEFERRED_KEY, {})
+            if deferred:
+                annotations = IAnnotations(obj)
+                annotations[DEFERRED_KEY] = {}
+                for key, value in deferred.items():
+                    annotations[DEFERRED_KEY][key] = value
+
+You then need a new step in the migration to move the deferred values from the annotation to the field:
+
+.. code-block:: python
+
+    class ImportDeferred(BrowserView):
+
+        def __call__(self):
+            # This example reuses the form export_other.pt from collective.exportimport
+            self.title = "Import deferred data"
+            if not self.request.form.get("form.submitted", False):
+                return self.index()
+            portal = api.portal.get()
+            self.results = []
+            for brain in api.content.find(portal_typeDEFERRED_FIELD_MAPPING.keys()):
+                obj = brain.getObject()
+                self.import_deferred(obj)
+            api.portal.show_message(f"Imported deferred data for {len(self.results)} items!", self.request)
+
+        def import_deferred(self, obj):
+            annotations = IAnnotations(obj, {})
+            deferred = annotations.get(DEFERRED_KEY, None)
+            if not deferred:
+                return
+            # Shortcut for simple fields (e.g. storing strings, uuids etc.)
+            for fieldname in SIMPLE_SETTER_FIELDS.get(obj.portal_type, []):
+                value = deferred.pop(fieldname, None)
+                if value:
+                    setattr(obj, fieldname, value)
+            if not deferred:
+                return
+            # This approach validates the values and converts more complex data
+            deserializer = getMultiAdapter((obj, self.request), IDeserializeFromJson)
+            try:
+                obj = deserializer(validate_all=False, data=deferred)
+            except Exception as e:
+                logger.info("Error while importing deferred data for %s", obj.absolute_url(), exc_info=True)
+                logger.info("Data: %s", deferred)
+            else:
+                self.results.append(obj.absolute_url())
+            # cleanup
+            del annotations[DEFERRED_KEY]
+
+This additional view obviously needs to be registered:
+
+.. code-block:: xml
+
+    <browser:page
+        name="import_deferred"
+        for="zope.interface.Interface"
+        class=".import_content.ImportDeferred"
+        template="export_other.pt"
+        permission="cmf.ManagePortal"
+        />
+
+Alternative ways to handle items without parent
+-----------------------------------------------
+
+TODO
+
+
+Export/Import registry settings
+-------------------------------
+
+TODO
+
+Export/Import Zope Users
+------------------------
+
+TODO
+
+Export/Import portal properties settings
+----------------------------------------
+
+TODO
+
+Export/Import installed Add-ons
+-------------------------------
+
+TODO
+
+Export PloneFormGen as Easyform
+-------------------------------
+
+TODO
+
+Fixing invalid collection queries
+---------------------------------
+
+TODO
+
+Migrate to Volto
+----------------
+
+TODO
+
 Written by
-----------
+==========
 
 .. image:: ./docs/starzel.png
     :target: https://www.starzel.de
@@ -457,7 +722,7 @@ Written by
 
 
 Installation
-------------
+============
 
 Install collective.exportimport by adding it to your buildout::
 
@@ -477,7 +742,7 @@ You do need to add it to your buildout configuration and run buildout to make th
 
 
 Contribute
-----------
+==========
 
 - Issue Tracker: https://github.com/collective/collective.exportimport/issues
 - Source Code: https://github.com/collective/collective.exportimport
