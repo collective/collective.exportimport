@@ -21,7 +21,14 @@
 collective.exportimport
 =======================
 
-Export and import content, members, relations, translations and localroles
+Export and import content, members, relations, translations, localroles and much more.
+
+Export and import all kinds of data from and to Plone sites using a intermediate json-format.
+The main use-case is migrations since it enables you to for example migrate from Plone 4 with Archetypes and Python 2 to Plone 6 with Dexterity and Python 3 in one step.
+Most features use `plone.restapi` to serialize and deserialize data.
+
+.. contents:: Contents
+    :local:
 
 Features
 ========
@@ -448,7 +455,7 @@ Run all imports using the data exported in the example above:
 
 
 Written by
-----------
+==========
 
 .. image:: ./docs/starzel.png
     :target: https://www.starzel.de
@@ -457,7 +464,7 @@ Written by
 
 
 Installation
-------------
+============
 
 Install collective.exportimport by adding it to your buildout::
 
@@ -477,7 +484,7 @@ You do need to add it to your buildout configuration and run buildout to make th
 
 
 Contribute
-----------
+==========
 
 - Issue Tracker: https://github.com/collective/collective.exportimport/issues
 - Source Code: https://github.com/collective/collective.exportimport
