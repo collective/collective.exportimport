@@ -151,13 +151,13 @@ if HAS_AT:
     if HAS_TALES:
         from zope.interface import classImplements
         from Products.TALESField._field import TALESString
-        
+
         # Products.TalesField does not implements any interface
         # we mark the field class to let queryMultiAdapter intercept
-        # this in place of the default one that would returns 
+        # this in place of the default one that would returns
         # the evaluated expression instead of the raw expression itself
         classImplements(TALESString, ITalesField)
-    
+
         @adapter(ITalesField, IBaseObject, Interface)
         @implementer(IFieldSerializer)
         class ATTalesFieldSerializer(ATDefaultFieldSerializer):
@@ -347,7 +347,7 @@ if HAS_AT and HAS_PAC:
     from plone.restapi.interfaces import ISerializeToJson
     from plone.restapi.serializer.atcontent import SerializeToJson
     from Products.ATContentTypes.interfaces.topic import IATTopic
-    
+
     @implementer(ISerializeToJson)
     @adapter(IATTopic, IMigrationMarker)
     class SerializeTopicToJson(SerializeToJson):

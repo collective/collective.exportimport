@@ -2,44 +2,41 @@
 from Acquisition import aq_base
 from App.config import getConfiguration
 from collective.exportimport import config
-from collective.exportimport.export_content import safe_bytes
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
 from plone.app.discussion.interfaces import IConversation
+from plone.app.portlets.interfaces import IPortletTypeInterface
 from plone.app.redirector.interfaces import IRedirectionStorage
 from plone.app.textfield.value import RichTextValue
+from plone.app.uuid.utils import uuidToObject
+from plone.portlets.constants import CONTENT_TYPE_CATEGORY
+from plone.portlets.constants import CONTEXT_CATEGORY
+from plone.portlets.constants import GROUP_CATEGORY
+from plone.portlets.constants import USER_CATEGORY
+from plone.portlets.interfaces import ILocalPortletAssignmentManager
+from plone.portlets.interfaces import IPortletAssignmentMapping
+from plone.portlets.interfaces import IPortletAssignmentSettings
+from plone.portlets.interfaces import IPortletManager
 from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
-from plone.app.uuid.utils import uuidToObject
 from Products.CMFCore.interfaces import IContentish
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.interfaces import IPloneSiteRoot
 from Products.Five import BrowserView
 from zope.component import getMultiAdapter
-from zope.component import queryUtility
-from plone.app.portlets.interfaces import IPortletTypeInterface
-from plone.portlets.interfaces import IPortletAssignmentMapping
-from plone.portlets.interfaces import ILocalPortletAssignmentManager
-from plone.portlets.interfaces import IPortletAssignmentSettings
-from plone.portlets.interfaces import IPortletManager
-from plone.portlets.constants import (
-    USER_CATEGORY,
-    GROUP_CATEGORY,
-    CONTENT_TYPE_CATEGORY,
-    CONTEXT_CATEGORY,
-)
 from zope.component import getUtilitiesFor
 from zope.component import getUtility
 from zope.component import queryMultiAdapter
+from zope.component import queryUtility
 from zope.interface import providedBy
 
 import json
+import logging
 import os
 import pkg_resources
 import six
-import logging
 
 try:
     pkg_resources.get_distribution("Products.Archetypes")
@@ -47,7 +44,6 @@ except pkg_resources.DistributionNotFound:
     HAS_AT = False
 else:
     HAS_AT = True
-
 
 try:
     pkg_resources.get_distribution("zc.relation")
@@ -697,7 +693,7 @@ def export_plone_redirects():
     storage = getUtility(IRedirectionStorage)
     redirects = {}
     for key, value in storage._paths.items():
-        if isinstance(value, tuple) and len(value)==3:
+        if isinstance(value, tuple) and len(value) == 3:
             value = value[0]
         redirects[key] = value
 

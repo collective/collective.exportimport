@@ -3,8 +3,8 @@ from Acquisition import aq_base
 from collective.exportimport import config
 from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
-from datetime import timedelta
 from DateTime import DateTime
+from datetime import timedelta
 from Persistence import PersistentMapping
 from plone import api
 from plone.api.exc import InvalidParameterError
@@ -13,8 +13,8 @@ from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from plone.restapi.interfaces import IDeserializeFromJson
-from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.interfaces.constrains import ENABLED
+from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.utils import _createObjectByType
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
@@ -531,7 +531,7 @@ class ImportContent(BrowserView):
 
         modified = dateutil.parser.parse(item["modified"])
         # add one millisecond to prevent created being before first revision
-        modified  = modified + timedelta(milliseconds=1)
+        modified = modified + timedelta(milliseconds=1)
         if six.PY2:
             import time
             timestamp = time.mktime(modified.timetuple())

@@ -15,7 +15,6 @@ from plone.uuid.interfaces import IUUID
 from Products.CMFCore.interfaces import IContentish
 from Products.Five import BrowserView
 from six.moves.urllib.parse import urlparse
-from six.moves.urllib.parse import urlunparse
 from zope.component import getUtilitiesFor
 from zope.component import queryMultiAdapter
 from zope.interface import providedBy
@@ -237,7 +236,7 @@ def find_object(base, path):
         obj = api.portal.get()
         portal_path = obj.absolute_url_path() + "/"
         if path.startswith(portal_path):
-            path = path[len(portal_path) :]
+            path = path[len(portal_path):]
     else:
         obj = aq_parent(base)  # relative urls start at the parent...
 
@@ -261,7 +260,7 @@ def find_object(base, path):
         obj = api.portal.get()
         portal_path = obj.absolute_url_path() + "/"
         if path.startswith(portal_path):
-            path = path[len(portal_path) :]
+            path = path[len(portal_path):]
     else:
         obj = aq_parent(base)  # relative urls start at the parent...
 
