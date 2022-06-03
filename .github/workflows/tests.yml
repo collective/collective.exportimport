@@ -47,5 +47,18 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install tox
+    - name: Prepare buildout egg cache
+      run: |
+        mkdir ~/.buildout
+        echo "[buildout]" >> ~/.buildout/default.cfg
+        echo "eggs-directory = ~/eggs" >> ~/.buildout/default.cfg
+    - name: Cache eggs
+      uses: actions/cache@v3
+      with:
+        path: ~/eggs
+        key: ${{ runner.os }}-eggs-${{ matrix.config[0] }}-${{ matrix.config[1] }}-${{ hashFiles('*cfg') }}
+        restore-keys: |
+          ${{ runner.os }}-eggs-${{ matrix.config[0] }}-${{ matrix.config[1] }}-
+          ${{ runner.os }}-eggs-${{ matrix.config[0] }}-
     - name: Test
       run: tox -e ${{ matrix.config[1] }}

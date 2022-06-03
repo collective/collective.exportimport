@@ -10,17 +10,17 @@ from plone.app.discussion.comment import Comment
 from plone.app.discussion.interfaces import IConversation
 from plone.app.portlets.interfaces import IPortletTypeInterface
 from plone.app.redirector.interfaces import IRedirectionStorage
+from plone.portlets.interfaces import ILocalPortletAssignmentManager
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletAssignmentSettings
-from plone.portlets.interfaces import ILocalPortletAssignmentManager
 from plone.portlets.interfaces import IPortletManager
 from plone.restapi.interfaces import IFieldDeserializer
 from Products.Five import BrowserView
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getUtility
-from zope.component import queryUtility
 from zope.component import queryMultiAdapter
+from zope.component import queryUtility
 from zope.component.interfaces import IFactory
 from zope.container.interfaces import INameChooser
 from zope.globalrequest import getRequest
@@ -39,14 +39,12 @@ try:
 except ImportError:
     HAS_RELAPI = False
 
-
 try:
     from Products.CMFPlone import relationhelper
 
     HAS_PLONE6 = True
 except ImportError:
     HAS_PLONE6 = False
-
 
 try:
     from plone.app.multilingual.interfaces import ITranslationManager

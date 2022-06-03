@@ -528,7 +528,7 @@ class TestExport(unittest.TestCase):
         self.assertDictEqual(
             data,
             {u'/plone/doc1': u'/plone/doc1-moved',
-            u'/plone/doc2': u'/plone/doc2-moved'},
+             u'/plone/doc2': u'/plone/doc2-moved'},
         )
 
     def test_export_versions(self):
@@ -560,13 +560,13 @@ class TestExport(unittest.TestCase):
             description="A Description",
         )
 
-        doc1.title= u"Document 1 with changed title"
+        doc1.title = u"Document 1 with changed title"
         modified(doc1)
-        doc2.title= u"Document 2 with changed title"
+        doc2.title = u"Document 2 with changed title"
         IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"Föö bar"
         modified(doc2)
 
-        doc2.description= u"New description in revision 3"
+        doc2.description = u"New description in revision 3"
         IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"I am new!"
         modified(doc2)
         folder1.title = u"Folder 1 with changed title"

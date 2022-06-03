@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """Setup tests for this package."""
 from plone import api
-from collective.exportimport.testing import (
-    COLLECTIVE_EXPORTIMPORT_INTEGRATION_TESTING,
-)  # noqa: E501
+from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_INTEGRATION_TESTING
 
 import unittest
 

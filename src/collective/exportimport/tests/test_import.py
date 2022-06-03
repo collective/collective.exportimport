@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
 from App.config import getConfiguration
 from collective.exportimport import config
-from collective.exportimport.testing import (
-    COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,  # noqa: E501,,
-)
+from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
 from OFS.interfaces import IOrderedContainer
 from plone import api
 from plone.app.redirector.interfaces import IRedirectionStorage
-from plone.app.textfield.value import RichTextValue
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.textfield.value import RichTextValue
-from plone.namedfile.file import NamedImage
 from plone.namedfile.file import NamedBlobImage
+from plone.namedfile.file import NamedImage
 from Products.CMFPlone.interfaces.constrains import ENABLED
 from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.tests import dummy
@@ -1181,13 +1178,13 @@ class TestImport(unittest.TestCase):
         modified(folder1)
         modified(doc2)
 
-        doc1.title= u"Document 1 with changed title"
+        doc1.title = u"Document 1 with changed title"
         modified(doc1)
-        doc2.title= u"Document 2 with changed title"
+        doc2.title = u"Document 2 with changed title"
         IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"Föö bar"
         modified(doc2)
 
-        doc2.description= u"New description in revision 3"
+        doc2.description = u"New description in revision 3"
         IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"I am new!"
         modified(doc2)
         folder1.title = u"Folder 1 with changed title"

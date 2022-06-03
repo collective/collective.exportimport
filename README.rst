@@ -685,7 +685,113 @@ TODO
 Export/Import Zope Users
 ------------------------
 
-TODO
+By default only users and groups stores in Plone are exported/imported.
+You can export/import Zope user like this.
+
+**Export**
+
+.. code-block:: python
+
+    from collective.exportimport.export_other import BaseExport
+    from plone import api
+
+    import six
+
+    class ExportZopeUsers(BaseExport):
+
+        AUTO_ROLES = ["Authenticated"]
+
+        def __call__(self, download_to_server=False):
+            self.title = "Export Zope users"
+            self.download_to_server = download_to_server
+            portal = api.portal.get()
+            app = portal.__parent__
+            self.acl = app.acl_users
+            self.pms = api.portal.get_tool("portal_membership")
+            data = self.all_zope_users()
+            self.download(data)
+
+        def all_zope_users(self):
+            results = []
+            for user in self.acl.searchUsers():
+                data = self._getUserData(user["userid"])
+                data['title'] = user['title']
+                results.append(data)
+            return results
+
+        def _getUserData(self, userId):
+            member = self.pms.getMemberById(userId)
+            roles = [
+                role
+                for role in member.getRoles()
+                if role not in self.AUTO_ROLES
+            ]
+            # userid, password, roles
+            props = {
+                "username": userId,
+                "password": json_compatible(self._getUserPassword(userId)),
+                "roles": json_compatible(roles),
+            }
+            return props
+
+        def _getUserPassword(self, userId):
+            users = self.acl.users
+            passwords = users._user_passwords
+            password = passwords.get(userId, "")
+            return password
+
+**Import**:
+
+.. code-block:: python
+
+    class ImportZopeUsers(BrowserView):
+
+        def __call__(self, jsonfile=None, return_json=False):
+            if jsonfile:
+                self.portal = api.portal.get()
+                status = "success"
+                try:
+                    if isinstance(jsonfile, str):
+                        return_json = True
+                        data = json.loads(jsonfile)
+                    elif isinstance(jsonfile, FileUpload):
+                        data = json.loads(jsonfile.read())
+                    else:
+                        raise ("Data is neither text nor upload.")
+                except Exception as e:
+                    status = "error"
+                    logger.error(e)
+                    api.portal.show_message(
+                        u"Failure while uploading: {}".format(e),
+                        request=self.request,
+                    )
+                else:
+                    members = self.import_members(data)
+                    msg = u"Imported {} members".format(members)
+                    api.portal.show_message(msg, self.request)
+                if return_json:
+                    msg = {"state": status, "msg": msg}
+                    return json.dumps(msg)
+
+            return self.index()
+
+        def import_members(self, data):
+            app = self.portal.__parent__
+            acl = app.acl_users
+            counter = 0
+            for item in data:
+                username = item["username"]
+                password = item.pop("password")
+                roles = item.pop("roles", [])
+                if not username or not password or not roles:
+                    continue
+                title = item.pop("title", None)
+                acl.users.addUser(username, title, password)
+                for role in roles:
+                    acl.roles.assignRoleToPrincipal(role, username)
+                counter += 1
+            return counter
+
 
 Export/Import portal properties settings
 ----------------------------------------
