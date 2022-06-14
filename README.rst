@@ -94,15 +94,9 @@ When a in-place-migration is not required you can choose this addon to migrate t
 
 * Export content from a Plone site (it supports Plone 4 and 5, Archetypes and Dexterity, Python 2 and 3).
 * Import the exported content into a new site (Plone 5.2+, Dexterity, Python 3)
-* Export and import relations, translations, users, groups and local roles.
+* Export and import relations, users and groups with their roles, translations, local roles, ordering, dedault-pages, comments, portlets and redirects.
 
-It does not support any of the following data from your database:
-
-* content revisions
-* registry-settings
-* portlets
-* theme
-* installed addons
+How to migrate additional features like Annotations or Marker Interfaces is discussed in the FAQ section.
 
 Other
 -----
@@ -153,9 +147,11 @@ Use for migrations
 
 A main use-case of this package is migration from one Plone-Version to another.
 
-Exporting Archetypes content and importing that as Dexterity content works fine but due to changes in field-names some settings would get lost. For example the setting to exclude content from the navigation was renamed from ``excludeFromNav`` to ``exclude_from_nav``.
+Exporting Archetypes content and importing that as Dexterity content works fine but due to changes in field-names some settings would get lost.
+For example the setting to exclude content from the navigation was renamed from ``excludeFromNav`` to ``exclude_from_nav``.
 
-To fix this you can check the checkbox "Modify exported data for migrations". This will modify the data during export:
+To fix this you can check the checkbox "Modify exported data for migrations".
+This will modify the data during export:
 
 * Drop unused data (e.g. `next_item` and `components`)
 * Remove all relationfields
@@ -176,10 +172,11 @@ To fix this you can check the checkbox "Modify exported data for migrations". Th
   * ``contactName`` → ``contact_name``
   * ``contactPhone`` → ``contact_phone``
 
-* Update view names on Folders and Collection
-* Export ATTopic and their criteria to Collections with querystrings
-* Update Collection-criteria (TODO)
-* Fix image links and scales (TODO)
+* Update view names on Folders and Collection thet changed since Plone 4.
+* Export ATTopic and their criteria to Collections with querystrings.
+* Update Collection-criteria.
+* Links and images in Richtext-Fields of content and portlets have changes since Plone 4.
+  the view ``/@@fix_html`` allows you to fix these.
 
 
 Control creating imported content
