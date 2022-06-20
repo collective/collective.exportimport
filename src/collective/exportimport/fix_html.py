@@ -160,12 +160,12 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
             if not uuid:
                 target = find_object(obj, path)
                 if not target:
-                    logger.debug(u"Cannot find target obj for {path}".format(path=path))
+                    logger.debug("Cannot find target obj for %s", path)
                     continue
                 uuid = IUUID(target, None)
 
             if not uuid:
-                logger.debug("Cannot find target obj for {link}".format(link=link))
+                logger.debug("Cannot find target obj for %s", link)
                 continue
 
             # construct new link
@@ -217,11 +217,7 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
         )
 
         if orig != content_link.decode():
-            logger.debug(
-                u"Changed {tag} {attr} from {orig} to {content_link}".format(
-                    tag=tag, attr=attr, orig=orig, content_link=content_link
-                )
-            )
+            logger.debug("Changed %s %s from %s to %s", tag, attr, orig, content_link)
 
 
 def find_object(base, path):
@@ -236,7 +232,7 @@ def find_object(base, path):
         obj = api.portal.get()
         portal_path = obj.absolute_url_path() + "/"
         if path.startswith(portal_path):
-            path = path[len(portal_path):]
+            path = path[len(portal_path) :]
     else:
         obj = aq_parent(base)  # relative urls start at the parent...
 
@@ -260,7 +256,7 @@ def find_object(base, path):
         obj = api.portal.get()
         portal_path = obj.absolute_url_path() + "/"
         if path.startswith(portal_path):
-            path = path[len(portal_path):]
+            path = path[len(portal_path) :]
     else:
         obj = aq_parent(base)  # relative urls start at the parent...
 
@@ -290,7 +286,7 @@ def fix_html_in_content_fields(context=None, commit=True):
     brains = catalog(**query)
     total = len(brains)
     logger.info(
-        "There are {} content items in total, starting migration...".format(len(brains))
+        "There are %d content items in total, starting migration...", len(brains)
     )
     results = 0
     results_to_commit = 0
@@ -300,8 +296,8 @@ def fix_html_in_content_fields(context=None, commit=True):
             obj = brain.getObject()
         except Exception:
             logger.warning(
-                "Not possible to fetch object from catalog result for "
-                "item: {}.".format(brain.getPath())
+                "Not possible to fetch object from catalog result for item: %s.",
+                brain.getPath(),
             )
             continue
         try:
@@ -309,14 +305,12 @@ def fix_html_in_content_fields(context=None, commit=True):
             for fieldname in types_with_richtext_fields[obj.portal_type]:
                 text = getattr(obj.aq_base, fieldname, None)
                 if text and IRichTextValue.providedBy(text) and text.raw:
-                    logger.debug("Checking {}".format(obj.absolute_url()))
+                    logger.debug("Checking %s", obj.absolute_url())
                     try:
                         clean_text = html_fixer(text.raw, obj)
                     except Exception as e:
                         logger.info(
-                            "html_fixer error: @{} {}".format(
-                                obj.absolute_url(), fieldname
-                            )
+                            "html_fixer error: @%s %s", obj.absolute_url(), fieldname
                         )
                         raise
                     if clean_text and clean_text != text.raw:
@@ -329,14 +323,14 @@ def fix_html_in_content_fields(context=None, commit=True):
                         setattr(obj, fieldname, textvalue)
                         obj.reindexObject(idxs=("SearchableText",))
                         logger.debug(
-                            "Fixed html for field {} of {}".format(
-                                fieldname, obj.absolute_url()
-                            )
+                            "Fixed html for field %s of %s",
+                            fieldname,
+                            obj.absolute_url(),
                         )
                         results += 1
                         results_to_commit += 1
         except:
-            logger.exception("HTML not fixed for {}".format(obj.absolute_url()))
+            logger.exception("HTML not fixed for %s", obj.absolute_url())
         if _p != results_to_commit:
             items_to_commit += 1
 
@@ -399,9 +393,9 @@ def fix_html_in_portlets(context=None):
                                 fix_count_ref.append(True)
                                 setattr(assignment, fieldname, textvalue)
                                 logger.info(
-                                    "Fixed html for field {} of portlet at {}".format(
-                                        fieldname, obj.absolute_url()
-                                    )
+                                    "Fixed html for field %s of portlet at %s",
+                                    fieldname,
+                                    obj.absolute_url(),
                                 )
                         elif text and isinstance(text, str):
                             clean_text = html_fixer(text, obj)
@@ -415,9 +409,10 @@ def fix_html_in_portlets(context=None):
                                 fix_count_ref.append(True)
                                 setattr(assignment, fieldname, textvalue)
                                 logger.info(
-                                    "Fixed html for field {} of portlet {} at {}".format(
-                                        fieldname, str(assignment), obj.absolute_url()
-                                    )
+                                    "Fixed html for field %s of portlet %s at %s",
+                                    fieldname,
+                                    str(assignment),
+                                    obj.absolute_url(),
                                 )
 
     portal = api.portal.get()
