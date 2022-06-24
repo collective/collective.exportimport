@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from pdb import Pdb
 from Acquisition import aq_base
 from BTrees.LLBTree import LLSet
 from collective.exportimport import config

@@ -1093,7 +1093,11 @@ class TestImport(unittest.TestCase):
 
         # remove annotations on request as they are used to cache local roles
         # previous access to local roles has populated the cache
-        IAnnotations(self.layer["request"]).clear()
+        #
+        # Need to understand why IAnnotations(portal.REQUEST).clear() does not work
+        # in zope.annotation <= 3.5.0
+        #IAnnotations(self.layer["request"]).clear()
+        portal.REQUEST.__annotations__.clear()
 
         # permissions are reindexed
         self.assertTrue(
