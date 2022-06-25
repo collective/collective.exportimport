@@ -365,7 +365,9 @@ class ImportContent(BrowserView):
                 logger.warning(
                     "cannot deserialize {}: {}".format(item["@id"], repr(error))
                 )
-                continue
+                # disabled 
+                # https://gitea.iwm-tuebingen.de/e-teaching.org/plone6.buildout/issues/10
+                # continue
 
             # Blobs can be exported as only a path in the blob storage.
             # It seems difficult to dynamically use a different deserializer,
@@ -382,7 +384,9 @@ class ImportContent(BrowserView):
             if uuid != item["UID"]:
                 item["UID"] = uuid
 
+#            print(f'WF {item["@id"]} -> {item["review_state"]}')
             if item["review_state"] and item["review_state"] != "private":
+
                 if portal_workflow.getChainFor(new):
                     try:
                         api.content.transition(to_state=item["review_state"], obj=new)
@@ -804,7 +808,7 @@ class ImportContent(BrowserView):
         # As a final fallback we create the folder-structure required by the path
         return self.create_container(item)
 
-    def create_container(self, item):
+    def create_container(self, item, portal_type="Folder"):
         """Create container for item.
 
         See remarks in get_parent_as_container for some corner cases.
