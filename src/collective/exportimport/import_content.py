@@ -814,6 +814,7 @@ class ImportContent(BrowserView):
         See remarks in get_parent_as_container for some corner cases.
         """
         folder = self.context
+        portal_workflow = api.portal.get_tool("portal_workflow")
         parent_url = unquote(item["parent"]["@id"])
         parent_url_parsed = urlparse(parent_url)
         # Get the path part, split it, remove the always empty first element.
@@ -828,11 +829,21 @@ class ImportContent(BrowserView):
             parent_path = parent_path[1:]
 
         # create original structure for imported content
+
+        parents = dict()
+        for p in item["parents"]:
+            p_url = unquote(p["@id"])
+            p_url_parsed = urlparse(p_url)
+            p_id = p_url_parsed.path.split("/")[-1]
+            parents[p_id] = p
+
+
         for element in parent_path:
             if element not in folder:
+                portal_type = parents[element]["@type"]
                 folder = api.content.create(
                     container=folder,
-                    type="Folder",
+                    type=portal_type,
                     id=element,
                     title=element,
                 )
@@ -841,6 +852,15 @@ class ImportContent(BrowserView):
                         folder.absolute_url(), item["@id"]
                     )
                 )
+
+                parent_item = parents[element]
+                if parent_item["review_state"] and parent_item["review_state"] != "private":
+                    if portal_workflow.getChainFor(folder):
+                        try:
+                            api.content.transition(to_state=parent_item["review_state"], obj=folder)
+                        except InvalidParameterError as e:
+                            logger.info(e)
+
             else:
                 folder = folder[element]
 
