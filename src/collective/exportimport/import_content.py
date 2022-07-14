@@ -282,6 +282,7 @@ class ImportContent(BrowserView):
                     break
                 self.import_item(index, item, added)
             except Exception as error:
+                logger.error(error)
                 self.errors.append(
                     dict(id=item["@id"], uid=item["UID"], error=repr(error)))
         return added
