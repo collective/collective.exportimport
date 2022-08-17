@@ -253,7 +253,13 @@ class ImportMembers(BrowserView):
                     u"Skipping user {} without email: {}".format(username, item)
                 )
                 continue
-            pr.addMember(username, password, roles, [], item)
+            try:
+                pr.addMember(username, password, roles, [], item)
+            except ValueError:
+                logger.info(
+                    u"ValueError {} : {}".format(username, item)
+                )
+                continue
             for group in groups:
                 if group not in groupsDict.keys():
                     groupsDict[group] = acl.getGroupById(group)
