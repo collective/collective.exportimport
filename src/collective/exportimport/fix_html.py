@@ -248,10 +248,56 @@ def find_object(base, path):
         return target
 
 
-def fix_html_in_content_fields(context=None, commit=True):
-    """Fix html this after importing content into Plone 5 or 6."""
+def fix_html_in_content_fields(context=None, commit=True, fixers=None):
+    """Fix html this after importing content into Plone 5 or 6.
+    When calling this from your code you can pass additional fixers to modify the html.
+
+    Example for a fixer that changes css-classes of tables::
+
+        def table_class_fixer(text, obj=None):
+            if "table" not in text:
+                return text
+
+            dropped_classes = [
+                "MsoNormalTable",
+                "MsoTableGrid",
+            ]
+            replaced_classes = {
+                "invisible": "table-borderless",
+                "plain": "table-borderless",
+                "listing": "table-striped",
+            }
+            soup = BeautifulSoup(text, "html.parser")
+            for table in soup.find_all("table"):
+                new_classes = []
+                table_classes = table.get("class", [])
+
+                for dropped in dropped_classes:
+                    if dropped in table_classes:
+                        table_classes.remove(dropped)
+
+                for old, new in replaced_classes.items():
+                    if old in table_classes:
+                        table_classes.remove(old)
+                        table_classes.append(new)
+
+                # all tables get the default bootstrap table class
+                if "table" not in table_classes:
+                    table_classes.insert(0, "table")
+                if new_classes:
+                    table["class"] = new_classes
+
+            return soup.decode()
+    """
     catalog = api.portal.get_tool("portal_catalog")
     portal_types = api.portal.get_tool("portal_types")
+
+    if fixers is None:
+        fixers = [html_fixer]
+    else:
+        if not isinstance(fixers, list):
+            fixers = [fixers]
+        fixers = [html_fixer] + [i for i in fixers if callable(i)]
 
     # Find RichText field for all registered types
     types_with_richtext_fields = defaultdict(list)
@@ -280,12 +326,14 @@ def fix_html_in_content_fields(context=None, commit=True):
             for fieldname in types_with_richtext_fields[obj.portal_type]:
                 text = getattr(obj.aq_base, fieldname, None)
                 if text and IRichTextValue.providedBy(text) and text.raw:
-                    logger.debug("Checking {}".format(obj.absolute_url()))
-                    try:
-                        clean_text = html_fixer(text.raw, obj)
-                    except Exception:
-                        logger.info(u"Error while fixing html of %s for %s", fieldname, obj.absolute_url())
-                        raise
+                    clean_text = text.raw
+                    for fixer in fixers:
+                        logger.debug("Fixing html for %s with %s", obj.absolute_url(), fixer.__name__)
+                        try:
+                            clean_text = fixer(clean_text, obj)
+                        except Exception:
+                            logger.info(u"Error while fixing html of %s for %s", fieldname, obj.absolute_url())
+                            raise
 
                     if clean_text and clean_text != text.raw:
                         textvalue = RichTextValue(
