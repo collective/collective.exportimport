@@ -248,30 +248,6 @@ def find_object(base, path):
         return target
 
 
-def find_object(base, path):
-    """Find a link target based ob a absolute or relative path.
-    When the target in the link is no content leave the link as is.
-    It might be a link to a browser-view, form or script...
-    """
-    if six.PY2 and isinstance(path, six.text_type):
-        path = path.encode("utf-8")
-    if path.startswith("/"):
-        # Make an absolute path relative to the portal root
-        obj = api.portal.get()
-        portal_path = obj.absolute_url_path() + "/"
-        if path.startswith(portal_path):
-            path = path[len(portal_path):]
-    else:
-        obj = aq_parent(base)  # relative urls start at the parent...
-
-    try:
-        target = obj.unrestrictedTraverse(path)
-    except:
-        return
-    if IContentish.providedBy(target):
-        return target
-
-
 def fix_html_in_content_fields(context=None, commit=True):
     """Run this in Plone 5.x"""
     catalog = api.portal.get_tool("portal_catalog")
