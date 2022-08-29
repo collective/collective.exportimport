@@ -248,77 +248,93 @@ def find_object(base, path):
         return target
 
 
-def find_object(base, path):
-    """Find a link target based ob a absolute or relative path.
-    When the target in the link is no content leave the link as is.
-    It might be a link to a browser-view, form or script...
+def fix_html_in_content_fields(context=None, commit=True, fixers=None):
+    """Fix html this after importing content into Plone 5 or 6.
+    When calling this from your code you can pass additional fixers to modify the html.
+
+    Example for a fixer that changes css-classes of tables::
+
+        def table_class_fixer(text, obj=None):
+            if "table" not in text:
+                return text
+
+            dropped_classes = [
+                "MsoNormalTable",
+                "MsoTableGrid",
+            ]
+            replaced_classes = {
+                "invisible": "table-borderless",
+                "plain": "table-borderless",
+                "listing": "table-striped",
+            }
+            soup = BeautifulSoup(text, "html.parser")
+            for table in soup.find_all("table"):
+                new_classes = []
+                table_classes = table.get("class", [])
+
+                for dropped in dropped_classes:
+                    if dropped in table_classes:
+                        table_classes.remove(dropped)
+
+                for old, new in replaced_classes.items():
+                    if old in table_classes:
+                        table_classes.remove(old)
+                        table_classes.append(new)
+
+                # all tables get the default bootstrap table class
+                if "table" not in table_classes:
+                    table_classes.insert(0, "table")
+                if new_classes:
+                    table["class"] = new_classes
+
+            return soup.decode()
     """
-    if six.PY2 and isinstance(path, six.text_type):
-        path = path.encode("utf-8")
-    if path.startswith("/"):
-        # Make an absolute path relative to the portal root
-        obj = api.portal.get()
-        portal_path = obj.absolute_url_path() + "/"
-        if path.startswith(portal_path):
-            path = path[len(portal_path):]
-    else:
-        obj = aq_parent(base)  # relative urls start at the parent...
-
-    try:
-        target = obj.unrestrictedTraverse(path)
-    except:
-        return
-    if IContentish.providedBy(target):
-        return target
-
-
-def fix_html_in_content_fields(context=None, commit=True):
-    """Run this in Plone 5.x"""
     catalog = api.portal.get_tool("portal_catalog")
     portal_types = api.portal.get_tool("portal_types")
 
+    if fixers is None:
+        fixers = [html_fixer]
+    else:
+        if not isinstance(fixers, list):
+            fixers = [fixers]
+        fixers = [html_fixer] + [i for i in fixers if callable(i)]
+
+    # Find RichText field for all registered types
     types_with_richtext_fields = defaultdict(list)
     for portal_type in portal_types.keys():
         for schema in iterSchemataForType(portal_type):
             for fieldname, field in schema.namesAndDescriptions():
                 if IRichText.providedBy(field):
                     types_with_richtext_fields[portal_type].append(fieldname)
-    query = {}
-    query["portal_type"] = list(types_with_richtext_fields.keys())
-    query["sort_on"] = "path"
-
+    query = {
+        "portal_type": list(types_with_richtext_fields.keys()),
+        "sort_on": "path",
+    }
     brains = catalog(**query)
     total = len(brains)
-    logger.info(
-        "There are {} content items in total, starting migration...".format(len(brains))
-    )
-    results = 0
-    results_to_commit = 0
-    items_to_commit = 0
+    logger.info("There are %s content items in total, starting migration...", len(brains))
+    fixed_fields = 0
+    fixed_items = 0
     for index, brain in enumerate(brains, start=1):
         try:
             obj = brain.getObject()
         except Exception:
-            logger.warning(
-                "Not possible to fetch object from catalog result for "
-                "item: {}.".format(brain.getPath())
-            )
+            logger.warning("Could not get object for: %s", brain.getPath(), exc_info=True)
             continue
         try:
-            _p = results_to_commit
+            changed = False
             for fieldname in types_with_richtext_fields[obj.portal_type]:
                 text = getattr(obj.aq_base, fieldname, None)
                 if text and IRichTextValue.providedBy(text) and text.raw:
-                    logger.debug("Checking {}".format(obj.absolute_url()))
-                    try:
-                        clean_text = html_fixer(text.raw, obj)
-                    except Exception as e:
-                        logger.info(
-                            "html_fixer error: @{} {}".format(
-                                obj.absolute_url(), fieldname
-                            )
-                        )
-                        raise
+                    clean_text = text.raw
+                    for fixer in fixers:
+                        logger.debug("Fixing html for %s with %s", obj.absolute_url(), fixer.__name__)
+                        try:
+                            clean_text = fixer(clean_text, obj)
+                        except Exception:
+                            logger.info(u"Error while fixing html of %s for %s", fieldname, obj.absolute_url())
+                            raise
+
                     if clean_text and clean_text != text.raw:
                         textvalue = RichTextValue(
                             raw=clean_text,
@@ -327,41 +343,28 @@ def fix_html_in_content_fields(context=None, commit=True):
                             encoding=text.encoding,
                         )
                         setattr(obj, fieldname, textvalue)
-                        obj.reindexObject(idxs=("SearchableText",))
-                        logger.debug(
-                            "Fixed html for field {} of {}".format(
-                                fieldname, obj.absolute_url()
-                            )
-                        )
-                        results += 1
-                        results_to_commit += 1
+                        changed = True
+                        logger.debug(u"Fixed html for field %s of %s", fieldname, obj.absolute_url())
+                        fixed_fields += 1
+            if changed:
+                fixed_items += 1
+                obj.reindexObject(idxs=("SearchableText",))
         except:
             logger.exception("HTML not fixed for {}".format(obj.absolute_url()))
-        if _p != results_to_commit:
-            items_to_commit += 1
 
-        if results_to_commit >= 1000:
-            # Commit every 1000 changes.
-            msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(
-                items_to_commit, round(items_to_commit / total * 100, 2), total, results
-            )
-            logger.info(msg)
+        if fixed_items != 0 and not fixed_items % 1000:
+            # Commit every 1000 changed items.
+            logger.info(u"Fix html for %s (%s) of %s items (changed %s fields in %s items)",
+                index, round(index / total * 100, 2), total, fixed_fields, fixed_items)
             if commit:
-                transaction.get().note(msg)
                 transaction.commit()
-            results_to_commit = 0
 
-    if results_to_commit > 0:
-        # Commit any remaining changes.
-        msg = u"Fix html for {} ({}%) of {} items ({} changed fields)".format(
-            items_to_commit, round(items_to_commit / total * 100, 2), total, results
-        )
-        logger.info(msg)
-        if commit:
-            transaction.get().note(msg)
-            transaction.commit()
+    logger.info(u"Finished fixing html in content fields (changed %s fields in %s items)", fixed_fields, fixed_items)
+    if commit:
+        # commit remaining items
+        transaction.commit()
 
-    return results
+    return fixed_items
 
 
 def fix_html_in_portlets(context=None):
