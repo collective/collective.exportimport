@@ -14,6 +14,9 @@ Changelog
 - Support export to server by passing ``download_to_server=True`` for all exports (#115).
   [pbauer]
 
+- Add support for adding custom html-fixers to fix_html_in_content_fields.
+  [pbauer]
+
 
 1.5 (2022-04-26)
 ----------------
