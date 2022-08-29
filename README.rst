@@ -218,7 +218,7 @@ The best way depends on how you are going to import the blobs:
 
 - Export as download urls: small download, but ``collective.exportimport`` cannot import the blobs, so you will need an own import script to download them.
 - Export as base-64 encoded strings: large download, but ``collective.exportimport`` can handle the import.
-- Export as blob paths: small download and ``collective.exportimport`` can handle the import, but you need to copy ``var/blobstorage`` to the Plone Site where you do the import.
+- Export as blob paths: small download and ``collective.exportimport`` can handle the import, but you need to copy ``var/blobstorage`` to the Plone Site where you do the import or set the environment variable ``COLLECTIVE_EXPORTIMPORT_BLOB_HOME`` to the old blobstorage path: ``export COLLECTIVE_EXPORTIMPORT_BLOB_HOME=/path-to-old-instance/var/blobstorage``.
 
 
 Customize export and import
