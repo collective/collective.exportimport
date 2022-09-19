@@ -5,6 +5,9 @@ Changelog
 1.6 (unreleased)
 ----------------
 
+- Use `Language=all` when querying TranslationGroup items
+  [erral]
+
 - Export parent UID and use it to find the container to import.
   [pbauer]
 

@@ -356,7 +356,7 @@ class ExportTranslations(BaseExport):
             return results
 
         for uid in portal_catalog.uniqueValuesFor("TranslationGroup"):
-            brains = portal_catalog(TranslationGroup=uid)
+            brains = portal_catalog(TranslationGroup=uid, Language='all')
 
             if len(brains) < 2:
                 # logger.info(u'Skipping...{} {}'.format(uid, brains))
