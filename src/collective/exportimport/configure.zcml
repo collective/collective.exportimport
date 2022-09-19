@@ -98,10 +98,10 @@
       factory=".serializer.ATImageFieldSerializer" />
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATImageFieldSerializerForBlobPaths" />
-  
+
   <adapter zcml:condition="installed Products.TALESField"
       factory=".serializer.ATTalesFieldSerializer" />
-      
+
   <adapter zcml:condition="installed Products.Archetypes"
       factory=".serializer.ATTextFieldSerializer" />
   <configure zcml:condition="installed Products.Archetypes">
@@ -161,7 +161,7 @@
       />
 
   <browser:page
-      zcml:condition="installed plone.app.multilingual"
+      zcml:condition="installed plone.app.multilingual.interfaces.ITranslationManager"
       name="import_translations"
       for="zope.interface.Interface"
       class=".import_other.ImportTranslations"

@@ -5,6 +5,9 @@ Changelog
 1.6 (unreleased)
 ----------------
 
+- Be more specific in the import_translation endpoint condition to install in a site with p.a.multilingual 1.x
+  [erral]
+
 - Export parent UID and use it to find the container to import.
   [pbauer]
 
