@@ -226,6 +226,20 @@ Customize export and import
 
 This addon is designed to be adapted to your requirements and has multiple hooks to make that easy.
 
+To make that easier here are packages you can reuse to override and extend the export and import.
+Use these templates and adapt them to your own projects:
+
+* https://github.com/starzel/contentexport
+* https://github.com/starzel/contentimport
+
+Many examples for customizing the export and import are collected in the chapter "FAQ, Tips and Tricks" below.
+
+.. note::
+
+    As a rule of thumb you should make changes to the data during import unless you need access to the original object for the required changes.
+    One reason is that this way the serialized content in the json-file more closely represents the original data.
+    Another reason is that it allows you to fix issues during the process you are currently developing (i.e. without having to redo the export).
+
 
 Export Example
 --------------
@@ -450,11 +464,174 @@ Run all imports using the data exported in the example above:
             reset_dates()
             transaction.commit()
 
+.. note::
+
+    The views ``@@export_all`` and ``@@import_all`` are also contained in the helper-packages https://github.com/starzel/contentexport and https://github.com/starzel/contentimport
 
 FAQ, Tips and Tricks
 ====================
 
 This section covers frequent use-cases and examples for features that are not required for all migrations.
+
+Using global_obj_hook during export
+-----------------------------------
+
+Using ``global_obj_hook`` during export to inspect content and decide to skip it.
+
+.. code-block:: python
+
+    def global_obj_hook(self, obj):
+        # Drop subtopics
+        if obj.portal_type == "Topic" and obj.__parent__.portal_type == "Topic":
+            return
+
+        # Drop files and images from PFG formfolders
+        if obj.__parent__.portal_type == "FormFolder":
+            return
+        return obj
+
+
+Using dict-hooks during export
+------------------------------
+
+Use ``global_dict_hook`` during export to inspect content and modify the serialized json.
+You can also use ``dict_hook_<somecontenttype>`` to better structure your code for readability.
+
+Sometimes you need to handle data that you add in ``global_dict_hook`` during export in corresponding code in ``global_object_hook`` during import.
+
+The following example about placeful workflow policy is a perfect example for that pattern:
+
+
+Export/Import placeful workflow policy
+--------------------------------------
+
+Export:
+
+.. code-block:: python
+
+    def global_dict_hook(self, item, obj):
+        if obj.isPrincipiaFolderish and ".wf_policy_config" in obj.keys():
+            wf_policy = obj[".wf_policy_config"]
+            item["exportimport.workflow_policy"] = {
+                "workflow_policy_below": wf_policy.workflow_policy_below,
+                "workflow_policy_in": wf_policy.workflow_policy_in,
+            }
+        return item
+
+Import:
+
+.. code-block:: python
+
+    def global_obj_hook(self, obj, item):
+        wf_policy = item.get("exportimport.workflow_policy")
+        if wf_policy:
+            obj.manage_addProduct["CMFPlacefulWorkflow"].manage_addWorkflowPolicyConfig()
+            wf_policy_config = obj[".wf_policy_config"]
+            wf_policy_config.setPolicyIn(wf_policy["workflow_policy_in"], update_security=True)
+            wf_policy_config.setPolicyBelow(wf_policy["workflow_policy_below"], update_security=True)
+
+
+Using dict-hooks during import
+------------------------------
+
+A lot of fixes can be done during import using the ``global_dict_hook`` or ``dict_hook_<contenttype>``.
+
+Here we prevent the expire-date to be before the effective date since that would lead to validation-errors during deserializing:
+
+.. code-block:: python
+
+    def global_dict_hook(self, item):
+        effective = item.get('effective', None)
+        expires = item.get('expires', None)
+        if effective and expires and expires <= effective:
+            item.pop('expires')
+        return item
+
+Here we drop empty lines from the creators:
+
+.. code-block:: python
+
+    def global_dict_hook(self, item):
+        item["creators"] = [i for i in item.get("creators", []) if i]
+        return item
+
+This example migrates a PloneHelpCenter to a simple folder/document structure during import.
+There are a couple more types to handle (as folder or document) but you get the idea, don't you?
+
+.. code-block:: python
+
+    def dict_hook_helpcenter(self, item):
+        item["@type"] = "Folder"
+        item["layout"] = "listing_view"
+        return item
+
+    def dict_hook_helpcenterglossary(self, item):
+        item["@type"] = "Folder"
+        item["layout"] = "listing_view"
+        return item
+
+    def dict_hook_helpcenterinstructionalvideo(self, item):
+        item["@type"] = "File"
+        if item.get("video_file"):
+            item["file"] = item["video_file"]
+        return item
+
+    def dict_hook_helpcenterlink(self, item):
+        item["@type"] = "Link"
+        item["remoteUrl"] = item.get("url", None)
+        return item
+
+    def dict_hook_helpcenterreferencemanualpage(self, item):
+        item["@type"] = "Document"
+        return item
+
+If you change types during import you need to take care of other cases where types are referenced.\
+Examples are collection-queries (see "Fixing invalid collection queries" below) or constrains (see here):
+
+.. code-block:: python
+
+    PORTAL_TYPE_MAPPING = {
+        "Topic": "Collection",
+        "FormFolder": "EasyForm",
+        "HelpCenter": "Folder",
+    }
+
+    def global_dict_hook(self, item):
+        if item.get("exportimport.constrains"):
+            types_fixed = []
+            for portal_type in item["exportimport.constrains"]["locally_allowed_types"]:
+                if portal_type in PORTAL_TYPE_MAPPING:
+                    types_fixed.append(PORTAL_TYPE_MAPPING[portal_type])
+                elif portal_type in ALLOWED_TYPES:
+                    types_fixed.append(portal_type)
+            item["exportimport.constrains"]["locally_allowed_types"] = list(set(types_fixed))
+
+            types_fixed = []
+            for portal_type in item["exportimport.constrains"]["immediately_addable_types"]:
+                if portal_type in PORTAL_TYPE_MAPPING:
+                    types_fixed.append(PORTAL_TYPE_MAPPING[portal_type])
+                elif portal_type in ALLOWED_TYPES:
+                    types_fixed.append(portal_type)
+            item["exportimport.constrains"]["immediately_addable_types"] = list(set(types_fixed))
+        return item
+
+
+Change workflow
+---------------
+
+.. code-block:: python
+
+    REVIEW_STATE_MAPPING = {
+        "internal": "published",
+        "internally_published": "published",
+        "obsolete": "private",
+        "hidden": "private",
+    }
+
+    def global_dict_hook(self, item):
+        if item.get("review_state") in REVIEW_STATE_MAPPING:
+            item["review_state"] = REVIEW_STATE_MAPPING[item["review_state"]]
+        return item
 
 
 Export/Import Annotations
@@ -474,7 +651,7 @@ Here is how you can migrate them.
     ]
     ANNOTATIONS_KEY = 'exportimport.annotations'
 
-    class ExportContent(ExportContent)
+    class CustomExportContent(ExportContent):
 
         def global_dict_hook(self, item, obj):
             item = self.export_annotations(item, obj)
@@ -498,7 +675,7 @@ Here is how you can migrate them.
     from zope.annotation.interfaces import IAnnotations
     ANNOTATIONS_KEY = "exportimport.annotations"
 
-    class ImportContent(ImportContent):
+    class CustomImportContent(ImportContent):
 
         def global_obj_hook(self, obj, item):
             item = self.import_annotations(obj, item)
@@ -530,7 +707,7 @@ It is a good idea to inspect a list of all used marker interfaces in a portal be
     ]
     MARKER_INTERFACES_KEY = "exportimport.marker_interfaces"
 
-    class ExportContent(ExportContent)
+    class CustomExportContent(ExportContent)
 
         def global_dict_hook(self, item, obj):
             item = self.export_marker_interfaces(item, obj)
@@ -552,7 +729,7 @@ It is a good idea to inspect a list of all used marker interfaces in a portal be
 
     MARKER_INTERFACES_KEY = "exportimport.marker_interfaces"
 
-    class ImportContent(ImportContent):
+    class CustomImportContent(ImportContent):
 
         def global_obj_hook_before_deserializing(self, obj, item):
             """Apply marker interfaces before deserializing."""
@@ -565,6 +742,82 @@ It is a good idea to inspect a list of all used marker interfaces in a portal be
                 except ModuleNotFoundError:
                     pass
             return obj, item
+
+Skip versioning during import
+-----------------------------
+
+The event-handlers of versioning can seriously slow down your imports.
+It is a good idea to skip it before the import:
+
+.. code-block:: python
+
+    VERSIONED_TYPES = [
+        "Document",
+        "News Item",
+        "Event",
+        "Link",
+    ]
+
+    def start(self):
+        self.items_without_parent = []
+        portal_types = api.portal.get_tool("portal_types")
+        for portal_type in VERSIONED_TYPES:
+            fti = portal_types.get(portal_type)
+            behaviors = list(fti.behaviors)
+            if 'plone.versioning' in behaviors:
+                logger.info(f"Disable versioning for {portal_type}")
+                behaviors.remove('plone.versioning')
+            fti.behaviors = behaviors
+
+Re-enable versioning and create initial versions after all imports and fixes are done, e.g in the view ``@@import_all``.
+
+.. code-block:: python
+
+    from Products.CMFEditions.interfaces.IModifier import FileTooLargeToVersionError
+
+    VERSIONED_TYPES = [
+        "Document",
+        "News Item",
+        "Event",
+        "Link",
+    ]
+
+    class ImportAll(BrowserView):
+
+        # re-enable versioning
+        portal_types = api.portal.get_tool("portal_types")
+        for portal_type in VERSIONED_TYPES:
+            fti = portal_types.get(portal_type)
+            behaviors = list(fti.behaviors)
+            if "plone.versioning" not in behaviors:
+                behaviors.append("plone.versioning")
+                logger.info(f"Enable versioning for {portal_type}")
+            if "plone.locking" not in behaviors:
+                behaviors.append("plone.locking")
+                logger.info(f"Enable locking for {portal_type}")
+            fti.behaviors = behaviors
+        transaction.get().note("Re-enabled versioning")
+        transaction.commit()
+
+        # create initial version for all versioned types
+        logger.info("Creating initial versions")
+        portal_repository = api.portal.get_tool("portal_repository")
+        brains = api.content.find(portal_type=VERSIONED_TYPES)
+        total = len(brains)
+        for index, brain in enumerate(brains):
+            obj = brain.getObject()
+            try:
+                portal_repository.save(obj=obj, comment="Imported Version")
+            except FileTooLargeToVersionError:
+                pass
+            if not index % 1000:
+                msg = f"Created versions for {index} of {total} items."
+                logger.info(msg)
+                transaction.get().note(msg)
+                transaction.commit()
+        msg = "Created initial versions"
+        transaction.get().note(msg)
+        transaction.commit()
 
 
 Defer imports
@@ -594,7 +847,7 @@ The export does not need to change, only the import.
     }
     SIMPLE_SETTER_FIELDS = {"custom_type": ["another_field"]}
 
-    class ImportContent(ImportContent):
+    class CustomImportContent(ImportContent):
 
         def global_dict_hook(self, item):
             # Move deferred values to a different key to not deserialize.
@@ -668,10 +921,118 @@ This additional view obviously needs to be registered:
         permission="cmf.ManagePortal"
         />
 
+
+Handle LinguaPlone content
+--------------------------
+
+Export:
+
+.. code-block:: python
+
+    def global_dict_hook(self, item, obj):
+        # Find language of the nearest parent with a language
+        # Usefull for LinguaPlone sites where some content is languageindependent
+        parent = obj.__parent__
+        for ancestor in parent.aq_chain:
+            if IPloneSiteRoot.providedBy(ancestor):
+                # keep language for root content
+                nearest_ancestor_lang = item["language"]
+                break
+            if getattr(ancestor, "getLanguage", None) and ancestor.getLanguage():
+                nearest_ancestor_lang = ancestor.getLanguage()
+                item["parent"]["language"] = nearest_ancestor_lang
+                break
+
+        # This forces "wrong" languages to the nearest parents language
+        if "language" in item and item["language"] != nearest_ancestor_lang:
+            logger.info(u"Forcing %s (was %s) for %s %s ", nearest_ancestor_lang, item["language"], item["@type"], item["@id"])
+            item["language"] = nearest_ancestor_lang
+
+        # set missing language
+        if not item.get("language"):
+            item["language"] = nearest_ancestor_lang
+
+        # add info on translations to help find the right container
+        # usually this idone by export_translations
+        # but when migrating from LP to pam you sometimes want to check the
+        # tranlation info during import
+        if getattr(obj.aq_base, "getTranslations", None) is not None:
+            translations = obj.getTranslations()
+            if translations:
+                item["translation"] = {}
+                for lang in translations:
+                    uuid = IUUID(translations[lang][0], None)
+                    if uuid == item["UID"]:
+                        continue
+                    translation = translations[lang][0]
+                    if not lang:
+                        lang = "no_language"
+                    item["translation"][lang] = translation.absolute_url()
+
+Import:
+
+.. code-block:: python
+
+    def global_dict_hook(self, item):
+
+        # Adapt this to your site
+        languages = ["en", "fr", "de"]
+        default_language = "en"
+        portal_id = "Plone"
+
+        # No language => lang of parent or default
+        if item.get("language") not in languages:
+            if item["parent"].get("language"):
+                item["language"] = item["parent"]["language"]
+            else:
+                item["language"] = default_language
+
+        lang = item["language"]
+
+        if item["parent"].get("language") != item["language"]:
+            logger.debug(f"Inconsistent lang: item is {lang}, parent is {item['parent'].get('language')} for {item['@id']}")
+
+        # Move item to the correct language-root-folder
+        # This is only relevant for items in the site-root.
+        # Most items containers are usually looked up by the uuid of the old parent
+        url = item["@id"]
+        parent_url = item["parent"]["@id"]
+
+        url = url.replace(f"/{portal_id}/", f"/{portal_id}/{lang}/", 1)
+        parent_url = parent_url.replace(f"/{portal_id}", f"/{portal_id}/{lang}", 1)
+
+        item["@id"] = url
+        item["parent"]["@id"] = parent_url
+
+        return item
+
 Alternative ways to handle items without parent
 -----------------------------------------------
 
-TODO
+Often it is better to export and log items for which no container could be found instead of re-creating the original structure.
+
+.. code-block:: python
+
+    def update(self):
+        self.items_without_parent = []
+
+    def create_container(self, item):
+        # Override create_container to never create parents
+        self.items_without_parent.append(item)
+
+    def finish(self):
+        # export content without parents
+        if self.items_without_parent:
+            data = json.dumps(self.items_without_parent, sort_keys=True, indent=4)
+            number = len(self.items_without_parent)
+            cfg = getConfiguration()
+            filename = 'content_without_parent.json'
+            filepath = os.path.join(cfg.clienthome, filename)
+            with open(filepath, 'w') as f:
+                f.write(data)
+            msg = u"Saved {} items without parent to {}".format(number, filepath)
+            logger.info(msg)
+            api.portal.show_message(msg, self.request)
 
 
 Export/Import registry settings
@@ -800,20 +1161,405 @@ Export/Import installed Add-ons
 
 TODO
 
-Export PloneFormGen as Easyform
--------------------------------
+Migrate PloneFormGen to Easyform
+--------------------------------
 
-TODO
+To be able to export PFG as easyform you should use the branch ``migration_features_1.x`` of ``collective.easyform`` in your old site.
+Easyform does not need to be installed, we only need the methods ``fields_model`` and ``actions_model``.
+
+Export:
+
+.. code-block:: python
+
+    def dict_hook_formfolder(self, item, obj):
+        item["@type"] = "EasyForm"
+        item["is_folderish"] = False
+
+        from collective.easyform.migration.fields import fields_model
+        from collective.easyform.migration.actions import actions_model
+
+        # this does most of the heavy lifting...
+        item["fields_model"] = fields_model(obj)
+        item["actions_model"] = actions_model(obj)
+
+        # handle thankspage
+        pfg_thankspage = obj.get(obj.getThanksPage(), None)
+        if pfg_thankspage:
+            item["thankstitle"] = pfg_thankspage.title
+            item["thanksdescription"] = pfg_thankspage.Description()
+            item["showAll"] = pfg_thankspage.showAll
+            item["showFields"] = pfg_thankspage.showFields
+            item["includeEmpties"] = pfg_thankspage.includeEmpties
+            item["thanksPrologue"] = json_compatible(pfg_thankspage.thanksPrologue.raw)
+            item["thanksEpilogue"] = json_compatible(pfg_thankspage.thanksEpilogue.raw)
+
+        # optional
+        item["exportimport._inputStorage"] = self.export_saved_data(obj)
+
+        # Drop some PFG fields no longer needed
+        obsolete_fields = [
+            "layout",
+            "actionAdapter",
+            "checkAuthenticator",
+            "constrainTypesMode",
+            "location",
+            "thanksPage",
+        ]
+        for key in obsolete_fields:
+            item.pop(key, None)
+
+        # optional: disable tabs for imported forms
+        item["form_tabbing"] = False
+
+        # fix some custom validators
+        replace_mapping = {
+            "request.form['": "request.form['form.widgets.",
+            "request.form.get('": "request.form.get('form.widgets.",
+            "member and member.id or ''": "member and member.getProperty('id', '') or ''",
+        }
+
+        # fix overrides in actions and fields to use form.widgets.xyz instead of xyz
+        for schema in ["actions_model", "fields_model"]:
+            for old, new in replace_mapping.items():
+                if old in item[schema]:
+                    item[schema] = item[schema].replace(old, new)
+
+            # add your own fields if you have these issues...
+            for fieldname in [
+                "email",
+                "replyto",
+            ]:
+                if "request/form/{}".format(fieldname) in item[schema]:
+                    item[schema] = item[schema].replace("request/form/{}".format(fieldname), "python: request.form.get('form.widgets.{}')".format(fieldname))
+
+        return item
+
+    def export_saved_data(self, obj):
+        actions = {}
+        for data_adapter in obj.objectValues("FormSaveDataAdapter"):
+            data_adapter_name = data_adapter.getId()
+            actions[data_adapter_name] = {}
+            cols = data_adapter.getColumnNames()
+            column_count_mismatch = False
+            for idx, row in enumerate(data_adapter.getSavedFormInput()):
+                if len(row) != len(cols):
+                    column_count_mismatch = True
+                    logger.debug("Column count mismatch at row %s", idx)
+                    continue
+                data = {}
+                for key, value in zip(cols, row):
+                    data[key] = json_compatible(value)
+                id_ = int(time() * 1000)
+                while id_ in actions[data_adapter_name]:  # avoid collisions during export
+                    id_ += 1
+                data["id"] = id_
+                actions[data_adapter_name][id_] = data
+            if column_count_mismatch:
+                logger.info(
+                    "Number of columns does not match for all rows. Some data were skipped in "
+                    "data adapter %s/%s",
+                    "/".join(obj.getPhysicalPath()),
+                    data_adapter_name,
+                )
+        return actions
+
+Import exported PloneFormGen data into Easyform:
+
+.. code-block:: python
+
+    def obj_hook_easyform(self, obj, item):
+        if not item.get("exportimport._inputStorage"):
+            return
+        from collective.easyform.actions import SavedDataBTree
+        from persistent.mapping import PersistentMapping
+        if not hasattr(obj, '_inputStorage'):
+            obj._inputStorage = PersistentMapping()
+        for name, data in item["exportimport._inputStorage"].items():
+            obj._inputStorage[name] = SavedDataBTree()
+            for key, row in data.items():
+                 obj._inputStorage[name][int(key)] = row
+
+
+Export and import collective.cover content
+------------------------------------------
+
+Export:
+
+.. code-block:: python
+
+    from collective.exportimport.serializer import get_dx_blob_path
+    from plone.app.textfield.value import RichTextValue
+    from plone.namedfile.file import NamedBlobImage
+    from plone.restapi.interfaces import IJsonCompatible
+    from z3c.relationfield import RelationValue
+    from zope.annotation.interfaces import IAnnotations
+
+    def global_dict_hook(self, item, obj):
+        item = self.handle_cover(item, obj)
+        return item
+
+    def handle_cover(self, item, obj):
+        if ICover.providedBy(obj):
+            item['tiles'] = {}
+            annotations = IAnnotations(obj)
+            for tile in obj.get_tiles():
+                annotation_key = 'plone.tiles.data.{}'.format(tile['id'])
+                annotation = annotations.get(annotation_key, None)
+                if annotation is None:
+                    continue
+                tile_data = self.serialize_tile(annotation)
+                tile_data['type'] = tile['type']
+                item['tiles'][tile['id']] = tile_data
+        return item
+
+    def serialize_tile(self, annotation):
+        data = {}
+        for key, value in annotation.items():
+            if isinstance(value, RichTextValue):
+                value = value.raw
+            elif isinstance(value, RelationValue):
+                value = value.to_object.UID()
+            elif isinstance(value, NamedBlobImage):
+                blobfilepath = get_dx_blob_path(value)
+                if not blobfilepath:
+                    continue
+                value = {
+                    "filename": value.filename,
+                    "content-type": value.contentType,
+                    "size": value.getSize(),
+                    "blob_path": blobfilepath,
+                }
+            data[key] = IJsonCompatible(value, None)
+        return data
+
+Import:
+
+.. code-block:: python
+
+    from collections import defaultdict
+    from collective.exportimport.import_content import get_absolute_blob_path
+    from plone.app.textfield.interfaces import IRichText
+    from plone.app.textfield.interfaces import IRichTextValue
+    from plone.namedfile.file import NamedBlobImage
+    from plone.namedfile.interfaces import INamedBlobImageField
+    from plone.tiles.interfaces import ITileType
+    from zope.annotation.interfaces import IAnnotations
+    from zope.component import getUtilitiesFor
+    from zope.schema import getFieldsInOrder
+
+    COVER_CONTENT = [
+        "collective.cover.content",
+    ]
+
+    def global_obj_hook(self, obj, item):
+        if item["@type"] in COVER_CONTENT and "tiles" in item:
+            item = self.import_tiles(obj, item)
+
+    def import_tiles(self, obj, item):
+        RICHTEXT_TILES = defaultdict(list)
+        IMAGE_TILES = defaultdict(list)
+        for tile_name, tile_type in getUtilitiesFor(ITileType):
+            for fieldname, field in getFieldsInOrder(tile_type.schema):
+                if IRichText.providedBy(field):
+                    RICHTEXT_TILES[tile_name].append(fieldname)
+                if INamedBlobImageField.providedBy(field):
+                    IMAGE_TILES[tile_name].append(fieldname)
+
+        annotations = IAnnotations(obj)
+        prefix = "plone.tiles.data."
+        for uid, tile in item["tiles"].items():
+            # TODO: Maybe create all tiles that do not need to be defferred?
+            key = prefix + uid
+            tile_name = tile.pop("type", None)
+            # first set raw data
+            annotations[key] = item["tiles"][uid]
+            for fieldname in RICHTEXT_TILES.get(tile_name, []):
+                raw = annotations[key][fieldname]
+                if raw is not None and not IRichTextValue.providedBy(raw):
+                    annotations[key][fieldname] = RichTextValue(raw, "text/html", "text/x-html-safe")
+            for fieldname in IMAGE_TILES.get(tile_name, []):
+                data = annotations[key][fieldname]
+                if data is not None:
+                    blob_path = data.get("blob_path")
+                    if not blob_path:
+                        continue
+
+                    abs_blob_path = get_absolute_blob_path(obj, blob_path)
+                    if not abs_blob_path:
+                        logger.info("Blob path %s for tile %s of %s %s does not exist!", blob_path, tile, obj.portal_type, obj.absolute_url())
+                        continue
+                    # Determine the class to use: file or image.
+                    filename = data["filename"]
+                    content_type = data["content-type"]
+
+                    # Write the field.
+                    with open(abs_blob_path, "rb") as myfile:
+                        blobdata = myfile.read()
+                    image = NamedBlobImage(
+                        data=blobdata,
+                        contentType=content_type,
+                        filename=filename,
+                    )
+                    annotations[key][fieldname] = image
+        return item
+
 
 Fixing invalid collection queries
 ---------------------------------
 
-TODO
+Some queries changes between Plone 4 and 5.
+This fixes the issues.
+
+The actual migration of topics to collections in ``collective.exportimport.serializer.SerializeTopicToJson`` does not (yet) take care of that.
+
+.. code-block:: python
+
+    class CustomImportContent(ImportContent):
+
+        def global_dict_hook(self, item):
+            if item["@type"] in ["Collection", "Topic"]:
+                item = self.fix_query(item)
+
+        def fix_query(self, item):
+            item["@type"] = "Collection"
+            query = item.pop("query", [])
+            if not query:
+                logger.info("Drop item without query: %s", item["@id"])
+                return
+
+            fixed_query = []
+            indexes_to_fix = [
+                "portal_type",
+                "review_state",
+                "Creator",
+                "Subject",
+            ]
+            operator_mapping = {
+                # old -> new
+                "plone.app.querystring.operation.selection.is":
+                    "plone.app.querystring.operation.selection.any",
+                "plone.app.querystring.operation.string.is":
+                    "plone.app.querystring.operation.selection.any",
+            }
+
+            for crit in query:
+                if crit["i"] == "portal_type" and len(crit["v"]) > 30:
+                    # Criterion is all types
+                    continue
+
+                if crit["o"].endswith("relativePath") and crit["v"] == "..":
+                    # relativePath no longer accepts ..
+                    crit["v"] = "..::1"
+
+                if crit["i"] in indexes_to_fix:
+                    for old_operator, new_operator in operator_mapping.items():
+                        if crit["o"] == old_operator:
+                            crit["o"] = new_operator
+
+                if crit["i"] == "portal_type":
+                    # Some types may have changed their names
+                    fixed_types = []
+                    for portal_type in crit["v"]:
+                        fixed_type = PORTAL_TYPE_MAPPING.get(portal_type, portal_type)
+                        fixed_types.append(fixed_type)
+                    crit["v"] = list(set(fixed_types))
+
+                if crit["i"] == "review_state":
+                    # Review states may have changed their names
+                    fixed_states = []
+                    for review_state in crit["v"]:
+                        fixed_state = REVIEW_STATE_MAPPING.get(review_state, review_state)
+                        fixed_states.append(fixed_state)
+                    crit["v"] = list(set(fixed_states))
+
+                if crit["o"] == "plone.app.querystring.operation.string.currentUser":
+                    crit["v"] = ""
+
+                fixed_query.append(crit)
+            item["query"] = fixed_query
+
+            if not item["query"]:
+                logger.info("Drop collection without query: %s", item["@id"])
+                return
+            return item
+
 
 Migrate to Volto
 ----------------
 
-TODO
+.. warning::
+
+    This section is not complete yet!
+    For inspiration for more steps see the view ``@@migrate_to_volto`` in ``plone.volto``.
+
+**Default pages**
+
+Volto has no concept of default pages.
+For folders with default pages instead export the default page.
+
+.. code-block:: python
+
+    from collective.exportimport.export_content import fix_portal_type
+    from plone.restapi.interfaces import ISerializeToJson
+    from zope.component import getMultiAdapter
+
+
+    FOLDERISH_TYPES = [
+        "Document",
+        "Event",
+        "News Item",
+        "Folder",
+    ]
+
+    def update(self):
+        self.transformed_default_pages = []
+
+    def global_dict_hook(self, item, obj):
+        # this item is already exported to replace its container in dict_hook_folder
+        if item["UID"] in self.transformed_default_pages:
+            return
+        return item
+
+    def dict_hook_folder(self, item, obj):
+        # handle default pages
+        default_page = obj.getDefaultPage()
+        if not default_page:
+            # has no default-page, we keep it as a folder
+            return item
+
+        dp_obj = obj.get(default_page)
+        dp_obj = self.global_obj_hook(dp_obj)
+        if not dp_obj:
+            return
+
+        if dp_obj.portal_type not in FOLDERISH_TYPES:
+            # keep the old Folder for non-folderish content (Link)
+            return item
+
+        self.safe_portal_type = fix_portal_type(dp_obj.portal_type)
+        serializer = getMultiAdapter((dp_obj, self.request), ISerializeToJson)
+        dp_item = serializer(include_items=False)
+        dp_item = self.fix_url(dp_item, dp_obj)
+        dp_item = self.export_constraints(dp_item, dp_obj)
+        dp_item = self.export_workflow_history(dp_item, dp_obj)
+        if self.migration:
+            dp_item = self.update_data_for_migration(dp_item, dp_obj)
+        dp_item = self.global_dict_hook(dp_item, dp_obj)
+        if not dp_item:
+            logger.info(u"Skipping %s", dp_obj.absolute_url())
+            return obj
+        dp_item = self.custom_dict_hook(dp_item, dp_obj)
+        if dp_item["@type"] != "Document":
+            logger.info(u"Default page is type %s for %s: %s", dp_item["@type"], item["@id"], dp_obj.absolute_url())
+
+        dp_item["parent"] = item["parent"]
+        dp_item["@id"] = item["@id"]
+        dp_item["id"] = item["id"]
+        dp_item["is_folderish"] = True
+        # prevent importing the default page obj again
+        self.transformed_default_pages.append(dp_item["UID"])
+        return dp_item
+
 
 Written by
 ==========
