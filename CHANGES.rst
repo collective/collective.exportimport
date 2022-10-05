@@ -5,6 +5,9 @@ Changelog
 1.6 (unreleased)
 ----------------
 
+- Export only value when serializing vocabulary-based fields instead of token/title.
+  [pbauer]
+
 - Improve logging of errors during import.
   [pbauer]
 
