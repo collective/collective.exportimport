@@ -5,7 +5,10 @@ Changelog
 1.6 (unreleased)
 ----------------
 
-- Allow overriding setting the review_state.
+- Add INCLUDE_PATHS to specify which paths only should be imported.
+  [pbauer]
+
+- Add import_review_state to allow overriding setting the review_state during import.
   [pbauer]
 
 - Export parent UID and use it to find the container to import.
