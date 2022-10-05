@@ -820,16 +820,78 @@ Re-enable versioning and create initial versions after all imports and fixes are
         transaction.commit()
 
 
-Defer imports
--------------
+Dealing with validation errors
+------------------------------
 
-Some content types may have fields with options that are generated from content in the site.
+Sometimes you get validation-errors during import because the data cannot be validated.
+That can happen when options in a field are generated from content in the site.
 In these cases you cannot be sure that all options already exist in the portal while importing the content.
-This would lead to a validation-errors.
-You can defer setting the values on these fields until all content is imported.
-For relationfields this is not necessary since relations are imported after content anyway.
 
-The export does not need to change, only the import.
+It may also happen, when you have validators that rely on content or configuration that does not exist on import.
+
+.. note::
+
+    For relationfields this is not necessary since relations are imported after content anyway!
+
+There are two ways to handle these issues:
+
+* Use a simple setter bypassing the validation used by the restapi
+* Defer the import until all other imports were run
+
+
+Use a simple setter
+*******************
+
+You need to specify which content-types and fields you want to handle that way.
+
+It is put in a key, that the normal import will ignore and set using ``setattr()`` before deserializing the rest of the data.
+
+.. code-block:: python
+
+    SIMPLE_SETTER_FIELDS = {
+        "ALL": ["some_shared_field"],
+        "CollaborationFolder": ["allowedPartnerDocTypes"],
+        "DocType": ["automaticTransferTargets"],
+        "DPDocument": ["scenarios"],
+        "DPEvent" : ["Status"],
+    }
+
+    class CustomImportContent(ImportContent):
+
+        def global_dict_hook(self, item):
+            simple = {}
+            for fieldname in SIMPLE_SETTER_FIELDS.get("ALL", []):
+                if fieldname in item:
+                    value = item.pop(fieldname)
+                    if value:
+                        simple[fieldname] = value
+            for fieldname in SIMPLE_SETTER_FIELDS.get(item["@type"], []):
+                if fieldname in item:
+                    value = item.pop(fieldname)
+                    if value:
+                        simple[fieldname] = value
+            if simple:
+                item["exportimport.simplesetter"] = simple
+
+        def global_obj_hook_before_deserializing(self, obj, item):
+            """Hook to modify the created obj before deserializing the data.
+            """
+            # import simplesetter data before the rest
+            for fieldname, value in item.get("exportimport.simplesetter", {}).items():
+                setattr(obj, fieldname, value)
+
+.. note::
+
+    Using ``global_obj_hook_before_deserializing`` makes sure that data is there when the event-handlers are run after import.
+
+Defer import
+************
+
+You can also wait until all content is imported before setting the values on these fields.
+Again you need to find out which fields for which types you want to handle that way.
+
+Here the data is stored in an annotation on the imported object from which it is later read.
+This example also supports setting some data with ``setattr`` without validating it:
 
 .. code-block:: python
 
@@ -880,7 +942,7 @@ You then need a new step in the migration to move the deferred values from the a
                 return self.index()
             portal = api.portal.get()
             self.results = []
-            for brain in api.content.find(portal_typeDEFERRED_FIELD_MAPPING.keys()):
+            for brain in api.content.find(DEFERRED_FIELD_MAPPING.keys()):
                 obj = brain.getObject()
                 self.import_deferred(obj)
             api.portal.show_message(f"Imported deferred data for {len(self.results)} items!", self.request)
