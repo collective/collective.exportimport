@@ -1097,11 +1097,6 @@ Often it is better to export and log items for which no container could be found
             api.portal.show_message(msg, self.request)
 
 
-Export/Import registry settings
--------------------------------
-
-TODO
-
 Export/Import Zope Users
 ------------------------
 
@@ -1213,15 +1208,142 @@ You can export/import Zope user like this.
             return counter
 
 
-Export/Import portal properties settings
-----------------------------------------
+Export/Import properties, registry-settings and installed addons
+----------------------------------------------------------------
 
-TODO
+When you migrate multiple similar sites that are configured manually it can be useful to export and import configuration that was set by hand.
 
-Export/Import installed Add-ons
--------------------------------
+Export/Import installed settings and add-ons
+********************************************
 
-TODO
+This custom export exports and imports some selected settings and addons from a Plone 4.3 site.
+
+**Export:**
+
+.. code-block:: python
+
+    from collective.exportimport.export_other import BaseExport
+    from logging import getLogger
+    from plone import api
+    from plone.restapi.serializer.converters import json_compatible
+
+    logger = getLogger(__name__)
+
+
+    class ExportSettings(BaseExport):
+        """Export various settings for haiku sites
+        """
+
+        def __call__(self, download_to_server=False):
+            self.title = "Export installed addons various settings"
+            self.download_to_server = download_to_server
+            if not self.request.form.get("form.submitted", False):
+                return self.index()
+
+            data = self.export_settings()
+            self.download(data)
+
+        def export_settings(self):
+            results = {}
+            addons = []
+            qi = api.portal.get_tool("portal_quickinstaller")
+            for product in qi.listInstalledProducts():
+                if product["id"].startswith("myproject."):
+                    addons.append(product["id"])
+            results["addons"] = addons
+
+            portal = api.portal.get()
+            registry = {}
+            registry["plone.email_from_name"] = portal.getProperty('email_from_name', '')
+            registry["plone.email_from_address"] = portal.getProperty('email_from_address', '')
+            registry["plone.smtp_host"] = getattr(portal.MailHost, 'smtp_host', '')
+            registry["plone.smtp_port"] = int(getattr(portal.MailHost, 'smtp_port', 25))
+            registry["plone.smtp_userid"] = portal.MailHost.get('smtp_user_id')
+            registry["plone.smtp_pass"] = portal.MailHost.get('smtp_pass')
+            registry["plone.site_title"] = portal.title
+
+            portal_properties = api.portal.get_tool("portal_properties")
+            iprops = portal_properties.imaging_properties
+            registry["plone.allowed_sizes"] = iprops.getProperty('allowed_sizes')
+            registry["plone.quality"] = iprops.getProperty('quality')
+            site_props = portal_properties.site_properties
+            if site_props.hasProperty("webstats_js"):
+                registry["plone.webstats_js"] = site_props.webstats_js
+            results["registry"] = json_compatible(registry)
+            return results
+
+
+**Import:**
+
+The import installs the addons and load the settings in the registry.
+Since Plone 5 portal_properties is no longer used.
+
+.. code-block:: python
+
+    from logging import getLogger
+    from plone import api
+    from plone.registry.interfaces import IRegistry
+    from Products.CMFPlone.utils import get_installer
+    from Products.Five import BrowserView
+    from zope.component import getUtility
+    from ZPublisher.HTTPRequest import FileUpload
+
+    import json
+
+    logger = getLogger(__name__)
+
+    class ImportSettings(BrowserView):
+        """Import various settings"""
+
+        def __call__(self, jsonfile=None, return_json=False):
+            if jsonfile:
+                self.portal = api.portal.get()
+                status = "success"
+                try:
+                    if isinstance(jsonfile, str):
+                        return_json = True
+                        data = json.loads(jsonfile)
+                    elif isinstance(jsonfile, FileUpload):
+                        data = json.loads(jsonfile.read())
+                    else:
+                        raise ("Data is neither text nor upload.")
+                except Exception as e:
+                    status = "error"
+                    logger.error(e)
+                    api.portal.show_message(
+                        "Failure while uploading: {}".format(e),
+                        request=self.request,
+                    )
+                else:
+                    self.import_settings(data)
+                    msg = "Imported addons and settings"
+                    api.portal.show_message(msg, self.request)
+                if return_json:
+                    msg = {"state": status, "msg": msg}
+                    return json.dumps(msg)
+
+            return self.index()
+
+        def import_settings(self, data):
+            installer = get_installer(self.context)
+            for addon in data["addons"]:
+                if not installer.is_product_installed(addon) and installer.is_product_installable(addon):
+                    installer.install_product(addon)
+                    logger.info(f"Installed addon {addon}")
+            registry = getUtility(IRegistry)
+            for key, value in data["registry"].items():
+                registry[key] = value
+                logger.info(f"Imported record {key}: {value}")
+
+
+Export/Import registry settings
+*******************************
+
+The pull-request https://github.com/collective/collective.exportimport/pull/130 has views ``@@export_registry`` and ``@@import_registry``.
+These views export and import registry records that do not use the default-setting specified in the schema for that registry record.
+The export alone could also be usefull to figure out which settings were modified for a site.
+
+That code will probably not be merged but you can use it in your own projects.
 
 Migrate PloneFormGen to Easyform
 --------------------------------
