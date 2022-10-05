@@ -1006,7 +1006,7 @@ class TestImport(unittest.TestCase):
         api.user.create(
             username="peter",
             email="peter@example.org",
-            password="secret",
+            password="verysecret",
             roles=("Member",),
         )
         api.user.grant_roles(username="peter", obj=doc1, roles=["Reviewer"])
