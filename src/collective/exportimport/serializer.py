@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
-from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IPathBlobsMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
 from collective.exportimport.interfaces import ITalesField

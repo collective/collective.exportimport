@@ -389,6 +389,8 @@ class ExportContent(BrowserView):
         # 1. Drop unused data
         item.pop("@components", None)
         item.pop("next_item", None)
+        item.pop("batching", None)
+        item.pop("items", None)
         item.pop("previous_item", None)
         item.pop("immediatelyAddableTypes", None)
         item.pop("locallyAllowedTypes", None)
