@@ -251,8 +251,8 @@ class ImportContent(BrowserView):
             if self.limit and len(added) >= self.limit:
                 break
 
-            uuid = item["UID"]
-            if uuid in self.DROP_UIDS:
+            uuid = item.get("UID")
+            if uuid and uuid in self.DROP_UIDS:
                 continue
 
             skip = False
@@ -392,7 +392,7 @@ class ImportContent(BrowserView):
 
             uuid = self.set_uuid(item, new)
 
-            if uuid != item["UID"]:
+            if uuid != item.get("UID"):
                 item["UID"] = uuid
 
             # Try to set the original review_state
@@ -860,7 +860,9 @@ class ImportContent(BrowserView):
         return folder
 
     def set_uuid(self, item, obj):
-        uuid = item["UID"]
+        uuid = item.get("UID")
+        if not uuid:
+            return obj.UID()
         if not self.update_existing and api.content.find(UID=uuid):
             # this should only happen if you run import multiple times
             # without updating existing content

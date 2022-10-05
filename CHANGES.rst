@@ -5,6 +5,10 @@ Changelog
 1.6 (unreleased)
 ----------------
 
+- Support importing content without a UUID (e.g. for importing from an external source).
+  The minimal required data is @id, @type, id, and @parent["@id"].
+  [pbauer]
+
 - Export only value when serializing vocabulary-based fields instead of token/title.
   [pbauer]
 
