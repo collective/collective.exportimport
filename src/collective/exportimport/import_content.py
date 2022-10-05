@@ -237,7 +237,6 @@ class ImportContent(BrowserView):
         return msg
 
     def import_new_content(self, data):  # noqa: C901
-        portal_workflow = api.portal.get_tool("portal_workflow")
         added = []
 
         if getattr(data, "len", None):
@@ -380,12 +379,8 @@ class ImportContent(BrowserView):
             if uuid != item["UID"]:
                 item["UID"] = uuid
 
-            if item["review_state"] and item["review_state"] != "private":
-                if portal_workflow.getChainFor(new):
-                    try:
-                        api.content.transition(to_state=item["review_state"], obj=new)
-                    except InvalidParameterError as e:
-                        logger.info(e)
+            # Try to set the original review_state
+            self.import_review_state(new, item)
 
             # Import workflow_history last to drop entries created during import
             self.import_workflow_history(new, item)
@@ -644,6 +639,16 @@ class ImportContent(BrowserView):
         constrains.setLocallyAllowedTypes(locally_allowed_types)
         immediately_addable_types = item["exportimport.constrains"]["immediately_addable_types"]
         constrains.setImmediatelyAddableTypes(immediately_addable_types)
+
+    def import_review_state(self, obj, item):
+        """Try to set the original review_state. Overwrite to customize or skip."""
+        if item.get("review_state"):
+            portal_workflow = api.portal.get_tool("portal_workflow")
+            if portal_workflow.getChainFor(obj):
+                try:
+                    api.content.transition(to_state=item["review_state"], obj=obj)
+                except InvalidParameterError as e:
+                    logger.info(e)
 
     def import_workflow_history(self, obj, item):
         workflow_history = item.get("workflow_history", {})

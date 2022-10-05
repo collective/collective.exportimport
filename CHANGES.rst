@@ -5,6 +5,9 @@ Changelog
 1.6 (unreleased)
 ----------------
 
+- Allow overriding setting the review_state.
+  [pbauer]
+
 - Export parent UID and use it to find the container to import.
   [pbauer]
 
