@@ -132,7 +132,7 @@ def get_relative_blob_path(obj, full_path):
     base_dir = db._storage.fshelper.base_dir
     if not full_path.startswith(base_dir):
         return full_path
-    return full_path[len(base_dir):]
+    return full_path[len(base_dir) :]
 
 
 if HAS_AT:
@@ -163,7 +163,6 @@ if HAS_AT:
         class ATTalesFieldSerializer(ATDefaultFieldSerializer):
             def __call__(self):
                 return json_compatible(self.field.getRaw(self.context))
-
 
     @adapter(IImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -392,6 +391,10 @@ if HAS_AT and HAS_PAC:
             if self.context.itemCount:
                 topic_metadata["b_size"] = self.context.itemCount
 
+            if hasattr(self, "_collection_sort_on"):
+                topic_metadata["sort_on"] = self._collection_sort_on
+                topic_metadata["sort_reversed"] = self._collection_sort_reversed
+
             return topic_metadata
 
 
@@ -405,7 +408,6 @@ def get_dx_blob_path(obj):
 @adapter(INamedFileField, IDexterityContent, IPathBlobsMarker)
 @implementer(IFieldSerializer)
 class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
-
     def __call__(self):
         namedfile = self.field.get(self.context)
         if namedfile is None:
@@ -430,7 +432,6 @@ class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
 @adapter(INamedImageField, IDexterityContent, IPathBlobsMarker)
 @implementer(IFieldSerializer)
 class ImageFieldSerializerWithBlobPaths(DefaultFieldSerializer):
-
     def __call__(self):
         image = self.field.get(self.context)
         if image is None:
@@ -456,12 +457,15 @@ class ImageFieldSerializerWithBlobPaths(DefaultFieldSerializer):
 
 
 if six.PY2:
+
     @adapter(long)
     @implementer(IJsonCompatible)
     def long_converter(value):
         # convert long (py2 only)
         return int(str(value))
+
 else:
+
     @adapter(int)
     @implementer(IJsonCompatible)
     def long_converter(value):
