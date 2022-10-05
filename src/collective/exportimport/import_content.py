@@ -377,7 +377,7 @@ class ImportContent(BrowserView):
             try:
                 new = deserializer(validate_all=False, data=item)
             except Exception:
-                logger.warning("Cannot deserialize %s:", item["@id"], exc_info=True)
+                logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
                 continue
 
             # Blobs can be exported as only a path in the blob storage.
@@ -478,10 +478,8 @@ class ImportContent(BrowserView):
             deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
             try:
                 new = deserializer(validate_all=False, data=version)
-            except Exception as error:
-                logger.warning(
-                    "cannot deserialize {}: {}".format(item["@id"], repr(error))
-                )
+            except Exception:
+                logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
                 return
 
             self.save_revision(new, version, initial)
@@ -491,8 +489,8 @@ class ImportContent(BrowserView):
         deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
         try:
             new = deserializer(validate_all=False, data=item)
-        except Exception as error:
-            logger.warning("cannot deserialize {}: {}".format(item["@id"], repr(error)))
+        except Exception:
+            logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
             return
 
         self.import_blob_paths(new, item)

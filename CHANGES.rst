@@ -5,6 +5,9 @@ Changelog
 1.6 (unreleased)
 ----------------
 
+- Improve logging of errors during import.
+  [pbauer]
+
 - Add INCLUDE_PATHS to specify which paths only should be imported.
   [pbauer]
 
