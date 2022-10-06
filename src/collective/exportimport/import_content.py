@@ -258,21 +258,19 @@ class ImportContent(BrowserView):
 
             skip = False
             for drop in self.DROP_PATHS:
+                # this does work because item["@id"] is actually the item full path
                 if drop in item["@id"]:
                     skip = True
                     logger.info(u"Skipping {}".format(item["@id"]))
 
             if self.INCLUDE_PATHS:
+                # beware: here we ignore self.DROP_PATHS
                 skip = True
                 for include in self.INCLUDE_PATHS:
                     # this does work because item["@id"] is actually the item full path
                     if include in item["@id"]:
-                        included = True
-                        for drop in self.DROP_PATHS:
-                            if drop in item["@id"]:
-                                included = False
-                        if included:
-                            skip = False
+                        skip = False
+
             if skip:
                 continue
 
