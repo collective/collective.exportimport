@@ -5,6 +5,10 @@ Changelog
 1.6 (unreleased)
 ----------------
 
+- Export and import all group-members (including ldap-users and -groups).
+  Previously it only exported users and groups created in Plone.
+  [pbauer]
+
 - Support importing content without a UUID (e.g. for importing from an external source).
   The minimal required data is @id, @type, id, and @parent["@id"].
   [pbauer]

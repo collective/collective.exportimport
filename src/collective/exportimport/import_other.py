@@ -200,6 +200,7 @@ class ImportMembers(BrowserView):
 
     def import_groups(self, data):
         acl = api.portal.get_tool("acl_users")
+        pg = api.portal.get_tool("portal_groups")
         groupsIds = {item["id"] for item in acl.searchGroups()}
 
         groupsNumber = 0
@@ -212,6 +213,9 @@ class ImportMembers(BrowserView):
                     roles=item["roles"],
                     groups=item["groups"],
                 )
+                # add all principals
+                for principal in item.get("principals", []):
+                    pg.addPrincipalToGroup(principal, item["groupid"])
                 groupsNumber += 1
         return groupsNumber
 
