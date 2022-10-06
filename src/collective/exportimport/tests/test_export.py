@@ -92,7 +92,7 @@ class TestExport(unittest.TestCase):
         self.assertIn("Export redirects", browser.contents)
         self.assertIn("Export object positions", browser.contents)
         # We cannot choose a portal_type, because there is no content to export.
-        fti = self.layer['portal'].portal_types['Plone Site']
+        fti = self.layer["portal"].portal_types["Plone Site"]
         if "DexterityFTI" in repr(fti):
             # In Plone 6 the portal is exportable
             browser.getControl(name="portal_type")
@@ -332,7 +332,13 @@ class TestExport(unittest.TestCase):
         data = json.loads(contents)
         self.assertListEqual(
             data,
-            [{"default_page": "doc1", "uuid": folder1.UID(), 'default_page_uuid': doc1.UID()}],
+            [
+                {
+                    "default_page": "doc1",
+                    "uuid": folder1.UID(),
+                    "default_page_uuid": doc1.UID(),
+                }
+            ],
         )
 
     def test_export_defaultpages_download_to_server(self):
@@ -354,15 +360,25 @@ class TestExport(unittest.TestCase):
         original_central_directory = config.CENTRAL_DIRECTORY
         try:
             config.CENTRAL_DIRECTORY = tempfile.mkdtemp()
-            browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
-            msg = "Exported to {}/export_defaultpages.json".format(config.CENTRAL_DIRECTORY)
+            browser.getForm(action="@@export_defaultpages").submit(
+                name="form.submitted"
+            )
+            msg = "Exported to {}/export_defaultpages.json".format(
+                config.CENTRAL_DIRECTORY
+            )
             self.assertIn(msg, browser.contents)
             path = os.path.join(config.CENTRAL_DIRECTORY, "export_defaultpages.json")
             with open(path, "rb") as f:
                 data = json.load(f)
                 self.assertListEqual(
                     data,
-                    [{"default_page": "doc1", "uuid": folder1.UID(), 'default_page_uuid': doc1.UID()}],
+                    [
+                        {
+                            "default_page": "doc1",
+                            "uuid": folder1.UID(),
+                            "default_page_uuid": doc1.UID(),
+                        }
+                    ],
                 )
         finally:
             shutil.rmtree(config.CENTRAL_DIRECTORY)
@@ -387,7 +403,13 @@ class TestExport(unittest.TestCase):
         data = json.loads(contents)
         self.assertListEqual(
             data,
-            [{"default_page": "doc1", "uuid": config.SITE_ROOT, "default_page_uuid": doc1.UID()}],
+            [
+                {
+                    "default_page": "doc1",
+                    "uuid": config.SITE_ROOT,
+                    "default_page_uuid": doc1.UID(),
+                }
+            ],
         )
 
     def test_export_relations(self):
@@ -413,7 +435,13 @@ class TestExport(unittest.TestCase):
         data = json.loads(contents)
         self.assertListEqual(
             data,
-            [{u'to_uuid': doc2.UID(), u'relationship': u'relatedItems', u'from_uuid': doc1.UID()}],
+            [
+                {
+                    u"to_uuid": doc2.UID(),
+                    u"relationship": u"relatedItems",
+                    u"from_uuid": doc1.UID(),
+                }
+            ],
         )
 
     def test_export_discussion(self):
@@ -436,7 +464,9 @@ class TestExport(unittest.TestCase):
             contents = DATA[-1]
         data = json.loads(contents)
         self.assertEqual(data[0]["uuid"], doc1.UID())
-        self.assertEqual(data[0]["conversation"]["items"][0]["text"]["data"], "Comment text")
+        self.assertEqual(
+            data[0]["conversation"]["items"][0]["text"]["data"], "Comment text"
+        )
 
     def test_export_ordering(self):
         # First create some content.
@@ -512,11 +542,11 @@ class TestExport(unittest.TestCase):
         api.content.create(
             container=portal, type="Document", id="doc1", title="Document 1"
         )
-        api.content.rename(obj=portal['doc1'], new_id='doc1-moved')
+        api.content.rename(obj=portal["doc1"], new_id="doc1-moved")
         api.content.create(
             container=portal, type="Document", id="doc2", title="Document 2"
         )
-        api.content.rename(obj=portal['doc2'], new_id='doc2-moved')
+        api.content.rename(obj=portal["doc2"], new_id="doc2-moved")
         transaction.commit()
 
         browser = self.open_page("@@export_redirects")
@@ -527,8 +557,10 @@ class TestExport(unittest.TestCase):
         data = json.loads(contents)
         self.assertDictEqual(
             data,
-            {u'/plone/doc1': u'/plone/doc1-moved',
-             u'/plone/doc2': u'/plone/doc2-moved'},
+            {
+                u"/plone/doc1": u"/plone/doc1-moved",
+                u"/plone/doc2": u"/plone/doc2-moved",
+            },
         )
 
     def test_export_versions(self):
@@ -538,7 +570,9 @@ class TestExport(unittest.TestCase):
         login(app, SITE_OWNER_NAME)
         if six.PY2:
             # in Plone 4.3 this is somehow not set...
-            IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"initial_version_changeNote"
+            IAnnotations(request)[
+                "plone.app.versioningbehavior-changeNote"
+            ] = u"initial_version_changeNote"
         doc1 = api.content.create(
             container=portal,
             type="Document",
