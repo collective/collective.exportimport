@@ -96,6 +96,8 @@ class ImportContent(BrowserView):
     DROP_PATHS = []
 
     # If set, only these paths will be imported
+    # If a path is in both DROP and INCLUDE, DROP has precedence
+    # If not set, all paths will be imported
     # Example: ['/Plone/important/', '/Plone/standard/item']
     INCLUDE_PATHS = []
 
@@ -241,6 +243,31 @@ class ImportContent(BrowserView):
         logger.info(msg)
         return msg
 
+    def should_drop(self, path):
+        for drop in self.DROP_PATHS:
+            if drop in path:
+                return True
+        return False
+
+    def should_include(self, path):
+        for include in self.INCLUDE_PATHS:
+            if include in path:
+                return True
+        return False
+
+    def must_process(self, item_path):
+        if self.INCLUDE_PATHS:
+            if not self.should_include(item_path):
+                return False
+            elif self.should_drop(item_path):
+                logger.info(u"Skipping %s, even though listed in INCLUDE_PATHS", item_path)
+                return False
+        else:
+            if self.should_drop(item_path):
+                logger.info("Skipping %s", item_path)
+                return False
+        return True
+
     def import_new_content(self, data):  # noqa: C901
         added = []
 
@@ -256,22 +283,7 @@ class ImportContent(BrowserView):
             if uuid and uuid in self.DROP_UIDS:
                 continue
 
-            skip = False
-            for drop in self.DROP_PATHS:
-                # this does work because item["@id"] is actually the item full path
-                if drop in item["@id"]:
-                    skip = True
-                    logger.info(u"Skipping {}".format(item["@id"]))
-
-            if self.INCLUDE_PATHS:
-                # beware: here we ignore self.DROP_PATHS
-                skip = True
-                for include in self.INCLUDE_PATHS:
-                    # this does work because item["@id"] is actually the item full path
-                    if include in item["@id"]:
-                        skip = False
-
-            if skip:
+            if not self.must_process(item["@id"]):
                 continue
 
             if not index % 100:
