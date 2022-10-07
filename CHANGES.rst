@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.6 (unreleased)
+1.6 (2022-10-07)
 ----------------
 
 - Export and import all group-members (including ldap-users and -groups).
