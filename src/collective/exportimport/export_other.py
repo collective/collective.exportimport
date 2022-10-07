@@ -244,6 +244,9 @@ class ExportMembers(BaseExport):
             ]
             for prop in group.getProperties():
                 item[prop] = json_compatible(group.getProperty(prop))
+            # export all principals (incl. groups and ldap-users)
+            plone_group = group.getGroup()
+            item["principals"] = plone_group.getMemberIds()
             data.append(item)
         return data
 
