@@ -792,7 +792,7 @@ class ImportContent(BrowserView):
 
     def get_parent_as_container(self, item):
         """The default is to generate a folder-structure exactly as the original.
-        By default we use the UID of the parent to foind it in the new site.
+        By default we use the UID of the parent to find it in the new site.
 
         During fallback to a path-based lookup there is some trickyness that probably
         only happens during local development, and not in production sites.
