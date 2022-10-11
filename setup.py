@@ -37,7 +37,7 @@ else:
 
 setup(
     name="collective.exportimport",
-    version="1.6.dev0",
+    version="1.7.dev0",
     description="An add-on for Plone to Export and import content, members, relations, translations and localroles.",
     long_description=long_description,
     # Get more from https://pypi.org/classifiers/
@@ -51,11 +51,13 @@ setup(
         "Framework :: Plone :: 5.0",
         "Framework :: Plone :: 5.1",
         "Framework :: Plone :: 5.2",
+        "Framework :: Plone :: 6.0",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Operating System :: OS Independent",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
     ],
