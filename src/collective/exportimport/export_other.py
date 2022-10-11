@@ -59,6 +59,15 @@ except pkg_resources.DistributionNotFound:
 else:
     from z3c.relationfield import RelationValue
 
+try:
+    from plone.app.multilingual.interfaces import ITranslationManager
+
+    ITranslationManager
+
+    IS_PAM_1 = False
+except ImportError:
+    IS_PAM_1 = True
+
 
 logger = logging.getLogger(__name__)
 
@@ -356,7 +365,10 @@ class ExportTranslations(BaseExport):
             return results
 
         for uid in portal_catalog.uniqueValuesFor("TranslationGroup"):
-            brains = portal_catalog(TranslationGroup=uid, Language='all')
+            query = {"TranslationGroup": uid}
+            if IS_PAM_1:
+                query.update({"Language": "all"})
+            brains = portal_catalog(query)
 
             if len(brains) < 2:
                 # logger.info(u'Skipping...{} {}'.format(uid, brains))
