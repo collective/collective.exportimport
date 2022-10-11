@@ -60,13 +60,13 @@ else:
     from z3c.relationfield import RelationValue
 
 try:
-    from plone.app.multilingual.interfaces import ITranslationManager
-
-    ITranslationManager
-
+    pam_version = pkg_resources.get_distribution("plone.app.multilingual")
+    if pam_version.version < "2.0.0":
+        IS_PAM_1 = True
+    else:
+        IS_PAM_1 = False
+except pkg_resources.DistributionNotFound:
     IS_PAM_1 = False
-except ImportError:
-    IS_PAM_1 = True
 
 
 logger = logging.getLogger(__name__)
