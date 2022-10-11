@@ -164,6 +164,11 @@ if HAS_PAM:  # noqa: C901
         except TypeError as e:
             logger.info(u"Item is not translatable: {}".format(e))
 
+else:
+    class ImportTranslations(BrowserView):
+        def __call__(self, jsonfile=None, return_json=False):
+            return "This view only works when using plone.app.multilingual >= 2.0.0"
+
 
 class ImportMembers(BrowserView):
     """Import plone groups and members"""
