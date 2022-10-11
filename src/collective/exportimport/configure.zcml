@@ -161,7 +161,7 @@
       />
 
   <browser:page
-      zcml:condition="installed plone.app.multilingual.interfaces.ITranslationManager"
+      zcml:condition="installed plone.app.multilingual"
       name="import_translations"
       for="zope.interface.Interface"
       class=".import_other.ImportTranslations"
