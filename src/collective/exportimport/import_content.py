@@ -95,6 +95,12 @@ class ImportContent(BrowserView):
     # Example: ['/Plone/doormat/', '/Plone/import_files/']
     DROP_PATHS = []
 
+    # If set, only these paths will be imported
+    # If a path is in both DROP and INCLUDE, DROP has precedence
+    # If not set, all paths will be imported
+    # Example: ['/Plone/important/', '/Plone/standard/item']
+    INCLUDE_PATHS = []
+
     # Default values for some fields
     # Example: {'which_price': 'normal'}
     DEFAULTS = {}
@@ -144,8 +150,7 @@ class ImportContent(BrowserView):
                         break
             else:
                 msg = "File '{}' not found on server.".format(server_file)
-                api.portal.show_message(
-                    msg, request=self.request, type="warn")
+                api.portal.show_message(msg, request=self.request, type="warn")
                 server_file = None
                 status = "error"
         if jsonfile:
@@ -189,7 +194,9 @@ class ImportContent(BrowserView):
 
     def commit_hook(self, added, index):
         """Hook to do something after importing every x items."""
-        msg = u"Committing after creating {} of {} handled items...".format(len(added), index)
+        msg = u"Committing after creating {} of {} handled items...".format(
+            len(added), index
+        )
         logger.info(msg)
         transaction.get().note(msg)
         transaction.commit()
@@ -236,8 +243,32 @@ class ImportContent(BrowserView):
         logger.info(msg)
         return msg
 
+    def should_drop(self, path):
+        for drop in self.DROP_PATHS:
+            if drop in path:
+                return True
+        return False
+
+    def should_include(self, path):
+        for include in self.INCLUDE_PATHS:
+            if include in path:
+                return True
+        return False
+
+    def must_process(self, item_path):
+        if self.INCLUDE_PATHS:
+            if not self.should_include(item_path):
+                return False
+            elif self.should_drop(item_path):
+                logger.info(u"Skipping %s, even though listed in INCLUDE_PATHS", item_path)
+                return False
+        else:
+            if self.should_drop(item_path):
+                logger.info("Skipping %s", item_path)
+                return False
+        return True
+
     def import_new_content(self, data):  # noqa: C901
-        portal_workflow = api.portal.get_tool("portal_workflow")
         added = []
 
         if getattr(data, "len", None):
@@ -248,16 +279,11 @@ class ImportContent(BrowserView):
             if self.limit and len(added) >= self.limit:
                 break
 
-            uuid = item["UID"]
-            if uuid in self.DROP_UIDS:
+            uuid = item.get("UID")
+            if uuid and uuid in self.DROP_UIDS:
                 continue
 
-            skip = False
-            for drop in self.DROP_PATHS:
-                if drop in item["@id"]:
-                    skip = True
-                    logger.info(u"Skipping {}".format(item["@id"]))
-            if skip:
+            if not self.must_process(item["@id"]):
                 continue
 
             if not index % 100:
@@ -294,13 +320,17 @@ class ImportContent(BrowserView):
 
             if not container:
                 logger.info(
-                    u"No container (parent was {}) found for {} {}".format(item["parent"]["@type"], item["@type"], item["@id"])
+                    u"No container (parent was {}) found for {} {}".format(
+                        item["parent"]["@type"], item["@type"], item["@id"]
+                    )
                 )
                 continue
 
             if not getattr(aq_base(container), "isPrincipiaFolderish", False):
                 logger.info(
-                    u"Container {} for {} is not folderish".format(container.absolute_url(), item["@id"])
+                    u"Container {} for {} is not folderish".format(
+                        container.absolute_url(), item["@id"]
+                    )
                 )
                 continue
 
@@ -311,22 +341,28 @@ class ImportContent(BrowserView):
             if new_id in container:
                 if self.handle_existing_content == 0:
                     # Skip
-                    logger.info(u"{} ({}) already exists. Skipping it.".format(
-                        new_id, item["@id"])
+                    logger.info(
+                        u"{} ({}) already exists. Skipping it.".format(
+                            new_id, item["@id"]
+                        )
                     )
                     continue
 
                 elif self.handle_existing_content == 1:
                     # Replace content before creating it new
-                    logger.info(u"{} ({}) already exists. Replacing it.".format(
-                        new_id, item["@id"])
+                    logger.info(
+                        u"{} ({}) already exists. Replacing it.".format(
+                            new_id, item["@id"]
+                        )
                     )
                     api.content.delete(container[new_id], check_linkintegrity=False)
 
                 elif self.handle_existing_content == 2:
                     # Update existing item
-                    logger.info(u"{} ({}) already exists. Updating it.".format(
-                        new_id, item["@id"])
+                    logger.info(
+                        u"{} ({}) already exists. Updating it.".format(
+                            new_id, item["@id"]
+                        )
                     )
                     self.update_existing = True
                     new = container[new_id]
@@ -353,7 +389,9 @@ class ImportContent(BrowserView):
 
             if not self.update_existing:
                 # create without checking constrains and permissions
-                new = _createObjectByType(item["@type"], container, item["id"], **factory_kwargs)
+                new = _createObjectByType(
+                    item["@type"], container, item["id"], **factory_kwargs
+                )
 
             new, item = self.global_obj_hook_before_deserializing(new, item)
 
@@ -361,10 +399,8 @@ class ImportContent(BrowserView):
             deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
             try:
                 new = deserializer(validate_all=False, data=item)
-            except Exception as error:
-                logger.warning(
-                    "cannot deserialize {}: {}".format(item["@id"], repr(error))
-                )
+            except Exception:
+                logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
                 continue
 
             # Blobs can be exported as only a path in the blob storage.
@@ -379,15 +415,11 @@ class ImportContent(BrowserView):
 
             uuid = self.set_uuid(item, new)
 
-            if uuid != item["UID"]:
+            if uuid != item.get("UID"):
                 item["UID"] = uuid
 
-            if item["review_state"] and item["review_state"] != "private":
-                if portal_workflow.getChainFor(new):
-                    try:
-                        api.content.transition(to_state=item["review_state"], obj=new)
-                    except InvalidParameterError as e:
-                        logger.info(e)
+            # Try to set the original review_state
+            self.import_review_state(new, item)
 
             # Import workflow_history last to drop entries created during import
             self.import_workflow_history(new, item)
@@ -404,7 +436,11 @@ class ImportContent(BrowserView):
                 creation_date = DateTime(dateutil.parser.parse(created))
                 new.creation_date = creation_date
                 new.aq_base.creation_date_migrated = creation_date
-            logger.info("Created item #{}: {} {}".format(index, item["@type"], new.absolute_url()))
+            logger.info(
+                "Created item #{}: {} {}".format(
+                    index, item["@type"], new.absolute_url()
+                )
+            )
             added.append(new.absolute_url())
 
             if self.commit and not len(added) % self.commit:
@@ -469,10 +505,8 @@ class ImportContent(BrowserView):
             deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
             try:
                 new = deserializer(validate_all=False, data=version)
-            except Exception as error:
-                logger.warning(
-                    "cannot deserialize {}: {}".format(item["@id"], repr(error))
-                )
+            except Exception:
+                logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
                 return
 
             self.save_revision(new, version, initial)
@@ -482,8 +516,8 @@ class ImportContent(BrowserView):
         deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
         try:
             new = deserializer(validate_all=False, data=item)
-        except Exception as error:
-            logger.warning("cannot deserialize {}: {}".format(item["@id"], repr(error)))
+        except Exception:
+            logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
             return
 
         self.import_blob_paths(new, item)
@@ -515,7 +549,11 @@ class ImportContent(BrowserView):
             new.aq_base.creation_date_migrated = creation_date
 
         self.save_revision(new, item)
-        logger.info("Created item: {} {} with {} old versions".format(item["@type"], new.absolute_url(), len(item["exportimport.versions"])))
+        logger.info(
+            "Created item: {} {} with {} old versions".format(
+                item["@type"], new.absolute_url(), len(item["exportimport.versions"])
+            )
+        )
 
         if policy:
             repo_tool.addPolicyForContentType(item["@type"], policy)
@@ -534,10 +572,12 @@ class ImportContent(BrowserView):
         modified = modified + timedelta(milliseconds=1)
         if six.PY2:
             import time
+
             timestamp = time.mktime(modified.timetuple())
         else:
             timestamp = datetime.timestamp(modified)
         from plone.app.versioningbehavior import _ as PAV
+
         if initial:
             comment = PAV(u"initial_version_changeNote", default=u"Initial version")
         else:
@@ -547,7 +587,9 @@ class ImportContent(BrowserView):
             "timestamp": timestamp,
             "originator": None,
         }
-        rt._recursiveSave(obj, app_metadata={}, sys_metadata=sys_metadata, autoapply=True)
+        rt._recursiveSave(
+            obj, app_metadata={}, sys_metadata=sys_metadata, autoapply=True
+        )
 
     def handle_broken(self, item):
         """Fix some invalid values."""
@@ -644,8 +686,20 @@ class ImportContent(BrowserView):
         constrains.setConstrainTypesMode(ENABLED)
         locally_allowed_types = item["exportimport.constrains"]["locally_allowed_types"]
         constrains.setLocallyAllowedTypes(locally_allowed_types)
-        immediately_addable_types = item["exportimport.constrains"]["immediately_addable_types"]
+        immediately_addable_types = item["exportimport.constrains"][
+            "immediately_addable_types"
+        ]
         constrains.setImmediatelyAddableTypes(immediately_addable_types)
+
+    def import_review_state(self, obj, item):
+        """Try to set the original review_state. Overwrite to customize or skip."""
+        if item.get("review_state"):
+            portal_workflow = api.portal.get_tool("portal_workflow")
+            if portal_workflow.getChainFor(obj):
+                try:
+                    api.content.transition(to_state=item["review_state"], obj=obj)
+                except InvalidParameterError as e:
+                    logger.info(e)
 
     def import_workflow_history(self, obj, item):
         workflow_history = item.get("workflow_history", {})
@@ -653,7 +707,9 @@ class ImportContent(BrowserView):
         for key, value in workflow_history.items():
             # The time needs to be deserialized
             for history_item in value:
-                history_item["time"] = DateTime(dateutil.parser.parse(history_item["time"]))
+                history_item["time"] = DateTime(
+                    dateutil.parser.parse(history_item["time"])
+                )
             result[key] = value
         if result:
             obj.workflow_history = PersistentMapping(result.items())
@@ -736,7 +792,7 @@ class ImportContent(BrowserView):
 
     def get_parent_as_container(self, item):
         """The default is to generate a folder-structure exactly as the original.
-        By default we use the UID of the parent to foind it in the new site.
+        By default we use the UID of the parent to find it in the new site.
 
         During fallback to a path-based lookup there is some trickyness that probably
         only happens during local development, and not in production sites.
@@ -843,7 +899,9 @@ class ImportContent(BrowserView):
         return folder
 
     def set_uuid(self, item, obj):
-        uuid = item["UID"]
+        uuid = item.get("UID")
+        if not uuid:
+            return obj.UID()
         if not self.update_existing and api.content.find(UID=uuid):
             # this should only happen if you run import multiple times
             # without updating existing content

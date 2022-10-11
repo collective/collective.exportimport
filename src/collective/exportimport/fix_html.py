@@ -350,7 +350,7 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
                 fixed_items += 1
                 obj.reindexObject(idxs=("SearchableText",))
         except:
-            logger.exception("HTML not fixed for {}".format(obj.absolute_url()))
+            logger.exception("HTML not fixed for %s", brain.getPath(), exc_info=True)
 
         if fixed_items != 0 and not fixed_items % 1000:
             # Commit every 1000 changed items.

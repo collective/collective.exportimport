@@ -2,11 +2,35 @@ Changelog
 =========
 
 
-1.6 (unreleased)
+1.7 (unreleased)
 ----------------
 
 - Be more specific in the import_translation endpoint condition to install in a site with p.a.multilingual 1.x
   [erral]
+
+
+1.6 (2022-10-07)
+----------------
+
+- Export and import all group-members (including ldap-users and -groups).
+  Previously it only exported users and groups created in Plone.
+  [pbauer]
+
+- Support importing content without a UUID (e.g. for importing from an external source).
+  The minimal required data is @id, @type, id, and @parent["@id"].
+  [pbauer]
+
+- Export only value when serializing vocabulary-based fields instead of token/title.
+  [pbauer]
+
+- Improve logging of errors during import.
+  [pbauer]
+
+- Add INCLUDE_PATHS to specify which paths only should be imported.
+  [pbauer]
+
+- Add import_review_state to allow overriding setting the review_state during import.
+  [pbauer]
 
 - Export parent UID and use it to find the container to import.
   [pbauer]

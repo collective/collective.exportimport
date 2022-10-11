@@ -118,11 +118,14 @@
   <adapter zcml:condition="installed plone.app.blob"
       factory=".serializer.ATImageFieldSerializerWithBlobPaths" />
 
+  <!-- Serializers -->
   <adapter factory=".serializer.FileFieldSerializerWithBlobs" />
   <adapter factory=".serializer.FileFieldSerializerWithBlobPaths" />
   <adapter factory=".serializer.ImageFieldSerializerWithBlobs" />
   <adapter factory=".serializer.ImageFieldSerializerWithBlobPaths" />
   <adapter factory=".serializer.RichttextFieldSerializerWithRawText" />
+  <adapter factory=".serializer.CollectionFieldSerializer" />
+  <adapter factory=".serializer.ChoiceFieldSerializer" />
   <adapter factory=".serializer.long_converter" />
 
   <!-- Deserializers -->

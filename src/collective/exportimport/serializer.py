@@ -2,8 +2,8 @@
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IPathBlobsMarker
-from collective.exportimport.interfaces import ITalesField
 from collective.exportimport.interfaces import IRawRichTextMarker
+from collective.exportimport.interfaces import ITalesField
 from hurry.filesize import size
 from plone.app.textfield.interfaces import IRichText
 from plone.dexterity.interfaces import IDexterityContent
@@ -18,6 +18,10 @@ from zope.component import adapter
 from zope.component import getUtility
 from zope.interface import implementer
 from zope.interface import Interface
+from zope.schema.interfaces import IChoice
+from zope.schema.interfaces import ICollection
+from zope.schema.interfaces import IField
+from zope.schema.interfaces import IVocabularyTokenized
 
 import base64
 import logging
@@ -62,7 +66,7 @@ IMAGE_SIZE_WARNING = 5000000
 logger = logging.getLogger(__name__)
 
 
-# Custom Serializers
+# Custom Serializers for Dexterity
 
 
 @adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
@@ -126,13 +130,68 @@ class RichttextFieldSerializerWithRawText(DefaultFieldSerializer):
             }
 
 
+@adapter(ICollection, IDexterityContent, IMigrationMarker)
+@implementer(IFieldSerializer)
+class CollectionFieldSerializer(DefaultFieldSerializer):
+    def __call__(self):
+        """Override default serializer:
+        1. Export only the value, not a token/title dict.
+        2. Do not drop values that are not in the vocabulary.
+           Instead log info so you can handle the data.
+        """
+        # Binding is necessary for named vocabularies
+        if IField.providedBy(self.field):
+            self.field = self.field.bind(self.context)
+        value = self.get_value()
+        value_type = self.field.value_type
+        if (
+            value is not None
+            and IChoice.providedBy(value_type)
+            and IVocabularyTokenized.providedBy(value_type.vocabulary)
+        ):
+            for v in value:
+                try:
+                    value_type.vocabulary.getTerm(v)
+                except LookupError:
+                    # TODO: handle defaultFactory?
+                    if v not in [self.field.default, self.field.missing_value]:
+                        logger.info("Term lookup error: %r not in vocabulary %r for field %r of %r", v, value_type.vocabularyName, self.field.__name__, self.context)
+        return json_compatible(value)
+
+
+@adapter(IChoice, IDexterityContent, IMigrationMarker)
+@implementer(IFieldSerializer)
+class ChoiceFieldSerializer(DefaultFieldSerializer):
+    def __call__(self):
+        """Override default serializer:
+        1. Export only the value, not a token/title dict.
+        2. Do not drop values that are not in the vocabulary.
+           Instead log info so you can handle the data.
+        """
+        # Binding is necessary for named vocabularies
+        if IField.providedBy(self.field):
+            self.field = self.field.bind(self.context)
+        value = self.get_value()
+        if value is not None and IVocabularyTokenized.providedBy(self.field.vocabulary):
+            try:
+                self.field.vocabulary.getTerm(value)
+            except LookupError:
+                # TODO: handle defaultFactory?
+                if value not in [self.field.default, self.field.missing_value]:
+                    logger.info("Term lookup error: %r not in vocabulary %r for field %r of %r", value, self.field.vocabularyName, self.field.__name__, self.context)
+        return json_compatible(value)
+
+
 def get_relative_blob_path(obj, full_path):
     # Get blob path relative from the blobstorage root.
     db = obj._p_jar.db()
     base_dir = db._storage.fshelper.base_dir
     if not full_path.startswith(base_dir):
         return full_path
-    return full_path[len(base_dir):]
+    return full_path[len(base_dir) :]
+
+
+# Custom Serializers for Archetypes
 
 
 if HAS_AT:
@@ -163,7 +222,6 @@ if HAS_AT:
         class ATTalesFieldSerializer(ATDefaultFieldSerializer):
             def __call__(self):
                 return json_compatible(self.field.getRaw(self.context))
-
 
     @adapter(IImageField, IBaseObject, IBase64BlobsMarker)
     @implementer(IFieldSerializer)
@@ -392,6 +450,10 @@ if HAS_AT and HAS_PAC:
             if self.context.itemCount:
                 topic_metadata["b_size"] = self.context.itemCount
 
+            if hasattr(self, "_collection_sort_on"):
+                topic_metadata["sort_on"] = self._collection_sort_on
+                topic_metadata["sort_reversed"] = self._collection_sort_reversed
+
             return topic_metadata
 
 
@@ -405,7 +467,6 @@ def get_dx_blob_path(obj):
 @adapter(INamedFileField, IDexterityContent, IPathBlobsMarker)
 @implementer(IFieldSerializer)
 class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
-
     def __call__(self):
         namedfile = self.field.get(self.context)
         if namedfile is None:
@@ -430,7 +491,6 @@ class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
 @adapter(INamedImageField, IDexterityContent, IPathBlobsMarker)
 @implementer(IFieldSerializer)
 class ImageFieldSerializerWithBlobPaths(DefaultFieldSerializer):
-
     def __call__(self):
         image = self.field.get(self.context)
         if image is None:
@@ -456,12 +516,15 @@ class ImageFieldSerializerWithBlobPaths(DefaultFieldSerializer):
 
 
 if six.PY2:
+
     @adapter(long)
     @implementer(IJsonCompatible)
     def long_converter(value):
         # convert long (py2 only)
         return int(str(value))
+
 else:
+
     @adapter(int)
     @implementer(IJsonCompatible)
     def long_converter(value):
