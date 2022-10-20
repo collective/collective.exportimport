@@ -5,7 +5,8 @@ Changelog
 1.7 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix importing hidden portlets as visible. (#152)
+  [pbauer]
 
 
 1.6 (2022-10-07)
