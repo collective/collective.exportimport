@@ -5,10 +5,11 @@ Changelog
 1.7 (unreleased)
 ----------------
 
+- Fix importing hidden portlets as visible. (#152)
+  [pbauer]
+
 - Use `Language=all` when querying TranslationGroup items
   [erral]
-
-- Nothing changed yet.
 
 
 1.6 (2022-10-07)
