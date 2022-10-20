@@ -5,6 +5,9 @@ Changelog
 1.7 (unreleased)
 ----------------
 
+- Be more specific in the import_translation endpoint condition to install in a site with p.a.multilingual 1.x
+  [erral]
+  
 - Fix importing hidden portlets as visible. (#152)
   [pbauer]
 
