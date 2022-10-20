@@ -714,7 +714,7 @@ def register_portlets(obj, item):
 
             # set visibility setting
             visible = portlet_data.get("visible")
-            if visible:
+            if visible is not None:
                 settings = IPortletAssignmentSettings(assignment)
                 settings["visible"] = visible
 

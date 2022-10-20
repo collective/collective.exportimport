@@ -59,6 +59,15 @@ except pkg_resources.DistributionNotFound:
 else:
     from z3c.relationfield import RelationValue
 
+try:
+    pam_version = pkg_resources.get_distribution("plone.app.multilingual")
+    if pam_version.version < "2.0.0":
+        IS_PAM_1 = True
+    else:
+        IS_PAM_1 = False
+except pkg_resources.DistributionNotFound:
+    IS_PAM_1 = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -359,7 +368,10 @@ class ExportTranslations(BaseExport):
             return results
 
         for uid in portal_catalog.uniqueValuesFor("TranslationGroup"):
-            brains = portal_catalog(TranslationGroup=uid)
+            query = {"TranslationGroup": uid}
+            if IS_PAM_1:
+                query.update({"Language": "all"})
+            brains = portal_catalog(query)
 
             if len(brains) < 2:
                 # logger.info(u'Skipping...{} {}'.format(uid, brains))
