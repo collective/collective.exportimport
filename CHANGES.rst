@@ -8,6 +8,9 @@ Changelog
 - Fix importing hidden portlets as visible. (#152)
   [pbauer]
 
+- Use `Language=all` when querying TranslationGroup items
+  [erral]
+
 
 1.6 (2022-10-07)
 ----------------
