@@ -5,6 +5,9 @@ Changelog
 1.7 (unreleased)
 ----------------
 
+- Use `Language=all` when querying TranslationGroup items
+  [erral]
+
 - Nothing changed yet.
 
 
