@@ -315,6 +315,9 @@ class ImportContent(BrowserView):
             if not item:
                 continue
 
+            # id might have changed during a hook
+            new_id = item["id"]
+
             self.safe_portal_type = fix_portal_type(item["@type"])
             container = self.handle_container(item)
 
