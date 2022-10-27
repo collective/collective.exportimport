@@ -26,6 +26,7 @@ Changelog
   [pbauer]
 
 - Support exporting the blob-path without having access to the blobs.
+- Set image-variants in html-fields when running @@fix_html targeting in Plone 6.
   [pbauer]
 
 
