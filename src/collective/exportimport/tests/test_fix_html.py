@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from collective.exportimport.fix_html import html_fixer
 from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_INTEGRATION_TESTING
+from importlib import import_module
 from plone import api
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
@@ -9,6 +10,10 @@ from plone.namedfile.file import NamedImage
 from Products.CMFPlone.tests import dummy
 
 import unittest
+
+HAS_PLONE_6 = getattr(
+    import_module("Products.CMFPlone.factory"), "PLONE60MARKER", False
+)
 
 
 class TestFixHTML(unittest.TestCase):
@@ -143,6 +148,7 @@ class TestFixHTML(unittest.TestCase):
         self.assertEqual(output, fixed_html)
 
     def test_fix_html_form(self):
+        self.maxDiff = None
         self.create_demo_content()
         old_text = """
 <p><a class="some-class" href="resolveuid/{0}">Links to uuid</a></p>
@@ -183,6 +189,19 @@ class TestFixHTML(unittest.TestCase):
 """.format(
             self.contact.UID(), self.team.UID(), self.image.UID()
         )
+        if HAS_PLONE_6:
+            # Plone 6 also sets img-variants
+            fixed_html = """
+<p><a class="some-class" data-linktype="internal" data-val="{0}" href="resolveuid/{0}">Links to uuid</a></p>
+<p><a href="delete_confirmation">Link to view/form</a></p>
+<p><a data-linktype="internal" data-val="{1}" href="resolveuid/{1}">Link to content</a></p>
+<a href="edit?somequery=foo" target="_self" title="">Link to view with query string</a><br/>
+<a href="#target">Link to anchor</a>
+<img class="image-richtext image-inline picture-variant-preview" data-linktype="image" data-picturevariant="preview" data-scale="" data-val="{2}" src="resolveuid/{2}/@@images/image"/>
+<img class="image-richtext image-inline picture-variant-larger" data-linktype="image" data-picturevariant="larger" data-scale="large" data-val="{2}" src="resolveuid/{2}/@@images/image/large"/>
+<p><a href="image/image_preview"><img class="image-richtext image-inline picture-variant-preview" data-linktype="image" data-picturevariant="preview" data-scale="preview" data-val="{2}" src="resolveuid/{2}/@@images/image/preview"/></a></p>
+""".format(self.contact.UID(), self.team.UID(), self.image.UID())
+
         self.assertEqual(fixed_html, doc.text.raw)
 
     def test_fix_html_status_message(self):
