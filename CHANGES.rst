@@ -14,6 +14,8 @@ Changelog
 - Use `Language=all` when querying TranslationGroup items
   [erral]
 
+- Fix members import, by handling members that already exist.
+  [sunew]
 
 1.6 (2022-10-07)
 ----------------
