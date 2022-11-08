@@ -684,12 +684,28 @@ class ImportContent(BrowserView):
         if constrains is None:
             return
         constrains.setConstrainTypesMode(ENABLED)
-        locally_allowed_types = item["exportimport.constrains"]["locally_allowed_types"]
-        constrains.setLocallyAllowedTypes(locally_allowed_types)
+
+        locally_allowed_types = item["exportimport.constrains"][
+            "locally_allowed_types"
+        ]
+        try:
+            constrains.setLocallyAllowedTypes(locally_allowed_types)
+        except ValueError as err:
+            logger.warning(
+                "Cannot setLocallyAllowedTypes on %s", item["@id"],
+                exc_info=True
+            )
+
         immediately_addable_types = item["exportimport.constrains"][
             "immediately_addable_types"
         ]
-        constrains.setImmediatelyAddableTypes(immediately_addable_types)
+        try:
+            constrains.setImmediatelyAddableTypes(immediately_addable_types)
+        except ValueError as err:
+            logger.warning(
+                "Cannot setImmediatelyAddableTypes on %s", item["@id"],
+                exc_info=True
+            )
 
     def import_review_state(self, obj, item):
         """Try to set the original review_state. Overwrite to customize or skip."""
