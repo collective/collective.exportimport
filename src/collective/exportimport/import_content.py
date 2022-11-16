@@ -338,12 +338,12 @@ class ImportContent(BrowserView):
 
             # Handle existing content
             self.update_existing = False
-            if new_id in container:
+            if item["id"] in container:
                 if self.handle_existing_content == 0:
                     # Skip
                     logger.info(
                         u"{} ({}) already exists. Skipping it.".format(
-                            new_id, item["@id"]
+                            item["id"], item["@id"]
                         )
                     )
                     continue
@@ -352,29 +352,28 @@ class ImportContent(BrowserView):
                     # Replace content before creating it new
                     logger.info(
                         u"{} ({}) already exists. Replacing it.".format(
-                            new_id, item["@id"]
+                            item["id"], item["@id"]
                         )
                     )
-                    api.content.delete(container[new_id], check_linkintegrity=False)
+                    api.content.delete(container[item["id"]], check_linkintegrity=False)
 
                 elif self.handle_existing_content == 2:
                     # Update existing item
                     logger.info(
                         u"{} ({}) already exists. Updating it.".format(
-                            new_id, item["@id"]
+                            item["id"], item["@id"]
                         )
                     )
                     self.update_existing = True
-                    new = container[new_id]
+                    new = container[item["id"]]
 
                 else:
                     # Create with new id. Speed up by using random id.
-                    duplicate = new_id
-                    new_id = "{}-{}".format(new_id, random.randint(1000, 9999))
-                    item["id"] = new_id
+                    duplicate = item["id"]
+                    item["id"] = "{}-{}".format(item["id"], random.randint(1000, 9999))
                     logger.info(
                         u"{} ({}) already exists. Created as {}".format(
-                            duplicate, item["@id"], new_id
+                            duplicate, item["@id"], item["id"]
                         )
                     )
 

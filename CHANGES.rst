@@ -7,15 +7,18 @@ Changelog
 
 - Be more specific in the import_translation endpoint condition to install in a site with p.a.multilingual 1.x
   [erral]
-  
+
 - Fix importing hidden portlets as visible. (#152)
   [pbauer]
 
-- Use `Language=all` when querying TranslationGroup items
+- Use ``Language=all`` when querying TranslationGroup items
   [erral]
 
 - Fix members import, by handling members that already exist.
   [sunew]
+
+- Don't use new_id because a hook can change ``item["id"]``
+  [pbauer]
 
 1.6 (2022-10-07)
 ----------------
@@ -104,7 +107,7 @@ Changelog
 1.4 (2022-01-07)
 ----------------
 
-- Fix `debug` flag in `ExportRelations`
+- Fix ``debug`` flag in ``ExportRelations``
   [petschki]
 
 - Deserialize portlet-data using restapi to fix importing RichText.
