@@ -854,6 +854,8 @@ class ImportContent(BrowserView):
         # so we need to encode parent_path before using plone.api.content.get
         if isinstance(self.context.getPhysicalPath()[0], bytes):
             parent_path = parent_path.encode("utf8")
+        if parent_path == "":
+            parent_path = "/"
         try:
             parent = api.content.get(path=parent_path)
         except NotFound:
