@@ -501,6 +501,9 @@ class ExportDefaultPages(BaseExport):
             except Exception as e:
                 logger.info(u"Error getting obj for %s", brain.getURL(), exc_info=True)
                 continue
+            if obj is None:
+                logger.error(u"brain.getObject() is None %s", brain.getPath())
+                continue
             if IPloneSiteRoot.providedBy(obj):
                 # Site root is handled below (in Plone 6 it is returned by a catalog search)
                 continue
@@ -567,6 +570,9 @@ class ExportDiscussion(BaseExport):
         for brain in api.content.find(object_provides=IContentish.__identifier__, sort_on="path"):
             try:
                 obj = brain.getObject()
+                if obj is None:
+                    logger.error(u"brain.getObject() is None %s", brain.getPath())
+                    continue
                 conversation = IConversation(obj, None)
                 if not conversation:
                     continue

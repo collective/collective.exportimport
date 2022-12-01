@@ -321,6 +321,9 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
         except Exception:
             logger.warning("Could not get object for: %s", brain.getPath(), exc_info=True)
             continue
+        if obj is None:
+            logger.error(u"brain.getObject() is None %s", brain.getPath())
+            continue
         try:
             changed = False
             for fieldname in types_with_richtext_fields[obj.portal_type]:
