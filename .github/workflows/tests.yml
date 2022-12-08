@@ -23,7 +23,7 @@ jobs:
         - ["3.8",   "plone60-py38"]
         - ["3.9",   "plone60-py39"]
         # - ["3.10",  "plone60-py310"]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     name: ${{ matrix.config[1] }}
     steps:
     - uses: actions/checkout@v2
