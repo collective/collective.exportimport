@@ -2,6 +2,7 @@
 from App.config import getConfiguration
 from collective.exportimport import config
 from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
+from DateTime import DateTime
 from OFS.interfaces import IOrderedContainer
 from plone import api
 from plone.app.redirector.interfaces import IRedirectionStorage
@@ -1301,9 +1302,8 @@ class TestImport(unittest.TestCase):
         login(app, SITE_OWNER_NAME)
         self.create_demo_content()
         transaction.commit()
-        from copy import copy
-        old_modification_date = dateify(self.team.modification_date)
         old_creation_date = dateify(self.team.creation_date)
+        old_modification_date = dateify(self.team.modification_date)
 
         # Now export the complete portal.
         browser = self.open_page("@@export_content")
@@ -1329,11 +1329,12 @@ class TestImport(unittest.TestCase):
         browser.getForm(action="@@import_content").submit()
         self.assertIn("Imported 6 items", browser.contents)
 
-        team = portal["about"]["team"]
+        team = portal["about"]["team"].aq_base
 
-        # change item (e.g. fix html) to change modification date
+        # change modification and creation date
         old = team.modification_date
         sleep(1)
+        team.creation_date = DateTime()
         team.reindexObject()
         new = team.modification_date
         self.assertNotEqual(old, new)
@@ -1345,10 +1346,10 @@ class TestImport(unittest.TestCase):
 
         new_creation_date = dateify(team.creation_date)
         new_modification_date = dateify(team.modification_date)
-        self.assertEqual(old_creation_date, new_creation_date)
+        self.assertNotEqual(old_creation_date, new_creation_date)
         self.assertNotEqual(old_modification_date, new_modification_date)
 
-        # now we reset the dates
+        # reset the dates
         request.form["form.submitted"] = True
         view = api.content.get_view("reset_dates", portal, request)
         view()
@@ -1357,7 +1358,10 @@ class TestImport(unittest.TestCase):
         reset_creation_date = dateify(team.creation_date)
         reset_modification_date = dateify(team.modification_date)
         self.assertEqual(old_creation_date, reset_creation_date)
-        self.assertEqual(old_modification_date, reset_modification_date)
+        self.assertEqual(old_creation_date, reset_modification_date)
+        # the _migrated attributes are gone
+        self.assertIsNone(getattr(team, "creation_date_migrated", None))
+        self.assertIsNone(getattr(team, "cmodification_date_migrated", None))
 
         # check if index and metadata are correct
         catalog = api.portal.get_tool("portal_catalog")
