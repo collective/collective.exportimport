@@ -2,6 +2,7 @@
 from App.config import getConfiguration
 from collective.exportimport import config
 from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
+from DateTime import DateTime
 from OFS.interfaces import IOrderedContainer
 from plone import api
 from plone.app.redirector.interfaces import IRedirectionStorage
@@ -14,6 +15,7 @@ from plone.namedfile.file import NamedImage
 from Products.CMFPlone.interfaces.constrains import ENABLED
 from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.tests import dummy
+from time import sleep
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getUtility
 from zope.lifecycleevent import modified
@@ -1290,3 +1292,87 @@ class TestImport(unittest.TestCase):
         doc2 = portal["folder1"]["doc2"]
         self.assertEqual(doc2.title, u"Document 2")
         self.assertEqual(doc2.description, u"A Description")
+
+    def test_reset_dates(self):
+        """Reset original modification and creation dates"""
+        # First create some content to export.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        request = self.layer["request"]
+        login(app, SITE_OWNER_NAME)
+        self.create_demo_content()
+        transaction.commit()
+        old_creation_date = dateify(self.team.creation_date)
+        old_modification_date = dateify(self.team.modification_date)
+
+        # Now export the complete portal.
+        browser = self.open_page("@@export_content")
+        browser.getControl(name="portal_type").value = [
+            "Folder",
+            "Image",
+            "Link",
+            "Document",
+        ]
+        browser.getForm(action="@@export_content").submit(name="submit")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+
+        # Remove the added content.
+        self.remove_demo_content()
+        transaction.commit()
+
+        # Now import it.
+        browser = self.open_page("@@import_content")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(contents, "application/json", "Document.json")
+        browser.getForm(action="@@import_content").submit()
+        self.assertIn("Imported 6 items", browser.contents)
+
+        team = portal["about"]["team"].aq_base
+
+        # change modification and creation date
+        old = team.modification_date
+        sleep(1)
+        team.creation_date = DateTime()
+        team.reindexObject()
+        new = team.modification_date
+        self.assertNotEqual(old, new)
+
+        creation_date_migrated = dateify(team.creation_date_migrated)
+        modification_date_migrated = dateify(team.modification_date_migrated)
+        self.assertEqual(old_creation_date, creation_date_migrated)
+        self.assertEqual(old_modification_date, modification_date_migrated)
+
+        new_creation_date = dateify(team.creation_date)
+        new_modification_date = dateify(team.modification_date)
+        self.assertNotEqual(old_creation_date, new_creation_date)
+        self.assertNotEqual(old_modification_date, new_modification_date)
+
+        # reset the dates
+        request.form["form.submitted"] = True
+        view = api.content.get_view("reset_dates", portal, request)
+        view()
+
+        # now all dates should be the same as before the export
+        reset_creation_date = dateify(team.creation_date)
+        reset_modification_date = dateify(team.modification_date)
+        self.assertEqual(old_creation_date, reset_creation_date)
+        self.assertEqual(old_creation_date, reset_modification_date)
+        # the _migrated attributes are gone
+        self.assertIsNone(getattr(team, "creation_date_migrated", None))
+        self.assertIsNone(getattr(team, "cmodification_date_migrated", None))
+
+        # check if index and metadata are correct
+        catalog = api.portal.get_tool("portal_catalog")
+        brain = api.content.find(UID=team.UID())[0]
+        indexdata = catalog.getIndexDataForRID(brain.getRID())
+        metadata = catalog.getMetadataForRID(brain.getRID())
+        # metadata is correct
+        self.assertEqual(dateify(metadata["modified"]), reset_modification_date)
+        # index data is correct
+        convert = catalog._catalog.indexes["modified"]._convert
+        self.assertEqual(indexdata["modified"], convert(reset_modification_date))
+
+def dateify(value):
+    return value.asdatetime().replace(microsecond=0)
