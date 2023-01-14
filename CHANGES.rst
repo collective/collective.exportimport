@@ -25,6 +25,10 @@ Changelog
 - Don't use new_id because a hook can change ``item["id"]``
   [pbauer]
 
+- Support exporting the blob-path without having access to the blobs.
+  [pbauer]
+
+
 1.6 (2022-10-07)
 ----------------
 

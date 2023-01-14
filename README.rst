@@ -219,6 +219,7 @@ The best way depends on how you are going to import the blobs:
 - Export as download urls: small download, but ``collective.exportimport`` cannot import the blobs, so you will need an own import script to download them.
 - Export as base-64 encoded strings: large download, but ``collective.exportimport`` can handle the import.
 - Export as blob paths: small download and ``collective.exportimport`` can handle the import, but you need to copy ``var/blobstorage`` to the Plone Site where you do the import or set the environment variable ``COLLECTIVE_EXPORTIMPORT_BLOB_HOME`` to the old blobstorage path: ``export COLLECTIVE_EXPORTIMPORT_BLOB_HOME=/path-to-old-instance/var/blobstorage``.
+  To export the blob-path you do not need to have access to the blobs!
 
 
 Customize export and import
@@ -1777,7 +1778,7 @@ Installing in Plone 4
 ---------------------
 
 collective.exportimport depends on plone.restapi . For Plone 4, you need to pin plone.restapi to 7.x . When installing plone.restapi version 7.x.x in Plone 4 you may need to add the following version pins to your buildout::
-  
+
     [versions]
     PyJWT = 1.7.1
 
