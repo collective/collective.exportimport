@@ -340,8 +340,6 @@ class ExportContent(BrowserView):
         """Extend and modify serialized data to make importing easier."""
 
         # Add uuid of parent to simplify getting parent during import
-        import pdb; pdb.set_trace() 
-
         parent = obj.__parent__
         if item["parent"]:
             item["parent"]["UID"] = IUUID(parent, None)
