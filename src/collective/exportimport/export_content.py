@@ -313,6 +313,8 @@ class ExportContent(BrowserView):
         results = []
         query = self.build_query()
         for fti in portal_types.listTypeInfo():
+            if fti.id in config.SKIPPED_CONTENTTYPE_IDS:
+                continue
             query["portal_type"] = fti.id
             number = len(catalog.unrestrictedSearchResults(**query))
             if number >= 1:
@@ -338,8 +340,11 @@ class ExportContent(BrowserView):
         """Extend and modify serialized data to make importing easier."""
 
         # Add uuid of parent to simplify getting parent during import
+        import pdb; pdb.set_trace() 
+
         parent = obj.__parent__
-        item["parent"]["UID"] = IUUID(parent, None)
+        if item["parent"]:
+            item["parent"]["UID"] = IUUID(parent, None)
 
         item = self.fix_url(item, obj)
         item = self.export_constraints(item, obj)

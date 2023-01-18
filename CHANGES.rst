@@ -5,6 +5,11 @@ Changelog
 1.7 (unreleased)
 ----------------
 
+- Filter out 'Discussion Item' in content type export list. Comments have their own export and
+  import views. A normal content type export for comments will raise a KeyError when trying to find 
+  the parent. (#112)
+  [fredvd]
+
 - Be more specific in the import_translation endpoint condition to install in a site with p.a.multilingual 1.x
   [erral]
 

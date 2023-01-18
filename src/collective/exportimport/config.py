@@ -13,3 +13,6 @@ CENTRAL_DIRECTORY = os.path.expanduser(
 )
 
 SITE_ROOT = 'plone_site_root'
+
+# Discussion Item has its own export / import views, don't show it in the exportable content type list
+SKIPPED_CONTENTTYPE_IDS = ['Discussion Item']
