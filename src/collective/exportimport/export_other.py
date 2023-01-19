@@ -71,6 +71,8 @@ except pkg_resources.DistributionNotFound:
 
 logger = logging.getLogger(__name__)
 
+PORTAL_PLACEHOLDER = "<Portal>"
+
 
 class BaseExport(BrowserView):
     """Just DRY"""
@@ -116,7 +118,9 @@ class BaseExport(BrowserView):
 class ExportRelations(BaseExport):
     """Export all relations"""
 
-    def __call__(self, download_to_server=False, debug=False, include_linkintegrity=False):
+    def __call__(
+        self, download_to_server=False, debug=False, include_linkintegrity=False
+    ):
         self.title = "Export relations"
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
@@ -139,7 +143,10 @@ class ExportRelations(BaseExport):
                 ref_catalog = reference_catalog._catalog
                 for rid in ref_catalog.data:
                     rel = ref_catalog[rid]
-                    if not include_linkintegrity and rel.relationship == "isReferencing":
+                    if (
+                        not include_linkintegrity
+                        and rel.relationship == "isReferencing"
+                    ):
                         continue
                     source = uuidToObject(rel.sourceUID)
                     target = uuidToObject(rel.targetUID)
@@ -167,7 +174,10 @@ class ExportRelations(BaseExport):
             if relation_catalog:
                 portal_catalog = getToolByName(self.context, "portal_catalog")
                 for rel in relation_catalog.findRelations():
-                    if not include_linkintegrity and rel.from_attribute == "isReferencing":
+                    if (
+                        not include_linkintegrity
+                        and rel.from_attribute == "isReferencing"
+                    ):
                         continue
                     try:
                         rel_from_path_and_rel_to_path = rel.from_path and rel.to_path
@@ -414,12 +424,18 @@ class ExportLocalRoles(BaseExport):
 
         portal = api.portal.get()
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=self.get_localroles)
+
+        self.get_root_localroles()
+
         return self.results
 
     def get_localroles(self, obj, path):
         uid = IUUID(obj, None)
         if not uid:
             return
+        self._get_localroles(obj, uid)
+
+    def _get_localroles(self, obj, uid):
         localroles = None
         block = None
         obj = aq_base(obj)
@@ -437,6 +453,10 @@ class ExportLocalRoles(BaseExport):
             if item is None:
                 return
             self.results.append(item)
+
+    def get_root_localroles(self):
+        site = api.portal.get()
+        self._get_localroles(site, PORTAL_PLACEHOLDER)
 
     def item_hook(self, item):
         return item
@@ -495,7 +515,9 @@ class ExportDefaultPages(BaseExport):
     def all_default_pages(self):
         results = []
         catalog = api.portal.get_tool("portal_catalog")
-        for brain in catalog.unrestrictedSearchResults(is_folderish=True, sort_on="path"):
+        for brain in catalog.unrestrictedSearchResults(
+            is_folderish=True, sort_on="path"
+        ):
             try:
                 obj = brain.getObject()
             except Exception as e:
@@ -508,7 +530,11 @@ class ExportDefaultPages(BaseExport):
             try:
                 data = self.get_default_page_info(obj)
             except Exception as e:
-                logger.info(u"Error exporting default_page for %s", obj.absolute_url(), exc_info=True)
+                logger.info(
+                    u"Error exporting default_page for %s",
+                    obj.absolute_url(),
+                    exc_info=True,
+                )
                 continue
 
             if data:
@@ -533,11 +559,11 @@ class ExportDefaultPages(BaseExport):
         # and the property default_page on the object.
         # We don't care about other cases
         # 1. obj is folderish, check for a index_html in it
-        if 'index_html' in obj:
-            default_page = 'index_html'
+        if "index_html" in obj:
+            default_page = "index_html"
         else:
             # 2. Check attribute 'default_page'
-            default_page = getattr(aq_base(obj), 'default_page', [])
+            default_page = getattr(aq_base(obj), "default_page", [])
 
         if default_page and default_page in obj:
             default_page_obj = obj.get(default_page)
@@ -564,18 +590,24 @@ class ExportDiscussion(BaseExport):
 
     def all_discussions(self):
         results = []
-        for brain in api.content.find(object_provides=IContentish.__identifier__, sort_on="path"):
+        for brain in api.content.find(
+            object_provides=IContentish.__identifier__, sort_on="path"
+        ):
             try:
                 obj = brain.getObject()
                 conversation = IConversation(obj, None)
                 if not conversation:
                     continue
-                serializer = getMultiAdapter((conversation, self.request), ISerializeToJson)
+                serializer = getMultiAdapter(
+                    (conversation, self.request), ISerializeToJson
+                )
                 output = serializer()
                 if output:
                     results.append({"uuid": IUUID(obj), "conversation": output})
             except Exception as e:
-                logger.info("Error exporting comments for %s", brain.getURL(), exc_info=True)
+                logger.info(
+                    "Error exporting comments for %s", brain.getURL(), exc_info=True
+                )
                 continue
         return results
 
