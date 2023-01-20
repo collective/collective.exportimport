@@ -10,6 +10,7 @@ from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
+from plone.dexterity.interfaces import IDexterityContent
 from z3c.relationfield import RelationValue
 from zope.annotation.interfaces import IAnnotations
 from zope.component import createObject
@@ -687,3 +688,105 @@ class TestExport(unittest.TestCase):
         self.assertEqual(item["title"], u"Document 2 with changed title")
         self.assertEqual(item["description"], u"New description in revision 3")
         self.assertEqual(item["changeNote"], u"I am new!")
+
+    def test_export_blob_as_base64(self):
+        # First create some content with blobs.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        from plone.namedfile.file import NamedBlobFile
+
+        filepath = os.path.join(os.path.dirname(__file__), "file.pdf")
+        with open(filepath, "rb") as f:
+            file_data = f.read()
+        file1 = api.content.create(
+            container=portal,
+            type="File",
+            id="file1",
+            title=u"File 1",
+        )
+        file1.file=NamedBlobFile(data=file_data, filename=u"file.pdf")
+        transaction.commit()
+
+        # Now export
+        browser = self.open_page("@@export_content")
+        self.assertEqual(browser.getControl(name="include_blobs").value, ["1"])
+        browser.getControl(name="include_blobs").value = ["1"]
+        portal_type = browser.getControl(name="portal_type")
+        self.assertEqual(portal_type.value, [])
+        self.assertIn("File", portal_type.options)
+        portal_type.value = ["File"]
+        try:
+            # Plone 5.2
+            browser.getForm(action="@@export_content").submit(name="submit")
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+
+        # We should have gotten json.
+        data = json.loads(contents)
+        self.assertEqual(len(data), 1)
+
+        # Check a few important keys.
+        info = data[0]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/file1")
+        self.assertEqual(info["@type"], "File")
+        self.assertEqual(info["title"], file1.Title())
+        self.assertEqual(info["file"]["content-type"], "application/pdf")
+        self.assertEqual(info["file"]["filename"], "file.pdf")
+        self.assertTrue(info["file"]["data"].startswith("JVBERi0xLjQKJcOkw7zDtsOf"))
+        self.assertEqual(info["file"]["encoding"], "base64")
+
+    def test_export_blob_as_download_urls(self):
+        # First create some content with blobs.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        from plone.namedfile.file import NamedBlobFile
+
+        filepath = os.path.join(os.path.dirname(__file__), "file.pdf")
+        with open(filepath, "rb") as f:
+            file_data = f.read()
+        file1 = api.content.create(
+            container=portal,
+            type="File",
+            id="file1",
+            title=u"File 1",
+        )
+        file1.file=NamedBlobFile(data=file_data, filename=u"file.pdf")
+        transaction.commit()
+
+        # Now export
+        browser = self.open_page("@@export_content")
+        self.assertEqual(browser.getControl(name="include_blobs").value, ["1"])
+        browser.getControl(name="include_blobs").value = ["0"]
+        portal_type = browser.getControl(name="portal_type")
+        self.assertEqual(portal_type.value, [])
+        self.assertIn("File", portal_type.options)
+        portal_type.value = ["File"]
+        try:
+            # Plone 5.2
+            browser.getForm(action="@@export_content").submit(name="submit")
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+
+        # We should have gotten json.
+        data = json.loads(contents)
+        self.assertEqual(len(data), 1)
+
+        # Check a few important keys.
+        info = data[0]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/file1")
+        self.assertEqual(info["@type"], "File")
+        self.assertEqual(info["title"], file1.Title())
+        self.assertEqual(info["file"]["content-type"], "application/pdf")
+        self.assertEqual(info["file"]["filename"], "file.pdf")
+        self.assertEqual(info["file"]["download"], "http://nohost/plone/file1/@@download/file")
+        self.assertEqual(info["file"]["size"], 8561)
