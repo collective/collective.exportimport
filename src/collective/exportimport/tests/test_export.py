@@ -10,6 +10,7 @@ from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
+from plone.dexterity.interfaces import IDexterityContent
 from z3c.relationfield import RelationValue
 from zope.annotation.interfaces import IAnnotations
 from zope.component import createObject
@@ -695,16 +696,19 @@ class TestExport(unittest.TestCase):
         login(app, SITE_OWNER_NAME)
         from plone.namedfile.file import NamedBlobFile
 
-        filename = os.path.join(os.path.dirname(__file__), "file.pdf")
-        with open(filename, "rb") as f:
+        filepath = os.path.join(os.path.dirname(__file__), "file.pdf")
+        with open(filepath, "rb") as f:
             file_data = f.read()
-        file = api.content.create(
+        file1 = api.content.create(
             container=portal,
             type="File",
             id="file1",
-            title="File 1",
-            file=NamedBlobFile(data=file_data, filename=filename)
+            title=u"File 1",
         )
+        if IDexterityContent.providedBy(file1):
+            file1.file=NamedBlobFile(data=file_data, filename="file.pdf")
+        else:
+            file1.setFile(file_data, mimetype="application/pdf", filename='file.pdf')
         transaction.commit()
 
         # Now export
@@ -733,9 +737,9 @@ class TestExport(unittest.TestCase):
         info = data[0]
         self.assertEqual(info["@id"], portal.absolute_url() + "/file1")
         self.assertEqual(info["@type"], "File")
-        self.assertEqual(info["title"], file.Title())
+        self.assertEqual(info["title"], file1.Title())
         self.assertEqual(info["file"]["content-type"], "application/pdf")
-        self.assertTrue(info["file"]["filename"].endswith("/exportimport/tests/file.pdf"))
+        self.assertEqual(info["file"]["filename"], "file.pdf")
         self.assertTrue(info["file"]["data"].startswith("JVBERi0xLjQKJcOkw7zDtsOf"))
         self.assertEqual(info["file"]["encoding"], "base64")
 
@@ -746,16 +750,19 @@ class TestExport(unittest.TestCase):
         login(app, SITE_OWNER_NAME)
         from plone.namedfile.file import NamedBlobFile
 
-        filename = os.path.join(os.path.dirname(__file__), "file.pdf")
-        with open(filename, "rb") as f:
+        filepath = os.path.join(os.path.dirname(__file__), "file.pdf")
+        with open(filepath, "rb") as f:
             file_data = f.read()
-        file = api.content.create(
+        file1 = api.content.create(
             container=portal,
             type="File",
             id="file1",
-            title="File 1",
-            file=NamedBlobFile(data=file_data, filename=filename)
+            title=u"File 1",
         )
+        if IDexterityContent.providedBy(file1):
+            file1.file=NamedBlobFile(data=file_data, filename="file.pdf")
+        else:
+            file1.setFile(file_data, mimetype="application/pdf", filename='file.pdf')
         transaction.commit()
 
         # Now export
@@ -784,8 +791,8 @@ class TestExport(unittest.TestCase):
         info = data[0]
         self.assertEqual(info["@id"], portal.absolute_url() + "/file1")
         self.assertEqual(info["@type"], "File")
-        self.assertEqual(info["title"], file.Title())
+        self.assertEqual(info["title"], file1.Title())
         self.assertEqual(info["file"]["content-type"], "application/pdf")
-        self.assertTrue(info["file"]["filename"].endswith("/exportimport/tests/file.pdf"))
+        self.assertEqual(info["file"]["filename"], "file.pdf")
         self.assertEqual(info["file"]["download"], "http://nohost/plone/file1/@@download/file")
         self.assertEqual(info["file"]["size"], 8561)
