@@ -10,7 +10,6 @@ from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.testing import TEST_USER_ID
-from plone.dexterity.interfaces import IDexterityContent
 from z3c.relationfield import RelationValue
 from zope.annotation.interfaces import IAnnotations
 from zope.component import createObject
@@ -705,7 +704,7 @@ class TestExport(unittest.TestCase):
             id="file1",
             title=u"File 1",
         )
-        file1.file=NamedBlobFile(data=file_data, filename=u"file.pdf")
+        file1.file = NamedBlobFile(data=file_data, filename=u"file.pdf")
         transaction.commit()
 
         # Now export
@@ -756,7 +755,7 @@ class TestExport(unittest.TestCase):
             id="file1",
             title=u"File 1",
         )
-        file1.file=NamedBlobFile(data=file_data, filename=u"file.pdf")
+        file1.file = NamedBlobFile(data=file_data, filename=u"file.pdf")
         transaction.commit()
 
         # Now export

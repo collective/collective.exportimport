@@ -689,7 +689,7 @@ class ImportContent(BrowserView):
         ]
         try:
             constrains.setLocallyAllowedTypes(locally_allowed_types)
-        except ValueError as err:
+        except ValueError:
             logger.warning(
                 "Cannot setLocallyAllowedTypes on %s", item["@id"],
                 exc_info=True
@@ -700,7 +700,7 @@ class ImportContent(BrowserView):
         ]
         try:
             constrains.setImmediatelyAddableTypes(immediately_addable_types)
-        except ValueError as err:
+        except ValueError:
             logger.warning(
                 "Cannot setImmediatelyAddableTypes on %s", item["@id"],
                 exc_info=True

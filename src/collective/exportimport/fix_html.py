@@ -300,7 +300,6 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
             fixers = [fixers]
         fixers = [html_fixer] + [i for i in fixers if callable(i)]
 
-
     try:
         # Add img_variant_fixer if we are running this in Plone 6.x
         api.portal.get_registry_record("plone.picture_variants")
@@ -366,7 +365,8 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
 
         if fixed_items != 0 and not fixed_items % 1000:
             # Commit every 1000 changed items.
-            logger.info(u"Fix html for %s (%s) of %s items (changed %s fields in %s items)",
+            logger.info(
+                u"Fix html for %s (%s) of %s items (changed %s fields in %s items)",
                 index, round(index / total * 100, 2), total, fixed_fields, fixed_items)
             if commit:
                 transaction.commit()

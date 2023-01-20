@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import imp
 from App.config import getConfiguration
 from collective.exportimport import config
 from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
@@ -677,7 +676,7 @@ class TestImport(unittest.TestCase):
         self.assertIn("image", portal.contentIds())
 
         # create a collection in self.about
-        collection = api.content.create(
+        api.content.create(
             container=self.about,
             type="Collection",
             id="collection",
@@ -1096,7 +1095,7 @@ class TestImport(unittest.TestCase):
         #
         # Need to understand why IAnnotations(portal.REQUEST).clear() does not work
         # in zope.annotation <= 3.5.0
-        #IAnnotations(self.layer["request"]).clear()
+        # IAnnotations(self.layer["request"]).clear()
         portal.REQUEST.__annotations__.clear()
 
         # permissions are reindexed
@@ -1426,6 +1425,7 @@ class TestImport(unittest.TestCase):
         # index data is correct
         convert = catalog._catalog.indexes["modified"]._convert
         self.assertEqual(indexdata["modified"], convert(reset_modification_date))
+
 
 def dateify(value):
     return value.asdatetime().replace(microsecond=0)

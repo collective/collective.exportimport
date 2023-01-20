@@ -520,7 +520,7 @@ class ExportDefaultPages(BaseExport):
         ):
             try:
                 obj = brain.getObject()
-            except Exception as e:
+            except Exception:
                 logger.info(u"Error getting obj for %s", brain.getURL(), exc_info=True)
                 continue
             if obj is None:
@@ -532,7 +532,7 @@ class ExportDefaultPages(BaseExport):
 
             try:
                 data = self.get_default_page_info(obj)
-            except Exception as e:
+            except Exception:
                 logger.info(
                     u"Error exporting default_page for %s",
                     obj.absolute_url(),
@@ -550,7 +550,7 @@ class ExportDefaultPages(BaseExport):
             if data:
                 data["uuid"] = config.SITE_ROOT
                 results.append(data)
-        except Exception as e:
+        except Exception:
             logger.info(u"Error exporting default_page for portal", exc_info=True)
 
         return results
@@ -610,7 +610,7 @@ class ExportDiscussion(BaseExport):
                 output = serializer()
                 if output:
                     results.append({"uuid": IUUID(obj), "conversation": output})
-            except Exception as e:
+            except Exception:
                 logger.info(
                     "Error exporting comments for %s", brain.getURL(), exc_info=True
                 )

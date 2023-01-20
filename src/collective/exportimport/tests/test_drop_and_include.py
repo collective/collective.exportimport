@@ -1,19 +1,24 @@
+from collective.exportimport.import_content import ImportContent
 
 import unittest
-from collective.exportimport.import_content import ImportContent
+
 
 class NoIncludeAndNoDrop(ImportContent):
     pass
 
+
 class IncludeAndNoDrop(ImportContent):
     INCLUDE_PATHS = ['/Plone/include']
+
 
 class NoIncludeAndDrop(ImportContent):
     DROP_PATHS = ['/Plone/drop']
 
+
 class IncludeAndDrop(ImportContent):
     INCLUDE_PATHS = ['/Plone/include']
     DROP_PATHS = ['/Plone/include/drop', '/Plone/drop']
+
 
 class TestDropAndInclude(unittest.TestCase):
     def test_no_include_and_no_drop(self):
@@ -43,7 +48,7 @@ class TestDropAndInclude(unittest.TestCase):
         self.assertFalse(view.must_process('/Plone/drop'))
         self.assertTrue(view.must_process('/Plone/testdocument'))
         self.assertFalse(view.must_process('/Plone/drop/testdocument'))
-    
+
     def test_include_and_drop(self):
         view = IncludeAndDrop(None, None)
 
@@ -70,5 +75,3 @@ class TestDropAndInclude(unittest.TestCase):
         self.assertFalse(view.must_process('/Plone/include/drop/testdocument'))
         self.assertTrue(view.must_process('/Plone/include'))
         self.assertFalse(view.must_process('/Plone/include/drop'))
-
-

@@ -287,7 +287,7 @@ class ExportContent(BrowserView):
                 logger.info(u"Handled {} items...".format(index))
             try:
                 obj = brain.getObject()
-            except Exception as e:
+            except Exception:
                 logger.exception(u"Error getting brain %s", brain.getPath(), exc_info=True)
                 continue
             if obj is None:
@@ -306,7 +306,7 @@ class ExportContent(BrowserView):
                 item = self.update_export_data(item, obj)
 
                 yield item
-            except Exception as e:
+            except Exception:
                 logger.exception(u"Error exporting %s", obj.absolute_url(), exc_info=True)
 
     def portal_types(self):

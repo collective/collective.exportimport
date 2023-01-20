@@ -25,7 +25,6 @@ from zope.schema.interfaces import IVocabularyTokenized
 
 import base64
 import logging
-import os
 import pkg_resources
 import six
 
