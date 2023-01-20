@@ -326,7 +326,7 @@ if HAS_AT:
             return json_compatible(result)
 
     def get_at_blob_path(obj):
-        oid = obj._p_oid
+        oid = obj.getBlob()._p_oid
         tid = obj._p_serial
         db = obj._p_jar.db()
         full_path = db._storage.fshelper.getBlobFilename(oid, tid)
