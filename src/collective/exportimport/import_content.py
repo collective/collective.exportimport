@@ -319,7 +319,7 @@ class ImportContent(BrowserView):
             container = self.handle_container(item)
 
             if not container:
-                logger.info(
+                logger.warning(
                     u"No container (parent was {}) found for {} {}".format(
                         item["parent"]["@type"], item["@type"], item["@id"]
                     )
@@ -327,7 +327,7 @@ class ImportContent(BrowserView):
                 continue
 
             if not getattr(aq_base(container), "isPrincipiaFolderish", False):
-                logger.info(
+                logger.warning(
                     u"Container {} for {} is not folderish".format(
                         container.absolute_url(), item["@id"]
                     )
