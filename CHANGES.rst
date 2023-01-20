@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.7 (unreleased)
+1.7 (2023-01-20)
 ----------------
 
 - Filter out 'Discussion Item' in content type export list. Comments have their own export and
