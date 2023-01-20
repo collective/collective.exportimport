@@ -6,7 +6,7 @@ Changelog
 ----------------
 
 - Filter out 'Discussion Item' in content type export list. Comments have their own export and
-  import views. A normal content type export for comments will raise a KeyError when trying to find 
+  import views. A normal content type export for comments will raise a KeyError when trying to find
   the parent. (#112)
   [fredvd]
 
@@ -26,6 +26,9 @@ Changelog
   [pbauer]
 
 - Support exporting the blob-path without having access to the blobs.
+  [pbauer]
+
+- Set image-variants in html-fields when running @@fix_html targeting in Plone 6.
   [pbauer]
 
 
