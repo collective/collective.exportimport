@@ -847,6 +847,9 @@ class ImportContent(BrowserView):
             if brains:
                 return brains[0].getObject()
 
+        if item["parent"]["@type"] == "Plone Site":
+            return api.portal.get()
+
         # If the item is missing look for a item with the path of the old parent
         parent_url = unquote(item["parent"]["@id"])
         parent_path = urlparse(parent_url).path
