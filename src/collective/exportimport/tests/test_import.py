@@ -1411,7 +1411,7 @@ class TestImport(unittest.TestCase):
         reset_creation_date = dateify(team.creation_date)
         reset_modification_date = dateify(team.modification_date)
         self.assertEqual(old_creation_date, reset_creation_date)
-        self.assertEqual(old_creation_date, reset_modification_date)
+        self.assertEqual(old_modification_date, reset_modification_date)
         # the _migrated attributes are gone
         self.assertIsNone(getattr(team, "creation_date_migrated", None))
         self.assertIsNone(getattr(team, "cmodification_date_migrated", None))
