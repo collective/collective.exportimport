@@ -290,6 +290,9 @@ class ExportContent(BrowserView):
             except Exception as e:
                 logger.exception(u"Error getting brain %s", brain.getPath(), exc_info=True)
                 continue
+            if obj is None:
+                logger.error(u"brain.getObject() is None %s", brain.getPath())
+                continue
             obj = self.global_obj_hook(obj)
             if not obj:
                 continue
