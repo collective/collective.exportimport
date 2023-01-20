@@ -705,10 +705,7 @@ class TestExport(unittest.TestCase):
             id="file1",
             title=u"File 1",
         )
-        if IDexterityContent.providedBy(file1):
-            file1.file=NamedBlobFile(data=file_data, filename=u"file.pdf")
-        else:
-            file1.setFile(file_data, mimetype="application/pdf", filename=u"file.pdf")
+        file1.file=NamedBlobFile(data=file_data, filename=u"file.pdf")
         transaction.commit()
 
         # Now export
@@ -759,10 +756,7 @@ class TestExport(unittest.TestCase):
             id="file1",
             title=u"File 1",
         )
-        if IDexterityContent.providedBy(file1):
-            file1.file=NamedBlobFile(data=file_data, filename=u"file.pdf")
-        else:
-            file1.setFile(file_data, mimetype="application/pdf", filename=u"file.pdf")
+        file1.file=NamedBlobFile(data=file_data, filename=u"file.pdf")
         transaction.commit()
 
         # Now export
