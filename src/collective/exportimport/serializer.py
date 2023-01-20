@@ -182,15 +182,6 @@ class ChoiceFieldSerializer(DefaultFieldSerializer):
         return json_compatible(value)
 
 
-def get_relative_blob_path(obj, full_path):
-    # Get blob path relative from the blobstorage root.
-    db = obj._p_jar.db()
-    base_dir = db._storage.fshelper.base_dir
-    if not full_path.startswith(base_dir):
-        return full_path
-    return full_path[len(base_dir) :]
-
-
 # Custom Serializers for Archetypes
 
 
@@ -329,8 +320,7 @@ if HAS_AT:
         oid = obj.getBlob()._p_oid
         tid = obj._p_serial
         db = obj._p_jar.db()
-        full_path = db._storage.fshelper.getBlobFilename(oid, tid)
-        return get_relative_blob_path(obj, full_path)
+        return db._storage.fshelper.layout.getBlobFilePath(oid, tid)
 
     @adapter(IBlobImageField, IBaseObject, IPathBlobsMarker)
     @implementer(IFieldSerializer)
@@ -462,8 +452,7 @@ def get_dx_blob_path(obj):
     oid = obj._blob._p_oid
     tid = obj._p_serial
     db = obj._p_jar.db()
-    full_path = db._storage.fshelper.layout.getBlobFilePath(oid, tid)
-    return get_relative_blob_path(obj, full_path)
+    return db._storage.fshelper.layout.getBlobFilePath(oid, tid)
 
 
 @adapter(INamedFileField, IDexterityContent, IPathBlobsMarker)
