@@ -1672,78 +1672,194 @@ The actual migration of topics to collections in ``collective.exportimport.seria
 Migrate to Volto
 ----------------
 
-.. warning::
+You can reuse the migration-code provided by ``@@migrate_to_volto`` in ``plone.volto`` in a migration.
+The following example (used for migrating https://plone.org to Volto) can be used to migrate a site from any older version to Plone 6 with Volto.
 
-    This section is not complete yet!
-    For inspiration for more steps see the view ``@@migrate_to_volto`` in ``plone.volto``.
+You need to have the Blocks Conversion Tool (https://github.com/plone/blocks-conversion-tool) running that takes care of migrating richtext-values to Volto-blocks.
 
-**Default pages**
+See https://6.docs.plone.org/backend/upgrading/version-specific-migration/migrate-to-volto.html for more details on the changes the migration to Volto does.
 
-Volto has no concept of default pages.
-For folders with default pages instead export the default page.
 
 .. code-block:: python
 
-    from collective.exportimport.export_content import fix_portal_type
-    from plone.restapi.interfaces import ISerializeToJson
-    from zope.component import getMultiAdapter
+    from App.config import getConfiguration
+    from bs4 import BeautifulSoup
+    from collective.exportimport.fix_html import fix_html_in_content_fields
+    from collective.exportimport.fix_html import fix_html_in_portlets
+    from contentimport.interfaces import IContentimportLayer
+    from logging import getLogger
+    from pathlib import Path
+    from plone import api
+    from plone.volto.browser.migrate_to_volto import migrate_richtext_to_blocks
+    from plone.volto.setuphandlers import add_behavior
+    from plone.volto.setuphandlers import remove_behavior
+    from Products.CMFPlone.utils import get_installer
+    from Products.Five import BrowserView
+    from zope.interface import alsoProvides
+
+    import requests
+    import transaction
+
+    logger = getLogger(__name__)
+
+    DEFAULT_ADDONS = []
 
 
-    FOLDERISH_TYPES = [
-        "Document",
-        "Event",
-        "News Item",
-        "Folder",
-    ]
+    class ImportAll(BrowserView):
 
-    def update(self):
-        self.transformed_default_pages = []
+        def __call__(self):
 
-    def global_dict_hook(self, item, obj):
-        # this item is already exported to replace its container in dict_hook_folder
-        if item["UID"] in self.transformed_default_pages:
-            return
-        return item
+            request = self.request
 
-    def dict_hook_folder(self, item, obj):
-        # handle default pages
-        default_page = obj.getDefaultPage()
-        if not default_page:
-            # has no default-page, we keep it as a folder
-            return item
+            # Check if Blocks-conversion-tool is running
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            }
+            r = requests.post(
+                "http://localhost:5000/html", headers=headers, json={"html": "<p>text</p>"}
+            )
+            r.raise_for_status()
 
-        dp_obj = obj.get(default_page)
-        dp_obj = self.global_obj_hook(dp_obj)
-        if not dp_obj:
-            return
+            # Submit a simple form template to trigger the import
+            if not request.form.get("form.submitted", False):
+                return self.index()
 
-        if dp_obj.portal_type not in FOLDERISH_TYPES:
-            # keep the old Folder for non-folderish content (Link)
-            return item
+            portal = api.portal.get()
+            alsoProvides(request, IContentimportLayer)
 
-        self.safe_portal_type = fix_portal_type(dp_obj.portal_type)
-        serializer = getMultiAdapter((dp_obj, self.request), ISerializeToJson)
-        dp_item = serializer(include_items=False)
-        dp_item = self.fix_url(dp_item, dp_obj)
-        dp_item = self.export_constraints(dp_item, dp_obj)
-        dp_item = self.export_workflow_history(dp_item, dp_obj)
-        if self.migration:
-            dp_item = self.update_data_for_migration(dp_item, dp_obj)
-        dp_item = self.global_dict_hook(dp_item, dp_obj)
-        if not dp_item:
-            logger.info(u"Skipping %s", dp_obj.absolute_url())
-            return obj
-        dp_item = self.custom_dict_hook(dp_item, dp_obj)
-        if dp_item["@type"] != "Document":
-            logger.info(u"Default page is type %s for %s: %s", dp_item["@type"], item["@id"], dp_obj.absolute_url())
+            installer = get_installer(portal)
+            if not installer.is_product_installed("contentimport"):
+                installer.install_product("contentimport")
 
-        dp_item["parent"] = item["parent"]
-        dp_item["@id"] = item["@id"]
-        dp_item["id"] = item["id"]
-        dp_item["is_folderish"] = True
-        # prevent importing the default page obj again
-        self.transformed_default_pages.append(dp_item["UID"])
-        return dp_item
+            # install required addons
+            for addon in DEFAULT_ADDONS:
+                if not installer.is_product_installed(addon):
+                    installer.install_product(addon)
+
+            # Fake the target being a classic site even though plone.volto is installed...
+            # 1. Allow Folders and Collections (they are disabled in Volto by default)
+            portal_types = api.portal.get_tool("portal_types")
+            portal_types["Collection"].global_allow = True
+            portal_types["Folder"].global_allow = True
+            # 2. Enable richtext behavior (otherwise no text will be imported)
+            for type_ in ["Document", "News Item", "Event"]:
+                add_behavior(type_, "plone.richtext")
+
+            transaction.commit()
+            cfg = getConfiguration()
+            directory = Path(cfg.clienthome) / "import"
+
+            # Import content
+            view = api.content.get_view("import_content", portal, request)
+            request.form["form.submitted"] = True
+            request.form["commit"] = 500
+            view(server_file="Plone.json", return_json=True)
+            transaction.commit()
+
+            # Run all other imports
+            other_imports = [
+                "relations",
+                "members",
+                "translations",
+                "localroles",
+                "ordering",
+                "defaultpages",
+                "discussion",
+                "portlets",  # not really useful in Volto
+                "redirects",
+            ]
+            for name in other_imports:
+                view = api.content.get_view(f"import_{name}", portal, request)
+                path = Path(directory) / f"export_{name}.json"
+                if path.exists():
+                    results = view(jsonfile=path.read_text(), return_json=True)
+                    logger.info(results)
+                    transaction.get().note(f"Finished import_{name}")
+                    transaction.commit()
+                else:
+                    logger.info(f"Missing file: {path}")
+
+            # Optional: Run html-fixers on richtext
+            fixers = [anchor_fixer]
+            results = fix_html_in_content_fields(fixers=fixers)
+            msg = "Fixed html for {} content items".format(results)
+            logger.info(msg)
+            transaction.get().note(msg)
+            transaction.commit()
+
+            results = fix_html_in_portlets()
+            msg = "Fixed html for {} portlets".format(results)
+            logger.info(msg)
+            transaction.get().note(msg)
+            transaction.commit()
+
+            view = api.content.get_view("updateLinkIntegrityInformation", portal, request)
+            results = view.update()
+            msg = f"Updated linkintegrity for {results} items"
+            logger.info(msg)
+            transaction.get().note(msg)
+            transaction.commit()
+
+            # Rebuilding the catalog is necessary to prevent issues later on
+            catalog = api.portal.get_tool("portal_catalog")
+            logger.info("Rebuilding catalog...")
+            catalog.clearFindAndRebuild()
+            msg = "Finished rebuilding catalog!"
+            logger.info(msg)
+            transaction.get().note(msg)
+            transaction.commit()
+
+            # This uses the blocks-conversion-tool to migrate to blocks
+            logger.info("Start migrating richtext to blocks...")
+            migrate_richtext_to_blocks()
+            msg = "Finished migrating richtext to blocks"
+            transaction.get().note(msg)
+            transaction.commit()
+
+            # Reuse the migration-form from plon.volto to do some more tasks
+            view = api.content.get_view("migrate_to_volto", portal, request)
+            # Yes, wen want to migrate default pages
+            view.migrate_default_pages = True
+            view.slate = True
+            logger.info("Start migrating Folders to Documents...")
+            view.do_migrate_folders()
+            msg = "Finished migrating Folders to Documents!"
+            transaction.get().note(msg)
+            transaction.commit()
+
+            logger.info("Start migrating Collections to Documents...")
+            view.migrate_collections()
+            msg = "Finished migrating Collections to Documents!"
+            transaction.get().note(msg)
+            transaction.commit()
+
+            reset_dates = api.content.get_view("reset_dates", portal, request)
+            reset_dates()
+            transaction.commit()
+
+            # Disallow folders and collections again
+            portal_types["Collection"].global_allow = False
+            portal_types["Folder"].global_allow = False
+
+            # Disable richtext behavior again
+            for type_ in ["Document", "News Item", "Event"]:
+                remove_behavior(type_, "plone.richtext")
+
+            return request.response.redirect(portal.absolute_url())
+
+
+    def anchor_fixer(text, obj=None):
+        """Remove anchors since they are not supported by Volto yet"""
+        soup = BeautifulSoup(text, "html.parser")
+        for link in soup.find_all("a"):
+            if not link.get("href") and not link.text:
+                # drop empty links (e.g. anchors)
+                link.decompose()
+            elif not link.get("href") and link.text:
+                # drop links without a href but keep the text
+                link.unwrap()
+        return soup.decode()
 
 
 Written by
