@@ -142,6 +142,9 @@ Changelog
 - Always import discussions independent if discussion support is enabled or not
   on a particular content object (#182)
   [ajung]
+- Temporarily disallow constraints when creating the parent folder chain.
+  (#173)
+  [ale-rt]
 
 
 1.7 (2023-01-20)
