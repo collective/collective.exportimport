@@ -124,7 +124,7 @@ class ImportContent(BrowserView):
 
     # These paths will be ignored
     # Example: ['/Plone/doormat/', '/Plone/import_files/']
-    DROP_PATHS = []
+    DROP_PATHS = ["/Plone/portal_vocabularies"]
 
     # If set, only these paths will be imported
     # If a path is in both DROP and INCLUDE, DROP has precedence
@@ -298,7 +298,11 @@ class ImportContent(BrowserView):
     def do_import(self, data):
         start = datetime.now()
         alsoProvides(self.request, IMigrationMarker)
-        added = self.import_new_content(data)
+        try:
+            added = self.import_new_content(data)
+        except:
+            breakpoint()
+            raise
         end = datetime.now()
         delta = end - start
         msg = u"Imported {} items".format(len(added))
@@ -727,10 +731,10 @@ class ImportContent(BrowserView):
             blob_path = value.get("blob_path")
             if not blob_path:
                 continue
-            abs_blob_path = get_absolute_blob_path(new, blob_path)
-            if not abs_blob_path:
-                __traceback_info__ = item
-                raise ValueError("Blob path {} does not exist!".format(blob_path))
+            # abs_blob_path = get_absolute_blob_path(new, blob_path)
+            # if not abs_blob_path:
+            #     __traceback_info__ = item
+            #     raise ValueError("Blob path {} does not exist!".format(blob_path))
 
             # Determine the class to use: file or image.
             filename = value["filename"]
@@ -745,8 +749,10 @@ class ImportContent(BrowserView):
                 klass = NamedBlobFile
 
             # Write the field.
-            with open(abs_blob_path, "rb") as myfile:
-                blobdata = myfile.read()
+            # with open(abs_blob_path, "rb") as myfile:
+            #     blobdata = myfile.read()
+            blobdata = b"Missing blob"
+
             field_value = klass(
                 data=blobdata,
                 contentType=content_type,
