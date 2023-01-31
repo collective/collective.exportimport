@@ -446,16 +446,43 @@ def fix_html_in_portlets(context=None):
     return len(fix_count)
 
 
+def _get_picture_variant_mapping():
+    """Get mapping from scale to picture variant.
+
+    In standard Plone 6.0 we get:
+
+        {'great': 'large',
+         'huge': 'large',
+         'large': 'large',
+         'larger': 'large',
+         'preview': 'small',
+         'teaser': 'medium'}
+    """
+    picture_variants = api.portal.get_registry_record("plone.picture_variants")
+    mapping = {}
+    for variant, value in picture_variants.items():
+        sourceset = value.get("sourceset")
+        if not sourceset:
+            continue
+        # sourceset is a list, although I expect it to only contain one dictionary.
+        # Sample:
+        # [{'additionalScales': ['large', 'great', 'huge'], 'scale': 'larger'}]
+        for source in sourceset:
+            default_scale = source.get("scale")
+            if default_scale:
+                mapping[default_scale] = variant
+            for scale in source.get("additionalScales", []):
+                if scale not in mapping:
+                    mapping[scale] = variant
+    return mapping
+
+
 def img_variant_fixer(text, obj=None, fallback_variant=None):
     """Set image-variants"""
     if not text:
         return text
 
-    picture_variants = api.portal.get_registry_record("plone.picture_variants")
-    scale_variant_mapping = {
-        k: v["sourceset"][0]["scale"] for k, v in picture_variants.items()
-    }
-    scale_variant_mapping["thumb"] = "mini"
+    scale_variant_mapping = _get_picture_variant_mapping()
     if fallback_variant is None:
         fallback_variant = FALLBACK_VARIANT
 
