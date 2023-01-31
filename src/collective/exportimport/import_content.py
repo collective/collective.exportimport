@@ -105,7 +105,14 @@ class ImportContent(BrowserView):
     # Example: {'which_price': 'normal'}
     DEFAULTS = {}
 
-    def __call__(self, jsonfile=None, return_json=False, limit=None, server_file=None):
+    def __call__(
+        self,
+        jsonfile=None,
+        return_json=False,
+        limit=None,
+        server_file=None,
+        iterator=None
+    ):
         request = self.request
         self.limit = limit
         self.commit = int(request["commit"]) if request.get("commit") else None
@@ -178,6 +185,11 @@ class ImportContent(BrowserView):
 
         if close_file:
             jsonfile.close()
+
+        if not jsonfile and iterator:
+            self.start()
+            msg = self.do_import(iterator)
+            api.portal.show_message(msg, self.request)
 
         self.finish()
 
