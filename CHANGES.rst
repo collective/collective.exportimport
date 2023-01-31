@@ -5,7 +5,7 @@ Changelog
 1.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Let fix_html view work on the current context.  [maurits]
 
 
 1.7 (2023-01-20)

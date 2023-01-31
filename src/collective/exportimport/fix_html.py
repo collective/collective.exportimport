@@ -45,11 +45,11 @@ class FixHTML(BrowserView):
 
         msg = []
 
-        fix_count = fix_html_in_content_fields(commit=commit)
+        fix_count = fix_html_in_content_fields(context=self.context, commit=commit)
         msg.append(u"Fixed HTML for {} fields in content items".format(fix_count))
         logger.info(msg[-1])
 
-        fix_count = fix_html_in_portlets()
+        fix_count = fix_html_in_portlets(context=self.context)
         msg.append(u"Fixed HTML for {} portlets".format(fix_count))
         logger.info(msg[-1])
 
@@ -318,6 +318,8 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
         "portal_type": list(types_with_richtext_fields.keys()),
         "sort_on": "path",
     }
+    if context is not None:
+        query["path"] = "/".join(context.getPhysicalPath())
     brains = catalog(**query)
     total = len(brains)
     logger.info("There are %s content items in total, starting migration...", len(brains))
@@ -435,10 +437,11 @@ def fix_html_in_portlets(context=None):
                                     )
                                 )
 
-    portal = api.portal.get()
+    if context is None:
+        context = api.portal.get()
     fix_count = []
     f = lambda obj, path: get_portlets(obj, path, fix_count)
-    portal.ZopeFindAndApply(portal, search_sub=True, apply_func=f)
+    context.ZopeFindAndApply(context, search_sub=True, apply_func=f)
     return len(fix_count)
 
 
