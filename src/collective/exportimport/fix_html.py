@@ -34,6 +34,7 @@ IMAGE_SCALE_MAP = {
     "thumb": "thumb",
     "tile": "tile",
 }
+FALLBACK_VARIANT = "medium"
 
 
 class FixHTML(BrowserView):
@@ -445,7 +446,7 @@ def fix_html_in_portlets(context=None):
     return len(fix_count)
 
 
-def img_variant_fixer(text, obj=None):
+def img_variant_fixer(text, obj=None, fallback_variant=None):
     """Set image-variants"""
     if not text:
         return text
@@ -455,7 +456,8 @@ def img_variant_fixer(text, obj=None):
         k: v["sourceset"][0]["scale"] for k, v in picture_variants.items()
     }
     scale_variant_mapping["thumb"] = "mini"
-    fallback_variant = "preview"
+    if fallback_variant is None:
+        fallback_variant = FALLBACK_VARIANT
 
     soup = BeautifulSoup(text, "html.parser")
     for tag in soup.find_all("img"):
