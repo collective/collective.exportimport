@@ -628,10 +628,10 @@ class ImportContent(BrowserView):
             blob_path = value.get("blob_path")
             if not blob_path:
                 continue
-            # abs_blob_path = get_absolute_blob_path(new, blob_path)
-            # if not abs_blob_path:
-            #     __traceback_info__ = item
-            #     raise ValueError("Blob path {} does not exist!".format(blob_path))
+            abs_blob_path = get_absolute_blob_path(new, blob_path)
+            if not abs_blob_path:
+                abs_blob_path = None
+                logger.warning("Missing blob: %r", blob_path)
 
             # Determine the class to use: file or image.
             filename = value["filename"]
@@ -646,9 +646,11 @@ class ImportContent(BrowserView):
                 klass = NamedBlobFile
 
             # Write the field.
-            # with open(abs_blob_path, "rb") as myfile:
-            #     blobdata = myfile.read()
-            blobdata = b"Missing blob"
+            if abs_blob_path:
+                with open(abs_blob_path, "rb") as myfile:
+                    blobdata = myfile.read()
+            else:
+                blobdata = b"Missing blob"
 
             field_value = klass(
                 data=blobdata,
