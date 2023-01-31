@@ -392,60 +392,73 @@ class ImportContent(BrowserView):
                     item["@type"], container, item["id"], **factory_kwargs
                 )
 
-            new, item = self.global_obj_hook_before_deserializing(new, item)
-
-            # import using plone.restapi deserializers
-            deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
             try:
-                new = deserializer(validate_all=False, data=item)
-            except Exception:
-                logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
+                new = self.handle_new_object(item, index, new)
+
+                added.append(new.absolute_url())
+
+                if self.commit and not len(added) % self.commit:
+                    self.commit_hook(added, index)
+            except Exception as e:
+                item_id = item['@id'].split('/')[-1]
+                container.manage_delObjects(item_id)
+                logger.warning(e)
+                logger.warning("Didn't add %s %s", item["@type"], item["@id"], exc_info=True)
                 continue
 
-            # Blobs can be exported as only a path in the blob storage.
-            # It seems difficult to dynamically use a different deserializer,
-            # based on whether or not there is a blob_path somewhere in the item.
-            # So handle this case with a separate method.
-            self.import_blob_paths(new, item)
-            self.import_constrains(new, item)
-
-            self.global_obj_hook(new, item)
-            self.custom_obj_hook(new, item)
-
-            uuid = self.set_uuid(item, new)
-
-            if uuid != item.get("UID"):
-                item["UID"] = uuid
-
-            # Try to set the original review_state
-            self.import_review_state(new, item)
-
-            # Import workflow_history last to drop entries created during import
-            self.import_workflow_history(new, item)
-
-            # Set modification and creation-date as a custom attribute as last step.
-            # These are reused and dropped in ResetModifiedAndCreatedDate
-            modified = item.get("modified", item.get("modification_date", None))
-            if modified:
-                modification_date = DateTime(dateutil.parser.parse(modified))
-                new.modification_date = modification_date
-                new.aq_base.modification_date_migrated = modification_date
-            created = item.get("created", item.get("creation_date", None))
-            if created:
-                creation_date = DateTime(dateutil.parser.parse(created))
-                new.creation_date = creation_date
-                new.aq_base.creation_date_migrated = creation_date
-            logger.info(
-                "Created item #{}: {} {}".format(
-                    index, item["@type"], new.absolute_url()
-                )
-            )
-            added.append(new.absolute_url())
-
-            if self.commit and not len(added) % self.commit:
-                self.commit_hook(added, index)
-
         return added
+
+    def handle_new_object(self, item, index, new):
+
+        new, item = self.global_obj_hook_before_deserializing(new, item)
+
+        # import using plone.restapi deserializers
+        deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
+        try:
+            new = deserializer(validate_all=False, data=item)
+        except Exception:
+            logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
+            raise
+
+        # Blobs can be exported as only a path in the blob storage.
+        # It seems difficult to dynamically use a different deserializer,
+        # based on whether or not there is a blob_path somewhere in the item.
+        # So handle this case with a separate method.
+        self.import_blob_paths(new, item)
+        self.import_constrains(new, item)
+
+        self.global_obj_hook(new, item)
+        self.custom_obj_hook(new, item)
+
+        uuid = self.set_uuid(item, new)
+
+        if uuid != item.get("UID"):
+            item["UID"] = uuid
+
+        # Try to set the original review_state
+        self.import_review_state(new, item)
+
+        # Import workflow_history last to drop entries created during import
+        self.import_workflow_history(new, item)
+
+        # Set modification and creation-date as a custom attribute as last step.
+        # These are reused and dropped in ResetModifiedAndCreatedDate
+        modified = item.get("modified", item.get("modification_date", None))
+        if modified:
+            modification_date = DateTime(dateutil.parser.parse(modified))
+            new.modification_date = modification_date
+            new.aq_base.modification_date_migrated = modification_date
+        created = item.get("created", item.get("creation_date", None))
+        if created:
+            creation_date = DateTime(dateutil.parser.parse(created))
+            new.creation_date = creation_date
+            new.aq_base.creation_date_migrated = creation_date
+        logger.info(
+            "Created item #{}: {} {}".format(
+                index, item["@type"], new.absolute_url()
+            )
+        )
+        return new
 
     def import_versions(self, container, item):
         """Import one item with all its revisions..
