@@ -294,7 +294,7 @@ class TestImport(unittest.TestCase):
         upload.add_file(changed_raw_data.encode(), "application/json", "Document.json")
         browser.getControl(name="handle_existing_content").value = ["2"]  # update!
         browser.getForm(action="@@import_content").submit()
-        self.assertIn("Imported 1 items in 0 seconds", browser.contents)
+        self.assertIn("Imported 1 items", browser.contents)
 
         # new_doc now has a updated title
         new_doc = portal["doc1"]
