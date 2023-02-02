@@ -900,9 +900,15 @@ class ImportContent(BrowserView):
         # create original structure for imported content
         for element in parent_path:
             if element not in folder:
+                # Handle Volto not using 'Folder' for it's type and having support for folderish pages
+                parent_type = (
+                    "Document"
+                    if getattr(aq_base(folder), "isPrincipiaFolderish", False)
+                    else "Folder"
+                )
                 folder = api.content.create(
                     container=folder,
-                    type="Folder",
+                    type=parent_type,
                     id=element,
                     title=element,
                 )
