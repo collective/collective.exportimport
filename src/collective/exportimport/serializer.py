@@ -69,10 +69,12 @@ logger = logging.getLogger(__name__)
 
 def get_blob_path(blob):
     """Get the path of a ZODB.blob.Blob instance"""
+    connection = blob._p_jar
+    connection.setstate(blob)
     db = blob._p_jar.db()
     oid = blob._p_oid
     tid = blob._p_serial
-    return db._storage.fshelper.layout.getBlobFilePath(oid, tid)
+    return connection._storage.fshelper.layout.getBlobFilePath(blob._p_oid, blob._p_serial)
 
 
 @adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
