@@ -5,6 +5,8 @@ Changelog
 1.8 (unreleased)
 ----------------
 
+- Fix the way we get a blob path. (#180)
+  [ale-rt]
 - Temporarily disallow constraints when creating the parent folder chain.
   (#173)
   [ale-rt]

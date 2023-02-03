@@ -67,6 +67,13 @@ logger = logging.getLogger(__name__)
 
 # Custom Serializers for Dexterity
 
+def get_blob_path(blob):
+    """Get the path of a ZODB.blob.Blob instance"""
+    db = blob._p_jar.db()
+    oid = blob._p_oid
+    tid = blob._p_serial
+    return db._storage.fshelper.layout.getBlobFilePath(oid, tid)
+
 
 @adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
 class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
@@ -316,10 +323,7 @@ if HAS_AT:
             return json_compatible(result)
 
     def get_at_blob_path(obj):
-        oid = obj.getBlob()._p_oid
-        tid = obj._p_serial
-        db = obj._p_jar.db()
-        return db._storage.fshelper.layout.getBlobFilePath(oid, tid)
+        return get_blob_path(obj.getBlob())
 
     @adapter(IBlobImageField, IBaseObject, IPathBlobsMarker)
     @implementer(IFieldSerializer)
@@ -448,10 +452,7 @@ if HAS_AT and HAS_PAC:
 
 
 def get_dx_blob_path(obj):
-    oid = obj._blob._p_oid
-    tid = obj._p_serial
-    db = obj._p_jar.db()
-    return db._storage.fshelper.layout.getBlobFilePath(oid, tid)
+    return get_blob_path(obj._blob)
 
 
 @adapter(INamedFileField, IDexterityContent, IPathBlobsMarker)
