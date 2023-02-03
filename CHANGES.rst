@@ -5,7 +5,8 @@ Changelog
 1.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix the way we get a blob path. (#180)
+  [ale-rt]
 
 
 1.7 (2023-01-20)
