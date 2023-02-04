@@ -568,8 +568,6 @@ class ImportDiscussion(BrowserView):
             obj = api.content.get(UID=conversation_data["uuid"])
             if not obj:
                 continue
-            if not obj.restrictedTraverse("@@conversation_view").enabled():
-                continue
             added = 0
             conversation = IConversation(obj)
 
@@ -621,7 +619,7 @@ class ImportDiscussion(BrowserView):
                 if DISCUSSION_ANNOTATION_KEY not in annotions:
                     annotions[DISCUSSION_ANNOTATION_KEY] = aq_base(conversation)
                 added += 1
-            logger.info("Added {} comments to {}".format(added, obj.absolute_url()))
+            print("Added {} comments to {}".format(added, obj.absolute_url()))
             results += added
 
         return results
