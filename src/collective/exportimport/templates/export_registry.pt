@@ -1,0 +1,115 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="plone.z3cform"
+      metal:use-macro="context/main_template/macros/master">
+
+<div metal:fill-slot="main">
+    <tal:main-macro metal:define-macro="main">
+
+       <h1 class="documentFirstHeading" tal:content="python: view.title" i18n:translate="">
+           Export registry records
+       </h1>
+
+        <form id="export_registry" action="@@export_other" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
+
+            <div class="field mb-3">
+              <label for="interfaces">
+                <span i18n:translate="">Settings to export</span>
+              </label>
+              <div class="widget" id="interfaces">
+                <input type="checkbox" class="checkboxType" name="checkall" id="checkall"
+                       title="Toggle all" i18n:attributes="title label_toggle" />
+                <label for="checkall">Select all/none</label><br />
+                <script type="text/javascript">
+                   // Check or Uncheck All checkboxes
+                   $("#checkall").change(function(){
+                     var checked = $(this).is(':checked');
+                     if(checked){
+                       $("form#export_registry #interfaces input[type='checkbox']").each(function(){
+                         $(this).prop("checked",true);
+                       });
+                     }else{
+                       $("form#export_registry #interfaces input[type='checkbox']").each(function(){
+                         $(this).prop("checked",false);
+                       });
+                     }
+                   });
+
+                  // Changing state of CheckAll checkbox
+                  $("form#export_registry").on("click", "form#export_registry #interfaces input[name='interfaces']", function(){
+                    if($("form#export_registry #interfaces input[type='checkbox']").length == $("form#export_registry #ifacename input[type='checkbox']:checked").length) {
+                      $("#checkall").prop("checked", true);
+                    } else {
+                      $("#checkall").prop("checked", false);
+                    }
+
+                  });
+                </script>
+                <tal:types tal:repeat="ifacename python: view.all_interfacenames_with_prefix">
+                  <input type="checkbox"
+                         name="interfaces"
+                         class="checkboxType"
+                         tal:attributes="value python:ifacename; id python:ifacename;">
+                  <label tal:attributes="for python:ifacename">
+                    <span tal:replace="python:ifacename" />
+                    <span tal:condition="python:view.all_interfacenames_with_prefix[ifacename]" tal:replace="python: ' (prefix: ' + view.all_interfacenames_with_prefix[ifacename] + ')'" />
+                  </label>
+                         <br />
+                </tal:types>
+              </div>
+            </div>
+
+            <div class="field mb-3">
+              <label>
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="skip_defaults:boolean"
+                    id="skip_defaults"
+                    tal:attributes="checked python:'checked' if view.skip_defaults else None"
+                    />
+                Skip default values
+                <span class="formHelp">
+                  Ignore settings that were not changed
+                </span>
+              </label>
+            </div>
+
+            <div class="field mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="download_to_server:int" value="0" id="download_local" checked="checked">
+                <label for="download_local" class="form-check-label"  i18n:translate="">
+                  Download to local machine
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="download_to_server:int" value="1" id="download_server">
+                <label for="download_server" class="form-check-label" i18n:translate="">
+                  Save to file on server
+                </label>
+              </div>
+            </div>
+
+            <div class="formControls" class="form-group">
+                <button class="btn btn-primary submit-widget button-field context"
+                        type="submit" name="form.submitted" value="Export" tal:content="python: view.title" i18n:translate="">Export
+                </button>
+            </div>
+        </form>
+
+        <div metal:use-macro="context/@@exportimport_links/links">
+          Links to all exports and imports
+        </div>
+
+        <div tal:define="help_text python: getattr(view, 'help_text', None)"
+             tal:condition="python: help_text">
+          <h3>Help</h3>
+          <div tal:replace="structure python: help_text"></div>
+        </div>
+
+    </tal:main-macro>
+</div>
+
+</html>
