@@ -34,6 +34,7 @@ IMAGE_SCALE_MAP = {
     "thumb": "thumb",
     "tile": "tile",
 }
+FALLBACK_VARIANT = "medium"
 
 
 class FixHTML(BrowserView):
@@ -45,11 +46,11 @@ class FixHTML(BrowserView):
 
         msg = []
 
-        fix_count = fix_html_in_content_fields(commit=commit)
+        fix_count = fix_html_in_content_fields(context=self.context, commit=commit)
         msg.append(u"Fixed HTML for {} fields in content items".format(fix_count))
         logger.info(msg[-1])
 
-        fix_count = fix_html_in_portlets()
+        fix_count = fix_html_in_portlets(context=self.context)
         msg.append(u"Fixed HTML for {} portlets".format(fix_count))
         logger.info(msg[-1])
 
@@ -318,6 +319,8 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
         "portal_type": list(types_with_richtext_fields.keys()),
         "sort_on": "path",
     }
+    if context is not None:
+        query["path"] = "/".join(context.getPhysicalPath())
     brains = catalog(**query)
     total = len(brains)
     logger.info("There are %s content items in total, starting migration...", len(brains))
@@ -435,24 +438,53 @@ def fix_html_in_portlets(context=None):
                                     )
                                 )
 
-    portal = api.portal.get()
+    if context is None:
+        context = api.portal.get()
     fix_count = []
     f = lambda obj, path: get_portlets(obj, path, fix_count)
-    portal.ZopeFindAndApply(portal, search_sub=True, apply_func=f)
+    context.ZopeFindAndApply(context, search_sub=True, apply_func=f)
     return len(fix_count)
 
 
-def img_variant_fixer(text, obj=None):
+def _get_picture_variant_mapping():
+    """Get mapping from scale to picture variant.
+
+    In standard Plone 6.0 we get:
+
+        {'great': 'large',
+         'huge': 'large',
+         'large': 'large',
+         'larger': 'large',
+         'preview': 'small',
+         'teaser': 'medium'}
+    """
+    picture_variants = api.portal.get_registry_record("plone.picture_variants")
+    mapping = {}
+    for variant, value in picture_variants.items():
+        sourceset = value.get("sourceset")
+        if not sourceset:
+            continue
+        # sourceset is a list, although I expect it to only contain one dictionary.
+        # Sample:
+        # [{'additionalScales': ['large', 'great', 'huge'], 'scale': 'larger'}]
+        for source in sourceset:
+            default_scale = source.get("scale")
+            if default_scale:
+                mapping[default_scale] = variant
+            for scale in source.get("additionalScales", []):
+                if scale not in mapping:
+                    mapping[scale] = variant
+    return mapping
+
+
+def img_variant_fixer(text, obj=None, fallback_variant=None):
     """Set image-variants"""
     if not text:
         return text
 
-    picture_variants = api.portal.get_registry_record("plone.picture_variants")
-    scale_variant_mapping = {
-        k: v["sourceset"][0]["scale"] for k, v in picture_variants.items()
-    }
-    scale_variant_mapping["thumb"] = "mini"
-    fallback_variant = "preview"
+    scale_variant_mapping = _get_picture_variant_mapping()
+    if fallback_variant is None:
+        fallback_variant = FALLBACK_VARIANT
 
     soup = BeautifulSoup(text, "html.parser")
     for tag in soup.find_all("img"):

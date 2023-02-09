@@ -5,7 +5,13 @@ Changelog
 1.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix html: improve mapping from scale to picture variant.  [maurits]
+
+- Allow overriding the fallback variant in img_variant_fixer.
+  Use 'medium' by default.
+  [maurits]
+
+- Let fix_html view work on the current context.  [maurits]
 
 
 1.7 (2023-01-20)

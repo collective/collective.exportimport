@@ -197,9 +197,9 @@ class TestFixHTML(unittest.TestCase):
 <p><a data-linktype="internal" data-val="{1}" href="resolveuid/{1}">Link to content</a></p>
 <a href="edit?somequery=foo" target="_self" title="">Link to view with query string</a><br/>
 <a href="#target">Link to anchor</a>
-<img class="image-richtext image-inline picture-variant-preview" data-linktype="image" data-picturevariant="preview" data-scale="" data-val="{2}" src="resolveuid/{2}/@@images/image"/>
-<img class="image-richtext image-inline picture-variant-larger" data-linktype="image" data-picturevariant="larger" data-scale="large" data-val="{2}" src="resolveuid/{2}/@@images/image/large"/>
-<p><a href="image/image_preview"><img class="image-richtext image-inline picture-variant-preview" data-linktype="image" data-picturevariant="preview" data-scale="preview" data-val="{2}" src="resolveuid/{2}/@@images/image/preview"/></a></p>
+<img class="image-richtext image-inline picture-variant-medium" data-linktype="image" data-picturevariant="medium" data-scale="" data-val="{2}" src="resolveuid/{2}/@@images/image"/>
+<img class="image-richtext image-inline picture-variant-large" data-linktype="image" data-picturevariant="large" data-scale="large" data-val="{2}" src="resolveuid/{2}/@@images/image/large"/>
+<p><a href="image/image_preview"><img class="image-richtext image-inline picture-variant-small" data-linktype="image" data-picturevariant="small" data-scale="preview" data-val="{2}" src="resolveuid/{2}/@@images/image/preview"/></a></p>
 """.format(self.contact.UID(), self.team.UID(), self.image.UID())
 
         self.assertEqual(fixed_html, doc.text.raw)
