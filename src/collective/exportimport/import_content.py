@@ -897,26 +897,19 @@ class ImportContent(BrowserView):
             # Get rid of it.
             parent_path = parent_path[1:]
 
+        # Handle folderish Documents provided by plone.volto
+        fti = getUtility(IDexterityFTI, name="Document")
+        parent_type = "Document" if fti.klass.endswith("FolderishDocument") else "Folder"
         # create original structure for imported content
         for element in parent_path:
             if element not in folder:
-                # Handle Volto not using 'Folder' for it's type and having support for folderish pages
-                parent_type = (
-                    "Document"
-                    if getattr(aq_base(folder), "isPrincipiaFolderish", False)
-                    else "Folder"
-                )
                 folder = api.content.create(
                     container=folder,
                     type=parent_type,
                     id=element,
                     title=element,
                 )
-                logger.info(
-                    u"Created container {} to hold {}".format(
-                        folder.absolute_url(), item["@id"]
-                    )
-                )
+                logger.info(u"Created container %s to hold %s", folder.absolute_url(), item["@id"])
             else:
                 folder = folder[element]
 
