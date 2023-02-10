@@ -19,6 +19,13 @@ Changelog
 - Create documents as containers for items without parent when documents are folderish.
   [JeffersonBledsoe]
 
+- Add support for passing any iterator as data-source to the import.
+  [pbauer]
+
+- Add example for importing collective.jsonify data to documentation.
+  [pbauer]
+
+
 1.7 (2023-01-20)
 ----------------
 
