@@ -12,9 +12,12 @@ Changelog
   [maurits]
 
 - Let fix_html view work on the current context.  [maurits]
+
 - Fix the way we get a blob path. (#180)
   [ale-rt]
 
+- Create documents as containers for items without parent when documents are folderish.
+  [JeffersonBledsoe]
 
 1.7 (2023-01-20)
 ----------------
