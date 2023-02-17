@@ -30,7 +30,7 @@
         <div>
           <h3 i18n:translate="">Help</h3>
           <p i18n:translate="">Here is a example for the expected format. This is the format created by collective.exportimport when used for export.</p>
-          <pre i18n:ignore="">
+          <pre>
 {
     "groups": [
         {
