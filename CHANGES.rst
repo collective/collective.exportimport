@@ -5,6 +5,12 @@ Changelog
 1.8 (unreleased)
 ----------------
 
+- Add Spanish translation.
+  [macagua]
+
+- Add i18n support.
+  [macagua]
+
 - Fix html: improve mapping from scale to picture variant.  [maurits]
 
 - Allow overriding the fallback variant in img_variant_fixer.

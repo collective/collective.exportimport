@@ -2,7 +2,7 @@
       xmlns:metal="http://xml.zope.org/namespaces/metal"
       xmlns:tal="http://xml.zope.org/namespaces/tal"
       xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-      i18n:domain="plone.z3cform"
+      i18n:domain="collective.exportimport"
       metal:use-macro="context/main_template/macros/master">
 
 <div metal:fill-slot="main">
@@ -16,7 +16,7 @@
             <div class="field mb-3">
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="download_to_server:int" value="0" id="download_local" checked="checked">
-                <label for="download_local" class="form-check-label"  i18n:translate="">
+                <label for="download_local" class="form-check-label" i18n:translate="">
                   Download to local machine
                 </label>
               </div>
@@ -30,7 +30,7 @@
 
             <div class="formControls" class="form-group">
                 <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="form.submitted" value="Export" tal:content="python: view.title" i18n:translate="">Export
+                        type="submit" name="form.submitted" value="Export" tal:content="python: view.title" i18n:attributes="value" i18n:translate="">Export
                 </button>
             </div>
         </form>
@@ -41,7 +41,7 @@
 
         <div tal:define="help_text python: getattr(view, 'help_text', None)"
              tal:condition="python: help_text">
-          <h3>Help</h3>
+          <h3 i18n:translate="">Help</h3>
           <div tal:replace="structure python: help_text"></div>
         </div>
 

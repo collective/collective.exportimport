@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from Acquisition import aq_parent
 from bs4 import BeautifulSoup
+from collective.exportimport import _
 from collections import defaultdict
 from logging import getLogger
 from plone import api
@@ -39,7 +40,7 @@ FALLBACK_VARIANT = "medium"
 
 class FixHTML(BrowserView):
     def __call__(self):
-        self.title = "Fix links to content and images in richtext"
+        self.title = _(u"Fix links to content and images in richtext")
         if not self.request.form.get("form.submitted", False):
             return self.index()
         commit = self.request.form.get("form.commit", True)
@@ -47,11 +48,11 @@ class FixHTML(BrowserView):
         msg = []
 
         fix_count = fix_html_in_content_fields(context=self.context, commit=commit)
-        msg.append(u"Fixed HTML for {} fields in content items".format(fix_count))
+        msg.append(_(u"Fixed HTML for {} fields in content items").format(fix_count))
         logger.info(msg[-1])
 
         fix_count = fix_html_in_portlets(context=self.context)
-        msg.append(u"Fixed HTML for {} portlets".format(fix_count))
+        msg.append(_(u"Fixed HTML for {} portlets").format(fix_count))
         logger.info(msg[-1])
 
         # TODO: Fix html in tiles

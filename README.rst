@@ -27,7 +27,7 @@ Export and import all kinds of data from and to Plone sites using a intermediate
 The main use-case is migrations since it enables you to for example migrate from Plone 4 with Archetypes and Python 2 to Plone 6 with Dexterity and Python 3 in one step.
 Most features use `plone.restapi` to serialize and deserialize data.
 
-See also the training on migrating with exportimport: https://training.plone.org/migrations/exportimport.html
+See also the training on migrating with ``exportimport``: https://training.plone.org/migrations/exportimport.html
 
 .. contents:: Contents
     :local:
@@ -96,7 +96,7 @@ When a in-place-migration is not required you can choose this addon to migrate t
 
 * Export content from a Plone site (it supports Plone 4 and 5, Archetypes and Dexterity, Python 2 and 3).
 * Import the exported content into a new site (Plone 5.2+, Dexterity, Python 3)
-* Export and import relations, users and groups with their roles, translations, local roles, ordering, dedault-pages, comments, portlets and redirects.
+* Export and import relations, users and groups with their roles, translations, local roles, ordering, default-pages, comments, portlets and redirects.
 
 How to migrate additional features like Annotations or Marker Interfaces is discussed in the FAQ section.
 
@@ -107,7 +107,7 @@ You can use this addon to
 
 * Archive your content as json
 * Export data to prepare a migration to another system
-* Combine content from mutiple plone-sites into one.
+* Combine content from multiple plone-sites into one.
 * Import a plone-site as a subsite into another.
 * Import content from other systems as long as it fits the required format.
 * Update or replace existing data
@@ -156,8 +156,8 @@ To fix this you can check the checkbox "Modify exported data for migrations".
 This will modify the data during export:
 
 * Drop unused data (e.g. `next_item` and `components`)
-* Remove all relationfields
-* Change some fieldnames that changed between AT and DX
+* Remove all relation fields
+* Change some field names that changed between Archetypes and Dexterity
 
   * ``excludeFromNav`` → ``exclude_from_nav``
   * ``allowDiscussion`` → ``allow_discussion``
@@ -174,8 +174,8 @@ This will modify the data during export:
   * ``contactName`` → ``contact_name``
   * ``contactPhone`` → ``contact_phone``
 
-* Update view names on Folders and Collection thet changed since Plone 4.
-* Export ATTopic and their criteria to Collections with querystrings.
+* Update view names on Folders and Collection that changed since Plone 4.
+* Export ``ATTopic`` and their criteria to Collections with querystrings.
 * Update Collection-criteria.
 * Links and images in Richtext-Fields of content and portlets have changes since Plone 4.
   the view ``/@@fix_html`` allows you to fix these.
@@ -191,8 +191,8 @@ You can choose between four options how to deal with content that already exists
   * Update: Reuse and only overwrite imported data
   * Ignore: Create with a new id
 
-Imported content is initially created with ``invokeFactory`` using portal_type and id of the exported item before deserialing the rest of the data.
-You can set additional values by specifying a dict ``factory_kwargs`` that will be passed to the facory.
+Imported content is initially created with ``invokeFactory`` using portal_type and id of the exported item before deserializing the rest of the data.
+You can set additional values by specifying a dict ``factory_kwargs`` that will be passed to the factory.
 Like this you can set values on the imported object that are expected to be there by subscribers to IObjectAddedEvent.
 
 
@@ -558,7 +558,7 @@ Here we drop empty lines from the creators:
         item["creators"] = [i for i in item.get("creators", []) if i]
         return item
 
-This example migrates a PloneHelpCenter to a simple folder/document structure during import.
+This example migrates a ``PloneHelpCenter`` to a simple folder/document structure during import.
 There are a couple more types to handle (as folder or document) but you get the idea, don't you?
 
 .. code-block:: python
@@ -834,7 +834,7 @@ It may also happen, when you have validators that rely on content or configurati
 
 .. note::
 
-    For relationfields this is not necessary since relations are imported after content anyway!
+    For relation fields this is not necessary since relations are imported after content anyway!
 
 There are two ways to handle these issues:
 
@@ -1279,7 +1279,7 @@ This custom export exports and imports some selected settings and addons from a 
 **Import:**
 
 The import installs the addons and load the settings in the registry.
-Since Plone 5 portal_properties is no longer used.
+Since Plone 5 ``portal_properties`` is no longer used.
 
 .. code-block:: python
 
@@ -1450,7 +1450,7 @@ Export:
                 )
         return actions
 
-Import exported PloneFormGen data into Easyform:
+Import exported ``PloneFormGen`` data into ``Easyform``:
 
 .. code-block:: python
 
@@ -2131,6 +2131,13 @@ Written by
     :alt: Starzel.de
 
 
+Translations
+============
+
+This product has been translated into
+
+- Spanish
+
 
 Installation
 ============
@@ -2147,14 +2154,14 @@ Install collective.exportimport by adding it to your buildout::
 
 and then running ``bin/buildout``
 
-You don't need to activate the add-on in the Site Setup Add-ons control panel to be able to use the forms @@export_content and @@import_content in your site.
+You don't need to activate the add-on in the Site Setup Add-ons control panel to be able to use the forms ``@@export_content`` and ``@@import_content`` in your site.
 
 You do need to add it to your buildout configuration and run buildout to make these features available at all. See https://docs.plone.org/manage/installing/installing_addons.html for details.
 
 Installing in Plone 4
 ---------------------
 
-collective.exportimport depends on plone.restapi . For Plone 4, you need to pin plone.restapi to 7.x . When installing plone.restapi version 7.x.x in Plone 4 you may need to add the following version pins to your buildout::
+``collective.exportimport`` depends on ``plone.restapi``. For Plone 4, you need to pin ``plone.restapi`` to 7.x . When installing ``plone.restapi`` version 7.x.x in Plone 4 you may need to add the following version pins to your buildout::
 
     [versions]
     PyJWT = 1.7.1
@@ -2191,8 +2198,7 @@ collective.exportimport depends on plone.restapi . For Plone 4, you need to pin 
     contextlib2 = 0.6.0.post1
 
 
-These versions are taken from the plone.restapi 7.x README: https://pypi.org/project/plone.restapi/7.8.1/
-
+These versions are taken from the ``plone.restapi`` 7.x README: https://pypi.org/project/plone.restapi/7.8.1/
 
 
 Contribute
