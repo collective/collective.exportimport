@@ -2131,6 +2131,13 @@ Written by
     :alt: Starzel.de
 
 
+Translations
+============
+
+This product has been translated into
+
+- Spanish
+
 
 Installation
 ============
