@@ -27,7 +27,7 @@ Export and import all kinds of data from and to Plone sites using a intermediate
 The main use-case is migrations since it enables you to for example migrate from Plone 4 with Archetypes and Python 2 to Plone 6 with Dexterity and Python 3 in one step.
 Most features use `plone.restapi` to serialize and deserialize data.
 
-See also the training on migrating with exportimport: https://training.plone.org/migrations/exportimport.html
+See also the training on migrating with ``exportimport``: https://training.plone.org/migrations/exportimport.html
 
 .. contents:: Contents
     :local:
@@ -175,7 +175,7 @@ This will modify the data during export:
   * ``contactPhone`` → ``contact_phone``
 
 * Update view names on Folders and Collection that changed since Plone 4.
-* Export ATTopic and their criteria to Collections with querystrings.
+* Export ``ATTopic`` and their criteria to Collections with querystrings.
 * Update Collection-criteria.
 * Links and images in Richtext-Fields of content and portlets have changes since Plone 4.
   the view ``/@@fix_html`` allows you to fix these.
@@ -558,7 +558,7 @@ Here we drop empty lines from the creators:
         item["creators"] = [i for i in item.get("creators", []) if i]
         return item
 
-This example migrates a PloneHelpCenter to a simple folder/document structure during import.
+This example migrates a ``PloneHelpCenter`` to a simple folder/document structure during import.
 There are a couple more types to handle (as folder or document) but you get the idea, don't you?
 
 .. code-block:: python
@@ -1279,7 +1279,7 @@ This custom export exports and imports some selected settings and addons from a 
 **Import:**
 
 The import installs the addons and load the settings in the registry.
-Since Plone 5 portal_properties is no longer used.
+Since Plone 5 ``portal_properties`` is no longer used.
 
 .. code-block:: python
 
@@ -1450,7 +1450,7 @@ Export:
                 )
         return actions
 
-Import exported PloneFormGen data into Easyform:
+Import exported ``PloneFormGen`` data into ``Easyform``:
 
 .. code-block:: python
 
@@ -2154,14 +2154,14 @@ Install collective.exportimport by adding it to your buildout::
 
 and then running ``bin/buildout``
 
-You don't need to activate the add-on in the Site Setup Add-ons control panel to be able to use the forms @@export_content and @@import_content in your site.
+You don't need to activate the add-on in the Site Setup Add-ons control panel to be able to use the forms ``@@export_content`` and ``@@import_content`` in your site.
 
 You do need to add it to your buildout configuration and run buildout to make these features available at all. See https://docs.plone.org/manage/installing/installing_addons.html for details.
 
 Installing in Plone 4
 ---------------------
 
-collective.exportimport depends on plone.restapi . For Plone 4, you need to pin plone.restapi to 7.x . When installing plone.restapi version 7.x.x in Plone 4 you may need to add the following version pins to your buildout::
+``collective.exportimport`` depends on ``plone.restapi``. For Plone 4, you need to pin ``plone.restapi`` to 7.x . When installing ``plone.restapi`` version 7.x.x in Plone 4 you may need to add the following version pins to your buildout::
 
     [versions]
     PyJWT = 1.7.1
@@ -2198,7 +2198,7 @@ collective.exportimport depends on plone.restapi . For Plone 4, you need to pin 
     contextlib2 = 0.6.0.post1
 
 
-These versions are taken from the plone.restapi 7.x README: https://pypi.org/project/plone.restapi/7.8.1/
+These versions are taken from the ``plone.restapi`` 7.x README: https://pypi.org/project/plone.restapi/7.8.1/
 
 
 Contribute
