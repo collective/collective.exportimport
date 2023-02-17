@@ -1,0 +1,451 @@
+#--- PLEASE EDIT THE LINES BELOW CORRECTLY ---
+#SOME DESCRIPTIVE TITLE.
+#FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2023-02-17 02:40+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI +ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"Language-Code: en\n"
+"Language-Name: English\n"
+"Preferred-Encodings: utf-8 latin1\n"
+"Domain: collective.exportimport\n"
+
+#: collective/exportimport/import_content.py:961
+msgid "<p>Creation- and modification-dates are changed during import.This resets them to the original dates of the imported content.</p>"
+msgstr ""
+
+#: collective/exportimport/import_content.py:992
+msgid "<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>"
+msgstr ""
+
+#: collective/exportimport/templates/import_redirects.pt:32
+msgid "Beware that this import would work only if you keep the same Plone site id and location in the site !"
+msgstr ""
+
+#: collective/exportimport/import_other.py:517
+msgid "Changed {} default pages"
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:30
+msgid "Choose one"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:19
+msgid "Content Types to export"
+msgstr ""
+
+#: collective/exportimport/import_other.py:687
+msgid "Created {} portlets"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:71
+msgid "Depth"
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:56
+msgid "Do a commit after each number of items"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:139
+#: collective/exportimport/templates/export_other.pt:19
+msgid "Download to local machine"
+msgstr ""
+
+#: collective/exportimport/import_content.py:179
+msgid "Exception during upload: {}"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:155
+#: collective/exportimport/templates/export_other.pt:32
+msgid "Export"
+msgstr ""
+
+#: collective/exportimport/export_other.py:585
+#: collective/exportimport/templates/links.pt:38
+msgid "Export comments"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:11
+#: collective/exportimport/templates/links.pt:10
+msgid "Export content"
+msgstr ""
+
+#: collective/exportimport/export_other.py:506
+#: collective/exportimport/templates/links.pt:30
+msgid "Export default pages"
+msgstr ""
+
+#: collective/exportimport/export_other.py:413
+#: collective/exportimport/templates/links.pt:26
+msgid "Export local roles"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:22
+msgid "Export members"
+msgstr ""
+
+#: collective/exportimport/export_other.py:233
+msgid "Export members, groups and roles"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:34
+msgid "Export object positions in parent"
+msgstr ""
+
+#: collective/exportimport/export_other.py:470
+msgid "Export ordering"
+msgstr ""
+
+#: collective/exportimport/export_other.py:624
+#: collective/exportimport/templates/links.pt:42
+msgid "Export portlets"
+msgstr ""
+
+#: collective/exportimport/export_other.py:759
+#: collective/exportimport/templates/links.pt:46
+msgid "Export redirects"
+msgstr ""
+
+#: collective/exportimport/export_other.py:125
+#: collective/exportimport/templates/links.pt:14
+msgid "Export relations"
+msgstr ""
+
+#: collective/exportimport/export_other.py:331
+#: collective/exportimport/templates/links.pt:18
+msgid "Export translations"
+msgstr ""
+
+#: collective/exportimport/export_other.py:101
+msgid "Exported to {}"
+msgstr ""
+
+#: collective/exportimport/export_content.py:198
+msgid "Exported {} items ({}) as {} to {}"
+msgstr ""
+
+#: collective/exportimport/export_content.py:222
+msgid "Exported {} {}"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:8
+msgid "Exports"
+msgstr ""
+
+#: collective/exportimport/import_other.py:91
+msgid "Failure while uploading: {}"
+msgstr ""
+
+#: collective/exportimport/import_content.py:160
+msgid "File '{}' not found on server."
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:27
+msgid "File on server to import:"
+msgstr ""
+
+#: collective/exportimport/import_content.py:1006
+msgid "Finished fixing collection queries."
+msgstr ""
+
+#: collective/exportimport/import_content.py:969
+msgid "Finished resetting creation and modification dates."
+msgstr ""
+
+#: collective/exportimport/import_content.py:991
+#: collective/exportimport/templates/links.pt:97
+msgid "Fix collection queries"
+msgstr ""
+
+#: collective/exportimport/fix_html.py:43
+#: collective/exportimport/templates/links.pt:101
+msgid "Fix links to content and images in richtext"
+msgstr ""
+
+#: collective/exportimport/fix_html.py:51
+msgid "Fixed HTML for {} fields in content items"
+msgstr ""
+
+#: collective/exportimport/fix_html.py:55
+msgid "Fixed HTML for {} portlets"
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:38
+msgid "Handle existing content"
+msgstr ""
+
+#: collective/exportimport/templates/export_other.pt:44
+#: collective/exportimport/templates/import_defaultpages.pt:31
+#: collective/exportimport/templates/import_discussion.pt:31
+msgid "Help"
+msgstr ""
+
+#: collective/exportimport/templates/import_defaultpages.pt:32
+#: collective/exportimport/templates/import_discussion.pt:32
+#: collective/exportimport/templates/import_localroles.pt:32
+msgid "Here is a example for the expected format. This is the format created by collective.exportimport when used for export."
+msgstr ""
+
+#: collective/exportimport/templates/import_redirects.pt:34
+msgid "Here is an example for the expected format. This is the format created by collective.exportimport when used for export."
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:13
+#: collective/exportimport/templates/import_defaultpages.pt:13
+#: collective/exportimport/templates/import_discussion.pt:13
+msgid "Here you can upload a json-file."
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:39
+msgid "How should content be handled that exists with the same id/path?"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:88
+msgid "How should data from image- and file-fields be included?"
+msgstr ""
+
+#: collective/exportimport/import_content.py:127
+msgid "Ignore: Create with a new id"
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:92
+#: collective/exportimport/templates/import_defaultpages.pt:20
+#: collective/exportimport/templates/import_discussion.pt:20
+msgid "Import"
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:11
+msgid "Import Content"
+msgstr ""
+
+#: collective/exportimport/templates/import_defaultpages.pt:11
+msgid "Import Default Pages"
+msgstr ""
+
+#: collective/exportimport/templates/import_discussion.pt:11
+msgid "Import Discussion"
+msgstr ""
+
+#: collective/exportimport/templates/import_localroles.pt:11
+msgid "Import Localroles"
+msgstr ""
+
+#: collective/exportimport/templates/import_members.pt:11
+msgid "Import Members, Groups and their Roles"
+msgstr ""
+
+#: collective/exportimport/templates/import_ordering.pt:11
+msgid "Import Object Positions in Parent"
+msgstr ""
+
+#: collective/exportimport/templates/import_redirects.pt:11
+msgid "Import Redirects"
+msgstr ""
+
+#: collective/exportimport/templates/import_relations.pt:11
+msgid "Import Relations"
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:71
+msgid "Import all items into the current folder"
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:83
+msgid "Import all old revisions"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:81
+msgid "Import comments"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:53
+msgid "Import content"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:73
+msgid "Import default pages"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:69
+msgid "Import local roles"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:65
+msgid "Import members"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:77
+msgid "Import object positions in parent"
+msgstr ""
+
+#: collective/exportimport/templates/import_portlets.pt:11
+#: collective/exportimport/templates/links.pt:85
+msgid "Import portlets"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:89
+msgid "Import redirects"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:57
+msgid "Import relations"
+msgstr ""
+
+#: collective/exportimport/templates/import_translations.pt:11
+#: collective/exportimport/templates/links.pt:61
+msgid "Import translations"
+msgstr ""
+
+#: collective/exportimport/import_other.py:590
+msgid "Imported {} comments"
+msgstr ""
+
+#: collective/exportimport/import_other.py:201
+msgid "Imported {} groups and {} members"
+msgstr ""
+
+#: collective/exportimport/import_other.py:392
+msgid "Imported {} localroles"
+msgstr ""
+
+#: collective/exportimport/import_other.py:464
+msgid "Imported {} orders in {} seconds"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:51
+msgid "Imports"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:87
+msgid "Include blobs"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:129
+msgid "Include revisions."
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:113
+msgid "Modify exported data for migrations."
+msgstr ""
+
+#: collective/exportimport/templates/import_redirects.pt:33
+msgid "More code is needed if you have another use case."
+msgstr ""
+
+#: collective/exportimport/export_other.py:84
+msgid "No data to export for {}"
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:25
+msgid "No files found."
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:63
+msgid "Path"
+msgstr ""
+
+#: collective/exportimport/import_other.py:822
+msgid "Redirects imported"
+msgstr ""
+
+#: collective/exportimport/import_content.py:125
+msgid "Replace: Delete item and create new"
+msgstr ""
+
+#: collective/exportimport/templates/links.pt:93
+msgid "Reset created and modified dates"
+msgstr ""
+
+#: collective/exportimport/import_content.py:960
+msgid "Reset creation and modification date"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:145
+#: collective/exportimport/templates/export_other.pt:25
+msgid "Save to file on server"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:24
+msgid "Select all/none"
+msgstr ""
+
+#: collective/exportimport/export_content.py:150
+msgid "Select at least one type to export"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:13
+msgid "Select which content to export as a json-file."
+msgstr ""
+
+#: collective/exportimport/import_content.py:124
+msgid "Skip: Don't import at all"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:130
+msgid "This exports the content-history (versioning) of each exported item. Warning: This can significantly slow down the export!"
+msgstr ""
+
+#: collective/exportimport/templates/import_content.pt:84
+msgid "This will import the content-history (versioning) for each item that has revisions. Warning: This can significantly slow down the import!"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:72
+msgid "Unlimited: this item and all children, 0: this object only, 1: only direct children of this object, 2-x: children of this object up to the specified level"
+msgstr ""
+
+#: collective/exportimport/import_content.py:126
+msgid "Update: Reuse and only overwrite imported data"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:114
+msgid "Use this if you want to import the data in a newer version of Plone or migrate from Archetypes to Dexterity. Read the documentation to learn which changes are made by this option."
+msgstr ""
+
+#: collective/exportimport/import_other.py:288
+msgid "You need either Plone 6 or collective.relationhelpers to import relations"
+msgstr ""
+
+#: collective/exportimport/export_content.py:139
+msgid "as base-64 encoded strings"
+msgstr ""
+
+#: collective/exportimport/export_content.py:140
+msgid "as blob paths"
+msgstr ""
+
+#: collective/exportimport/export_content.py:138
+msgid "as download urls"
+msgstr ""
+
+#: collective/exportimport/templates/export_content.pt:155
+msgid "export"
+msgstr ""
+
+#: collective/exportimport/import_content.py:143
+msgid "json file was uploaded, so the selected server file was ignored."
+msgstr ""
+
+#. Default: "Toggle all"
+#: collective/exportimport/templates/export_content.pt:22
+msgid "label_toggle"
+msgstr ""
+
+#: collective/exportimport/import_content.py:996
+msgid "plone.app.querystring.upgrades.fix_select_all_existing_collections is not available"
+msgstr ""
+
+#. Default: "Or you can choose a file that is already uploaded on the server in one of these paths:"
+#: collective/exportimport/templates/import_content.pt:21
+msgid "server_paths_list"
+msgstr ""
+
+#: collective/exportimport/export_content.py:123
+msgid "unlimited"
+msgstr ""

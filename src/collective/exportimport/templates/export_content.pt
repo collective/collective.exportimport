@@ -2,15 +2,15 @@
       xmlns:metal="http://xml.zope.org/namespaces/metal"
       xmlns:tal="http://xml.zope.org/namespaces/tal"
       xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-      i18n:domain="plone.z3cform"
+      i18n:domain="collective.exportimport"
       metal:use-macro="context/main_template/macros/master">
 
 <div metal:fill-slot="main">
     <tal:main-macro metal:define-macro="main">
 
-      <h1 class="documentFirstHeading">Export content</h1>
+      <h1 class="documentFirstHeading" i18n:translate="">Export content</h1>
 
-      <p class="documentDescription">Select which content to export as a json-file.</p>
+      <p class="documentDescription" i18n:translate="">Select which content to export as a json-file.</p>
 
         <form id="export_content" action="@@export_content" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
 
@@ -21,7 +21,7 @@
               <div class="widget" id="portal_type">
                 <input type="checkbox" class="checkboxType" name="checkall" id="checkall"
                        title="Toggle all" i18n:attributes="title label_toggle" />
-                <label for="checkall"><i>Select all/none</i></label><br />
+                <label for="checkall"><i i18n:translate="">Select all/none</i></label><br />
                 <script type="text/javascript">
                    // Check or Uncheck All checkboxes
                    $("#checkall").change(function(){
@@ -60,7 +60,7 @@
             </div>
 
             <div class="field mb-3">
-              <label for="path">Path</label>
+              <label for="path" i18n:translate="">Path</label>
               <div class="widget">
                 <input type="text" name="path" id="path" value=""
                        tal:attributes="value python:view.path">
@@ -68,8 +68,8 @@
             </div>
 
             <div class="field mb-3">
-              <label for="depth">Depth</label>
-              <span class="formHelp">Unlimited: this item and all children, 0: this object only, 1: only direct children of this object, 2-x: children of this object up to the specified level</span>
+              <label for="depth" i18n:translate="">Depth</label>
+              <span class="formHelp" i18n:translate="">Unlimited: this item and all children, 0: this object only, 1: only direct children of this object, 2-x: children of this object up to the specified level</span>
               <div class="widget">
                 <select name="depth" class="">
                   <option value="1"
@@ -84,8 +84,8 @@
             </div>
 
             <div class="field mb-3">
-              <label for="include_blobs">Include blobs</label>
-              <span class="formHelp">
+              <label for="include_blobs" i18n:translate="">Include blobs</label>
+              <span class="formHelp" i18n:translate="">
                   How should data from image- and file-fields be included?
               </span>
               <div class="widget">
@@ -110,8 +110,8 @@
                     id="migration"
                     tal:attributes="checked python: 'checked' if view.migration else None"
                     />
-                Modify exported data for migrations.
-                <span class="formHelp">
+                <span i18n:translate="">Modify exported data for migrations.</span>
+                <span class="formHelp" i18n:translate="">
                   Use this if you want to import the data in a newer version of Plone or migrate from Archetypes to Dexterity. Read the documentation to learn which changes are made by this option.
                 </span>
               </label>
@@ -126,8 +126,8 @@
                     id="include_revisions"
                     tal:attributes="checked python: 'checked' if view.include_revisions else None"
                     />
-                Include revisions.
-                <span class="formHelp">
+                <span i18n:translate="">Include revisions.</span>
+                <span class="formHelp" i18n:translate="">
                   This exports the content-history (versioning) of each exported item. Warning: This can significantly slow down the export!
                 </span>
               </label>
@@ -136,7 +136,7 @@
             <div class="field mb-3">
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="download_to_server:int" value="0" id="download_local" checked="checked">
-                <label for="download_local" class="form-check-label"  i18n:translate="">
+                <label for="download_local" class="form-check-label" i18n:translate="">
                   Download to local machine
                 </label>
               </div>
@@ -153,7 +153,7 @@
                 <input type="hidden" name="form.submitted" value="1"/>
 
                 <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="submit" value="export">Export
+                        type="submit" name="submit" value="export" i18n:attributes="value" i18n:translate="">Export
                 </button>
 
             </div>

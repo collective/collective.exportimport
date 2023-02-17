@@ -2,15 +2,15 @@
       xmlns:metal="http://xml.zope.org/namespaces/metal"
       xmlns:tal="http://xml.zope.org/namespaces/tal"
       xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-      i18n:domain="plone.z3cform"
+      i18n:domain="collective.exportimport"
       metal:use-macro="context/main_template/macros/master">
 
 <div metal:fill-slot="main">
     <tal:main-macro metal:define-macro="main">
 
-      <h1 class="documentFirstHeading">Import Content</h1>
+      <h1 class="documentFirstHeading" i18n:translate="">Import Content</h1>
 
-      <p class="documentDescription">Here you can upload a json-file.</p>
+      <p class="documentDescription" i18n:translate="">Here you can upload a json-file.</p>
 
         <form action="." tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
             <div class="form-group">
@@ -35,8 +35,8 @@
             </tal:block>
 
             <div class="field mb-3">
-              <label for="include_blobs">Handle existing content</label>
-              <span class="formHelp">
+              <label for="include_blobs" i18n:translate="">Handle existing content</label>
+              <span class="formHelp" i18n:translate="">
                   How should content be handled that exists with the same id/path?
               </span>
               <div class="widget">
@@ -53,7 +53,7 @@
             </div>
 
             <div class="field mb-3">
-              <label for="commit">Do a commit after each number of items</label>
+              <label for="commit" i18n:translate="">Do a commit after each number of items</label>
               <div class="widget">
                 <input type="text" size="5" name="commit" id="commit" value=""
                        tal:attributes="value python:view.commit">
@@ -68,7 +68,7 @@
                     id="import_to_current_folder"
                     tal:attributes="checked python:'checked' if view.import_to_current_folder else None"
                     />
-                Import all items into the current folder
+                <span i18n:translate="">Import all items into the current folder</span>
               </label>
             </div>
 
@@ -80,8 +80,8 @@
                     id="import_old_revisions"
                     tal:attributes="checked python:'checked' if view.import_old_revisions else None"
                     />
-                Import all old revisions
-                <span class="formHelp">
+                <span i18n:translate="">Import all old revisions</span>
+                <span class="formHelp" i18n:translate="">
                   This will import the content-history (versioning) for each item that has revisions. Warning: This can significantly slow down the import!
                 </span>
               </label>
@@ -90,7 +90,7 @@
             <div class="formControls" class="form-group">
                 <input type="hidden" name="form.submitted" value="1"/>
                 <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="submit" value="Import">Import
+                        type="submit" name="submit" value="Import" i18n:attributes="value" i18n:translate="">Import
                 </button>
             </div>
 

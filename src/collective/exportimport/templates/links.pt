@@ -1,101 +1,105 @@
-<tal:main-macro metal:define-macro="links">
+<tal:main-macro metal:define-macro="links"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="collective.exportimport">
 
   <div class="formControls" class="form-group">
-      <h3>Exports</h3>
+      <h3 i18n:translate="">Exports</h3>
       <ul>
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_content'">Export content
+            tal:attributes="href python: portal_url + '/@@export_content'" i18n:translate="">Export content
          </a></li>
 
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_relations'">Export relations
+            tal:attributes="href python: portal_url + '/@@export_relations'" i18n:translate="">Export relations
          </a></li>
 
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_translations'">Export translations
+            tal:attributes="href python: portal_url + '/@@export_translations'" i18n:translate="">Export translations
          </a></li>
 
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_members'">Export members
+            tal:attributes="href python: portal_url + '/@@export_members'" i18n:translate="">Export members
          </a></li>
 
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_localroles'">Export local roles
+            tal:attributes="href python: portal_url + '/@@export_localroles'" i18n:translate="">Export local roles
          </a></li>
 
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_defaultpages'">Export default pages
+            tal:attributes="href python: portal_url + '/@@export_defaultpages'" i18n:translate="">Export default pages
          </a></li>
 
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_ordering'">Export object positions in parent
+            tal:attributes="href python: portal_url + '/@@export_ordering'" i18n:translate="">Export object positions in parent
          </a></li>
 
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_discussion'">Export comments
+            tal:attributes="href python: portal_url + '/@@export_discussion'" i18n:translate="">Export comments
          </a></li>
 
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_portlets'">Export portlets
+            tal:attributes="href python: portal_url + '/@@export_portlets'" i18n:translate="">Export portlets
          </a></li>
 
          <li><a class=""
-            tal:attributes="href python: portal_url + '/@@export_redirects'">Export redirects
+            tal:attributes="href python: portal_url + '/@@export_redirects'" i18n:translate="">Export redirects
          </a></li>
       </ul>
 
-      <h3>Imports</h3>
+      <h3 i18n:translate="">Imports</h3>
       <ul>
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@import_content'">Import content
+         tal:attributes="href python: portal_url + '/@@import_content'" i18n:translate="">Import content
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@import_relations'">Import relations
+         tal:attributes="href python: portal_url + '/@@import_relations'" i18n:translate="">Import relations
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@import_translations'">Import translations
+         tal:attributes="href python: portal_url + '/@@import_translations'" i18n:translate="">Import translations
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@import_members'">Import members
+         tal:attributes="href python: portal_url + '/@@import_members'" i18n:translate="">Import members
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@import_localroles'">Import local roles
+         tal:attributes="href python: portal_url + '/@@import_localroles'" i18n:translate="">Import local roles
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@import_defaultpages'">Import default pages
+         tal:attributes="href python: portal_url + '/@@import_defaultpages'" i18n:translate="">Import default pages
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@import_ordering'">Import object positions in parent
+         tal:attributes="href python: portal_url + '/@@import_ordering'" i18n:translate="">Import object positions in parent
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@import_discussion'">Import comments
+         tal:attributes="href python: portal_url + '/@@import_discussion'" i18n:translate="">Import comments
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@import_portlets'">Import portlets
+         tal:attributes="href python: portal_url + '/@@import_portlets'" i18n:translate="">Import portlets
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@import_redirects'">Import redirects
+         tal:attributes="href python: portal_url + '/@@import_redirects'" i18n:translate="">Import redirects
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@reset_dates'">Reset created and modified dates
+         tal:attributes="href python: portal_url + '/@@reset_dates'" i18n:translate="">Reset created and modified dates
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@fix_collection_queries'">Fix collection queries
+         tal:attributes="href python: portal_url + '/@@fix_collection_queries'" i18n:translate="">Fix collection queries
       </a></li>
 
       <li><a class=""
-         tal:attributes="href python: portal_url + '/@@fix_html'">Fix links to content and images in richtext
+         tal:attributes="href python: portal_url + '/@@fix_html'" i18n:translate="">Fix links to content and images in richtext
       </a></li>
    </ul>
    </div>

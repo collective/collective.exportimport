@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
 from BTrees.LLBTree import LLSet
+from collective.exportimport import _
 from collective.exportimport import config
 from datetime import datetime
 from OFS.interfaces import IOrderedContainer
@@ -87,7 +88,7 @@ if HAS_PAM:  # noqa: C901
                     status = "error"
                     msg = e
                     api.portal.show_message(
-                        u"Failure while uploading: {}".format(e),
+                        _(u"Failure while uploading: {}").format(e),
                         request=self.request,
                     )
                 else:
@@ -191,13 +192,13 @@ class ImportMembers(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    u"Failure while uploading: {}".format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
                 groups = self.import_groups(data["groups"])
                 members = self.import_members(data["members"])
-                msg = u"Imported {} groups and {} members".format(groups, members)
+                msg = _(u"Imported {} groups and {} members").format(groups, members)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
@@ -284,7 +285,7 @@ class ImportRelations(BrowserView):
 
         if not HAS_RELAPI and not HAS_PLONE6:
             api.portal.show_message(
-                "You need either Plone 6 or collective.relationhelpers to import relations",
+                _("You need either Plone 6 or collective.relationhelpers to import relations"),
                 self.request,
             )
             return self.index()
@@ -303,7 +304,7 @@ class ImportRelations(BrowserView):
             except Exception as e:
                 status = "error"
                 logger.error(e)
-                msg = u"Failure while uploading: {}".format(e)
+                msg = _(u"Failure while uploading: {}").format(e)
                 api.portal.show_message(msg, request=self.request)
             else:
                 msg = self.do_import(data)
@@ -383,12 +384,12 @@ class ImportLocalRoles(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    u"Failure while uploading: {}".format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
                 localroles = self.import_localroles(data)
-                msg = u"Imported {} localroles".format(localroles)
+                msg = _(u"Imported {} localroles").format(localroles)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
@@ -452,7 +453,7 @@ class ImportOrdering(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    u"Failure while uploading: {}".format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
@@ -460,7 +461,7 @@ class ImportOrdering(BrowserView):
                 orders = self.import_ordering(data)
                 end = datetime.now()
                 delta = end - start
-                msg = u"Imported {} orders in {} seconds".format(orders, delta.seconds)
+                msg = _(u"Imported {} orders in {} seconds").format(orders, delta.seconds)
                 logger.info(msg)
                 api.portal.show_message(msg, self.request)
             if return_json:
@@ -513,7 +514,7 @@ class ImportDefaultPages(BrowserView):
                 )
             else:
                 defaultpages = self.import_default_pages(data)
-                msg = u"Changed {} default pages".format(defaultpages)
+                msg = _(u"Changed {} default pages").format(defaultpages)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
@@ -581,12 +582,12 @@ class ImportDiscussion(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    u"Failure while uploading: {}".format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
                 results = self.import_data(data)
-                msg = u"Imported {} comments".format(results)
+                msg = _(u"Imported {} comments").format(results)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
@@ -678,12 +679,12 @@ class ImportPortlets(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    u"Failure while uploading: {}".format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
                 portlets = self.import_portlets(data)
-                msg = u"Created {} portlets".format(portlets)
+                msg = _(u"Created {} portlets").format(portlets)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
@@ -813,12 +814,12 @@ class ImportRedirects(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    u"Failure while uploading: {}".format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
                 import_plone_redirects(data)
-                msg = u"Redirects imported"
+                msg = _(u"Redirects imported")
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}

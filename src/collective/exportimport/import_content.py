@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
+from collective.exportimport import _
 from collective.exportimport import config
 from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
@@ -120,10 +121,10 @@ class ImportContent(BrowserView):
 
         self.handle_existing_content = int(request.get("handle_existing_content", 0))
         self.handle_existing_content_options = (
-            ("0", "Skip: Don't import at all"),
-            ("1", "Replace: Delete item and create new"),
-            ("2", "Update: Reuse and only overwrite imported data"),
-            ("3", "Ignore: Create with a new id"),
+            ("0", _("Skip: Don't import at all")),
+            ("1", _("Replace: Delete item and create new")),
+            ("2", _("Update: Reuse and only overwrite imported data")),
+            ("3", _("Ignore: Create with a new id")),
         )
         self.import_old_revisions = request.get("import_old_revisions", False)
 
@@ -139,7 +140,7 @@ class ImportContent(BrowserView):
             # This is an error.  But when you upload 10 GB AND select a server file,
             # it is a pity when you would have to upload again.
             api.portal.show_message(
-                u"json file was uploaded, so the selected server file was ignored.",
+                _(u"json file was uploaded, so the selected server file was ignored."),
                 request=self.request,
                 type="warn",
             )
@@ -156,7 +157,7 @@ class ImportContent(BrowserView):
                         close_file = True
                         break
             else:
-                msg = "File '{}' not found on server.".format(server_file)
+                msg = _("File '{}' not found on server.").format(server_file)
                 api.portal.show_message(msg, request=self.request, type="warn")
                 server_file = None
                 status = "error"
@@ -175,7 +176,7 @@ class ImportContent(BrowserView):
                 status = "error"
                 msg = str(e)
                 api.portal.show_message(
-                    u"Exception during uplad: {}".format(e),
+                    _(u"Exception during upload: {}").format(e),
                     request=self.request,
                 )
             else:
@@ -956,16 +957,16 @@ def fix_portal_type(portal_type):
 
 class ResetModifiedAndCreatedDate(BrowserView):
     def __call__(self):
-        self.title = "Reset creation and modification date"
-        self.help_text = """<p>Creation- and modification-dates are changed during import.
-        This resets them to the original dates of the imported content.</p>"""
+        self.title = _(u"Reset creation and modification date")
+        self.help_text = _("<p>Creation- and modification-dates are changed during import." \
+                         "This resets them to the original dates of the imported content.</p>")
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         portal = api.portal.get()
 
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=reset_dates)
-        msg = "Finished resetting creation and modification dates."
+        msg = _(u"Finished resetting creation and modification dates.")
         logger.info(msg)
         api.portal.show_message(msg, self.request)
         return self.index()
@@ -987,12 +988,12 @@ def reset_dates(obj, path):
 
 class FixCollectionQueries(BrowserView):
     def __call__(self):
-        self.title = "Fix collection queries"
-        self.help_text = """<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>"""
+        self.title = _(u"Fix collection queries")
+        self.help_text = _(u"""<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>""")
 
         if not HAS_COLLECTION_FIX:
             api.portal.show_message(
-                "plone.app.querystring.upgrades.fix_select_all_existing_collections is not available",
+                _(u"plone.app.querystring.upgrades.fix_select_all_existing_collections is not available"),
                 self.request,
             )
             return self.index()
@@ -1002,6 +1003,6 @@ class FixCollectionQueries(BrowserView):
 
         portal = api.portal.get()
         fix_select_all_existing_collections(portal)
-        msg = "Finished fixing collection queries."
+        msg = _("Finished fixing collection queries.")
         api.portal.show_message(msg, self.request)
         return self.index()

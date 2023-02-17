@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
 from App.config import getConfiguration
+from collective.exportimport import _
 from collective.exportimport import config
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
@@ -119,7 +120,7 @@ class ExportContent(BrowserView):
 
         self.depth = int(depth)
         self.depth_options = (
-            ("-1", "unlimited"),
+            ("-1", _(u"unlimited")),
             ("0", "0"),
             ("1", "1"),
             ("2", "2"),
@@ -134,9 +135,9 @@ class ExportContent(BrowserView):
         )
         self.include_blobs = int(include_blobs)
         self.include_blobs_options = (
-            ("0", "as download urls"),
-            ("1", "as base-64 encoded strings"),
-            ("2", "as blob paths"),
+            ("0", _(u"as download urls")),
+            ("1", _(u"as base-64 encoded strings")),
+            ("2", _(u"as blob paths")),
         )
         self.include_revisions = include_revisions
 
@@ -146,7 +147,7 @@ class ExportContent(BrowserView):
             return self.template()
 
         if not self.portal_type:
-            api.portal.show_message(u"Select at least one type to export", self.request)
+            api.portal.show_message(_(u"Select at least one type to export"), self.request)
             return self.template()
 
         if self.include_blobs == 1:
@@ -194,7 +195,7 @@ class ExportContent(BrowserView):
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
                     f.write("]")
-            msg = u"Exported {} items ({}) as {} to {}".format(
+            msg = _(u"Exported {} items ({}) as {} to {}").format(
                 number, ", ".join(self.portal_type), filename, filepath
             )
             logger.info(msg)
@@ -218,7 +219,7 @@ class ExportContent(BrowserView):
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
                     f.write("]")
-                msg = u"Exported {} {}".format(number, self.portal_type)
+                msg = _(u"Exported {} {}").format(number, self.portal_type)
                 logger.info(msg)
                 api.portal.show_message(msg, self.request)
                 response = self.request.response
