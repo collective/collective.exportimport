@@ -408,49 +408,142 @@ if HAS_AT and HAS_PAC:
         """This uses the topic migration from p.a.contenttypes to turn Criteria into a Querystring."""
 
         def __call__(self, version=None, include_items=False):
-            topic_metadata = super(SerializeTopicToJson, self).__call__(version=version)
+            # 1. Get the default serialisation for AT content
+            item = super(SerializeTopicToJson, self).__call__(version=version)
 
-            # migrate criteria
-            formquery = []
+            # 2. Get querystring-registry
+            query = []
             reg = getUtility(IRegistry)
             reader = IQuerystringRegistryReader(reg)
-            self.registry = reader.parseRegistry()
+            registry = reader.parseRegistry()
 
+            # Inject new selection-operators that were added in Plone 5
+            selection = registry["plone"]["app"]["querystring"]["operation"]["selection"]
+            new_operators = ["all", "any", "none"]
+            for operator  in new_operators:
+                if operator not in selection:
+                    # just a dummy method to pass validation
+                    selection[operator] = {"operation": "collective.exportimport"}
+
+            # Inject any operator for some fields
+            any_operator = "plone.app.querystring.operation.selection.any"
+            fields_with_any_operator = ['Creator', 'Subject', 'portal_type', 'review_state']
+            for field in fields_with_any_operator:
+                operations = registry["plone"]["app"]["querystring"]["field"][field]["operations"]
+                if any_operator not in operations:
+                    registry["plone"]["app"]["querystring"]["field"][field]["operations"].append(any_operator)
+
+            # Inject all operator for Subject
+            all_operator= "plone.app.querystring.operation.selection.all"
+            fields_with_any_operator = ["Subject"]
+            for field in fields_with_any_operator:
+                operations = registry["plone"]["app"]["querystring"]["field"][field]["operations"]
+                if all_operator not in operations:
+                    registry["plone"]["app"]["querystring"]["field"][field]["operations"].append(all_operator)
+
+            # 3. Migrate criteria using the converters from p.a.contenttypes
             criteria = self.context.listCriteria()
             for criterion in criteria:
                 type_ = criterion.__class__.__name__
                 if type_ == "ATSortCriterion":
-                    # Sort order and direction are now stored in the Collection.
-                    self._collection_sort_reversed = criterion.getReversed()
-                    self._collection_sort_on = criterion.Field()
-                    logger.debug(
-                        "Sort on %r, reverse: %s.",
-                        self._collection_sort_on,
-                        self._collection_sort_reversed,
-                    )
+                    # Migrate sorting
+                    item["sort_reversed"] = criterion.getReversed()
+                    item["sort_on"] = criterion.Field()
                     continue
 
                 converter = CONVERTERS.get(type_)
                 if converter is None:
-                    msg = "Unsupported criterion {0}".format(type_)
+                    msg = u"Unsupported criterion {0}".format(type_)
                     logger.error(msg)
                     raise ValueError(msg)
+                before = len(query)
                 try:
-                    converter(formquery, criterion, self.registry)
-                except Exception as e:
-                    logger.info(e)
+                    converter(query, criterion, registry)
+                except Exception:
+                    logger.info(u"Error converting criterion %s", criterion.__dict__, exc_info=True)
+                    pass
 
-            topic_metadata["query"] = json_compatible(formquery)
+                # Try to manually convert when no criterion was added
+                # this happens with invalid criteria (e.g. path without a path)
+                if len(query) == before:
+                    fixed = self.fix_criteria(criterion)
+                    if fixed:
+                        query.append(fixed)
+                    else:
+                        logger.info(u"Check maybe broken collection %s", self.context.absolute_url())
 
-            # migrate batch size
+            # 4. So some manual fixes in the migrated query
+            indexes_to_fix = [
+                u"portal_type",
+                u"review_state",
+                u"Creator",
+                u"Subject",
+            ]
+            operator_mapping = {
+                # old -> new
+                u"plone.app.querystring.operation.selection.is":
+                    u"plone.app.querystring.operation.selection.any",
+                u"plone.app.querystring.operation.string.is":
+                    u"plone.app.querystring.operation.selection.any",
+            }
+            fixed_query = []
+            for crit in query:
+                if crit["o"].endswith("relativePath") and crit["v"] == "..":
+                    # relativePath no longer accepts ..
+                    crit["v"] = "..::1"
+                if crit["i"] in indexes_to_fix:
+                    for old_operator, new_operator in operator_mapping.items():
+                        if crit["o"] == old_operator:
+                            crit["o"] = new_operator
+                if crit["o"] == u"plone.app.querystring.operation.string.currentUser":
+                    crit["v"] = ""
+                fixed_query.append(crit)
+            query = fixed_query
+
+            # 5. Migrate batch size
             if self.context.itemCount:
-                topic_metadata["b_size"] = self.context.itemCount
+                item["item_count"] = self.context.itemCount
 
-            if hasattr(self, "_collection_sort_on"):
-                topic_metadata["sort_on"] = self._collection_sort_on
-                topic_metadata["sort_reversed"] = self._collection_sort_reversed
+            # 6. Migrate customView
+            if item.pop("customView", False):
+                item["layout"] = "tabular_view"
 
-            return topic_metadata
+            item["query"] = json_compatible(query)
+            return item
+
+        def fix_criteria(self, criterion):
+            """Try to fix some invalid criteria"""
+            FIXES = {
+                # real operators
+                "or": "plone.app.querystring.operation.selection.any",
+                # fake operators
+                "contains": "plone.app.querystring.operation.string.contains",
+                "any": "plone.app.querystring.operation.selection.any",
+            }
+
+            type_ = criterion.__class__.__name__
+            field = criterion.field
+            value = getattr(criterion, "value", None)
+            operator = getattr(criterion, "operator", None)
+
+            if type_ == "ATSimpleStringCriterion":
+                operator = "contains"
+            if type_ == "ATSelectionCriterion":
+                operator = "any"
+            if type_ == "ATListCriterion":
+                operator = "any"
+            if type_ in ["ATPathCriterion", "ATDateCriteria"] and not value:
+                return
+            if field == "commentators":
+                # no index
+                return
+
+            query = {
+                "i": field,
+                "o": FIXES.get(operator, operator),
+                "v": value,
+            }
+            return query
 
 
 def get_dx_blob_path(obj):
