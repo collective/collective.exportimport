@@ -31,6 +31,13 @@ Changelog
 - Add example for importing collective.jsonify data to documentation.
   [pbauer]
 
+- Better serialization of Topics:
+  - Use newer criteria added in Plone 5
+  - Add fallback for some criteria
+  - Export sort_on and sort_reversed
+  - Export customView as tabular_view
+  [pbauer]
+  
 - Always import discussions independent if discussion support is enabled or not
   on a particular content object (#182)
   [ajung]
