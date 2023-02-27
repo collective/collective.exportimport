@@ -31,6 +31,10 @@ Changelog
 - Add example for importing collective.jsonify data to documentation.
   [pbauer]
 
+- Always import discussions independent if discussion support is enabled or not
+  on a particular content object (#182)
+  [ajung]
+
 
 1.7 (2023-01-20)
 ----------------

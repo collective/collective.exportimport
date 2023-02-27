@@ -601,8 +601,6 @@ class ImportDiscussion(BrowserView):
             obj = api.content.get(UID=conversation_data["uuid"])
             if not obj:
                 continue
-            if not obj.restrictedTraverse("@@conversation_view").enabled():
-                continue
             added = 0
             conversation = IConversation(obj)
 
