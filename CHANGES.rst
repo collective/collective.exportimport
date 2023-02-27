@@ -37,6 +37,10 @@ Changelog
   - Export sort_on and sort_reversed
   - Export customView as tabular_view
   [pbauer]
+  
+- Always import discussions independent if discussion support is enabled or not
+  on a particular content object (#182)
+  [ajung]
 
 
 1.7 (2023-01-20)
