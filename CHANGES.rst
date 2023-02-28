@@ -5,6 +5,9 @@ Changelog
 1.8 (unreleased)
 ----------------
 
+- Document COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY in README.
+  [fredvd]
+
 - Add Spanish translation.
   [macagua]
 
