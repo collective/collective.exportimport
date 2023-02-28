@@ -13,6 +13,7 @@ Changelog
 
 - Import: run set_uuid method before we call custom hooks, so the hooks have access to
   the item UUID. Fix #185.
+- Document COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY in README.
   [fredvd]
 
 - Add Spanish translation.
