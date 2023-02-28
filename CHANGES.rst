@@ -5,6 +5,10 @@ Changelog
 1.8 (unreleased)
 ----------------
 
+- Import: run set_uuid method before we call custom hooks, so the hooks have access to
+  the item UUID. Fix #185.
+  [fredvd]
+
 - Add Spanish translation.
   [macagua]
 
