@@ -440,13 +440,13 @@ class ImportContent(BrowserView):
         self.import_blob_paths(new, item)
         self.import_constrains(new, item)
 
-        self.global_obj_hook(new, item)
-        self.custom_obj_hook(new, item)
-
         uuid = self.set_uuid(item, new)
 
         if uuid != item.get("UID"):
             item["UID"] = uuid
+
+        self.global_obj_hook(new, item)
+        self.custom_obj_hook(new, item)
 
         # Try to set the original review_state
         self.import_review_state(new, item)
