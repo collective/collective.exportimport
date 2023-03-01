@@ -512,6 +512,18 @@ Export:
 
 .. code-block:: python
 
+    def global_obj_hook(self, obj, item):
+        wf_policy = item.get("exportimport.workflow_policy")
+        if wf_policy:
+            obj.manage_addProduct["CMFPlacefulWorkflow"].manage_addWorkflowPolicyConfig()
+            wf_policy_config = obj[".wf_policy_config"]
+            wf_policy_config.setPolicyIn(wf_policy["workflow_policy_in"], update_security=True)
+            wf_policy_config.setPolicyBelow(wf_policy["workflow_policy_below"], update_security=True)
+
+Import:
+
+.. code-block:: python
+
     def global_dict_hook(self, item, obj):
         if obj.isPrincipiaFolderish and ".wf_policy_config" in obj.keys():
             wf_policy = obj[".wf_policy_config"]
@@ -520,18 +532,6 @@ Export:
                 "workflow_policy_in": wf_policy.workflow_policy_in,
             }
         return item
-
-Import:
-
-.. code-block:: python
-
-    def global_obj_hook(self, obj, item):
-        wf_policy = item.get("exportimport.workflow_policy")
-        if wf_policy:
-            obj.manage_addProduct["CMFPlacefulWorkflow"].manage_addWorkflowPolicyConfig()
-            wf_policy_config = obj[".wf_policy_config"]
-            wf_policy_config.setPolicyIn(wf_policy["workflow_policy_in"], update_security=True)
-            wf_policy_config.setPolicyBelow(wf_policy["workflow_policy_below"], update_security=True)
 
 
 Using dict-hooks during import
