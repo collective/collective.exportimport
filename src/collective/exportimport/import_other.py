@@ -404,6 +404,9 @@ class ImportLocalRoles(BrowserView):
             if not obj:
                 if item["uuid"] == PORTAL_PLACEHOLDER:
                     obj = api.portal.get()
+                else:
+                    logger.info("Could not find object to set localroles on. UUID: {}".format(item["uuid"]))
+                    continue
             if item.get("localroles"):
                 localroles = item["localroles"]
                 for userid in localroles:
