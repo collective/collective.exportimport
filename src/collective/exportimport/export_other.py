@@ -631,29 +631,36 @@ class ExportPortlets(BaseExport):
         logger.info(u"Exported info for %s items with portlets", len(data))
         self.download(data)
 
-    def all_portlets(context=None):
-        results = []
-
-        def get_portlets(obj, path):
-            uid = IUUID(obj, None)
-            if not uid:
-                return
-            portlets = export_local_portlets(obj)
-            blacklist = export_portlets_blacklist(obj)
-            obj_results = {}
-            if portlets:
-                obj_results["portlets"] = portlets
-            if blacklist:
-                obj_results["blacklist_status"] = blacklist
-            if obj_results:
-                obj_results["uuid"] = uid
-                results.append(obj_results)
-            return
+    def all_portlets(self):
+        self.results = []
 
         portal = api.portal.get()
-        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=get_portlets)
-        return results
+        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=self.get_portlets)
+        return self.results
 
+    def get_portlets(self,obj, path):
+        uid = IUUID(obj, None)
+        if not uid:
+            return
+        portlets = export_local_portlets(obj)
+        blacklist = export_portlets_blacklist(obj)
+        portlets = self.local_portlets_hook(portlets)
+        blacklist = self.portlets_blacklist_hook(blacklist)
+        obj_results = {}
+        if portlets:
+            obj_results["portlets"] = portlets
+        if blacklist:
+            obj_results["blacklist_status"] = blacklist
+        if obj_results:
+            obj_results["uuid"] = uid
+            self.results.append(obj_results)
+        return
+
+    def local_portlets_hook(self, portlets):
+        return portlets
+
+    def portlets_blacklist_hook(self, blacklist):
+        return blacklist
 
 def export_local_portlets(obj):
     """Serialize portlets for one content object
@@ -682,7 +689,7 @@ def export_local_portlets(obj):
             if manager_name not in items:
                 items[manager_name] = []
             values = {}
-            for name in schema.names():
+            for name in schema.names(all=True):
                 value = getattr(assignment, name, None)
                 if RelationValue is not None and isinstance(value, RelationValue):
                     value = value.to_object.UID()
