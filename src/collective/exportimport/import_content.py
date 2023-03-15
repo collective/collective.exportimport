@@ -371,7 +371,6 @@ class ImportContent(BrowserView):
                 # https://gitea.iwm-tuebingen.de/e-teaching.org/plone6.buildout/issues/10a
 
             if item["@type"] == 'eteaching.policy.mediaitem':
-                print("fixing")
                 new.media_file = item["media_file"]
                 new.subtitle_file= item["subtitle_file"]
                 new.image_file= item["image_file"]
