@@ -248,6 +248,7 @@ class ImportContent(BrowserView):
             if self.limit and len(added) >= self.limit:
                 break
 
+
             uuid = item["UID"]
             if uuid in self.DROP_UIDS:
                 continue
@@ -357,6 +358,7 @@ class ImportContent(BrowserView):
 
             new, item = self.global_obj_hook_before_deserializing(new, item)
 
+
             # import using plone.restapi deserializers
             deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
             try:
@@ -366,8 +368,14 @@ class ImportContent(BrowserView):
                     "cannot deserialize {}: {}".format(item["@id"], repr(error))
                 )
                 # disabled 
-                # https://gitea.iwm-tuebingen.de/e-teaching.org/plone6.buildout/issues/10
-                # continue
+                # https://gitea.iwm-tuebingen.de/e-teaching.org/plone6.buildout/issues/10a
+
+            if item["@type"] == 'eteaching.policy.mediaitem':
+                print("fixing")
+                new.media_file = item["media_file"]
+                new.subtitle_file= item["subtitle_file"]
+                new.image_file= item["image_file"]
+
 
             # Blobs can be exported as only a path in the blob storage.
             # It seems difficult to dynamically use a different deserializer,
