@@ -443,6 +443,13 @@ class ImportContent(BrowserView):
         uuid = self.set_uuid(item, new)
 
         if uuid != item.get("UID"):
+            # Happens only when we import content that doesn't have a UID
+            # for instance when importing from non Plone systems.
+            logger.info(
+                "Created new UID for item %s with type %s.",
+                item["@id"],
+                item["@type"]
+            )
             item["UID"] = uuid
 
         self.global_obj_hook(new, item)
