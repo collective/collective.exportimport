@@ -749,7 +749,7 @@ def register_portlets(obj, item):
                 field = field.bind(assignment)
                 # deserialize data (e.g. for RichText)
                 deserializer = queryMultiAdapter(
-                    (field, obj, request), IFieldDeserializer
+                    (field, assignment, request), IFieldDeserializer
                 )
                 if deserializer is not None:
                     try:
