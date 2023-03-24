@@ -266,6 +266,9 @@ class ExportMembers(BrowserView):
         }
         if member is not None:
             # TODO: Add support for any additional member-properties.
+            print(userId)
+            if userId == "mschmidt1":
+                import pdb; pdb.set_trace() 
             for prop in self.MEMBER_PROPERTIES:
                 props[prop] = json_compatible(member.getProperty(prop))
         return props
@@ -682,8 +685,7 @@ def export_plone_redirects():
             value = value[0]
         redirects[key] = value
 
-    data = json.dumps(redirects, indent=4)
-    return data
+    return redirects
 
 
 class ExportRedirects(BrowserView):
