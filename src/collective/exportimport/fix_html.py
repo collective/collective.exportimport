@@ -163,12 +163,12 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
             if not uuid:
                 target = find_object(obj, path)
                 if not target:
-                    logger.debug(u"Cannot find target obj for {path}".format(path=path))
+                    logger.debug("Cannot find target obj for %s", path)
                     continue
                 uuid = IUUID(target, None)
 
             if not uuid:
-                logger.debug("Cannot find target obj for {link}".format(link=link))
+                logger.debug("Cannot find target obj for %s", link)
                 continue
 
             # construct new link
@@ -220,11 +220,7 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
         )
 
         if orig != content_link.decode():
-            logger.debug(
-                u"Changed {tag} {attr} from {orig} to {content_link}".format(
-                    tag=tag, attr=attr, orig=orig, content_link=content_link
-                )
-            )
+            logger.debug("Changed %s %s from %s to %s", tag, attr, orig, content_link)
 
 
 def find_object(base, path):
@@ -418,9 +414,9 @@ def fix_html_in_portlets(context=None):
                                 fix_count_ref.append(True)
                                 setattr(assignment, fieldname, textvalue)
                                 logger.info(
-                                    "Fixed html for field {} of portlet at {}".format(
-                                        fieldname, obj.absolute_url()
-                                    )
+                                    "Fixed html for field %s of portlet at %s",
+                                    fieldname,
+                                    obj.absolute_url(),
                                 )
                         elif text and isinstance(text, str):
                             clean_text = html_fixer(text, obj)
@@ -434,9 +430,10 @@ def fix_html_in_portlets(context=None):
                                 fix_count_ref.append(True)
                                 setattr(assignment, fieldname, textvalue)
                                 logger.info(
-                                    "Fixed html for field {} of portlet {} at {}".format(
-                                        fieldname, str(assignment), obj.absolute_url()
-                                    )
+                                    "Fixed html for field %s of portlet %s at %s",
+                                    fieldname,
+                                    str(assignment),
+                                    obj.absolute_url(),
                                 )
 
     if context is None:
