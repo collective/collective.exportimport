@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.8 (unreleased)
+1.8 (2023-04-20)
 ----------------
 
 - Document COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY in README.
