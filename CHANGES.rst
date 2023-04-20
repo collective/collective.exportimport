@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.8 (unreleased)
+1.8 (2023-04-20)
 ----------------
 
 - Import: run set_uuid method before we call custom hooks, so the hooks have access to
