@@ -746,6 +746,50 @@ def register_portlets(obj, item):
             # 2. Apply portlet settings
             portlet_interface = getUtility(IPortletTypeInterface, name=portlet_type)
             for property_name, value in assignment_data.items():
+                # For core portlets a path changed to uuid between Plone 4 and 5
+                migration_mapping = [
+                    {
+                        "portlet_type": "portlets.Navigation",
+                        "old": "root",
+                        "new": "root_uid",
+                    },
+                    {
+                        "portlet_type": "portlets.Search",
+                        "old": "search_base",
+                        "new": "search_base_uid",
+                    },
+                    {
+                        "portlet_type": "portlets.Events",
+                        "old": "search_base",
+                        "new": "search_base_uid",
+                    },
+                    {
+                        "portlet_type": "plone.portlet.collection.Collection",
+                        "old": "target_collection",
+                        "new": "uid",
+                    },
+                ]
+                for mapping in migration_mapping:
+                    if (
+                        property_name == mapping["old"]
+                        and value
+                        and portlet_type == mapping["portlet_type"]
+                    ):
+                        property_name = mapping["new"]
+                        target = api.content.get(path=value)
+                        if target:
+                            value = target.UID()
+                            break
+                        else:
+                            logger.info(
+                                "Could not find path '%s'. Manually fix %s '%s' at %s",
+                                value,
+                                portlet_type,
+                                name,
+                                obj.absolute_url(),
+                            )
+                            continue
+
                 field = portlet_interface.get(property_name, None)
                 if field is None:
                     continue
