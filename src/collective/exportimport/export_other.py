@@ -653,6 +653,7 @@ class ExportPortlets(BaseExport):
         if blacklist:
             obj_results["blacklist_status"] = blacklist
         if obj_results:
+            obj_results["@id"] = obj.absolute_url()
             obj_results["uuid"] = uid
             self.results.append(obj_results)
         return

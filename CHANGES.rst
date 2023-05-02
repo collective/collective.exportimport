@@ -7,6 +7,9 @@ Changelog
 
 - Migrate root of portlets that used a path in plone4 to using a uid (navigation, search, events, collection).
   [pbauer]
+- Add portlet location on exported data
+  [mpeeters]
+
 - Make export of discussions and portlets contextual
   [mpeeters]
 
