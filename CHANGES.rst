@@ -5,7 +5,8 @@ Changelog
 1.9 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Migrate root of portlets that used a path in plone4 to using a uid (navigation, search, events, collection).
+  [pbauer]
 
 
 1.8 (2023-04-20)
@@ -47,7 +48,7 @@ Changelog
   - Export sort_on and sort_reversed
   - Export customView as tabular_view
   [pbauer]
-  
+
 - Always import discussions independent if discussion support is enabled or not
   on a particular content object (#182)
   [ajung]
