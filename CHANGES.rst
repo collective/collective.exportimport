@@ -8,6 +8,10 @@ Changelog
 - Migrate root of portlets that used a path in plone4 to using a uid (navigation, search, events, collection).
   [pbauer]
 
+- Fix critical bug when importing groups: Do not import groups that a groups belongs to as members of the new group.
+  This could have caused groups to have more privileges than they should.
+  [pbauer]
+
 
 1.8 (2023-04-20)
 ----------------
