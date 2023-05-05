@@ -130,6 +130,7 @@
 
   <!-- Deserializers -->
   <adapter factory=".deserializer.RichTextFieldDeserializerWithoutUnescape" />
+  <adapter factory=".deserializer.PortletRichTextFieldDeserializer" />
 
   <browser:page
       name="exportimport_links"

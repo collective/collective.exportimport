@@ -5,8 +5,15 @@ Changelog
 1.9 (unreleased)
 ----------------
 
+- Fix portlet richtext field import
+  [mpeeters]
+
+- Add portlet location on exported data
+  [mpeeters]
+
 - Migrate root of portlets that used a path in plone4 to using a uid (navigation, search, events, collection).
   [pbauer]
+
 - Make export of discussions and portlets contextual
   [mpeeters]
 
