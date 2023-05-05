@@ -85,6 +85,18 @@ The imports for members, relations, localroles and relations are linked to in th
 
 As a last step in a migration there is another view ``@@reset_dates`` that resets the modified date on imported content to the date initially contained in the imported json-file. This is necessary since varous changes during a migration will likely result in a updated modified-date. During import the original is stored as ``obj.modification_date_migrated`` on each new object and this view sets this date.
 
+Export- and import locations
+----------------------------
+
+If you select 'Save to file on server', the Export view will save json files in the <var> directory of your Plone instanc in /var/instance.
+The import view will look for  files under /var/instance/import.
+These directories will normally be different, under different Plone instances and possibly on different servers. 
+
+You can set the environment variable 'COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY' to add a 'shared' directory on one server or maybe network share.
+With this variable set, collective.exportimport will both save to and load .json files from the same server directory. 
+This saves time not having to move .json files around from the export- to the import location.
+You should be aware that the Export views will overwrite any existing previous .json file export that have the same name. 
+
 
 Use-cases
 =========
