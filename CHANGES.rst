@@ -17,6 +17,10 @@ Changelog
 - Make export of discussions and portlets contextual
   [mpeeters]
 
+- Fix critical bug when importing groups: Do not import groups that a groups belongs to as members of the new group.
+  This could have caused groups to have more privileges than they should.
+  [pbauer]
+
 
 1.8 (2023-04-20)
 ----------------

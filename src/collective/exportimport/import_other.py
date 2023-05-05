@@ -221,7 +221,6 @@ class ImportMembers(BrowserView):
                     title=item["title"],
                     description=item["description"],
                     roles=item["roles"],
-                    groups=item["groups"],
                 )
                 # add all principals
                 for principal in item.get("principals", []):
