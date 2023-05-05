@@ -2,6 +2,7 @@ from collective.exportimport.interfaces import IMigrationMarker
 from plone.app.textfield.interfaces import IRichText
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
+from plone.portlets.interfaces import IPortletAssignment
 from plone.restapi.deserializer.dxfields import DefaultFieldDeserializer
 from plone.restapi.interfaces import IFieldDeserializer
 from zope.component import adapter
@@ -31,3 +32,9 @@ class RichTextFieldDeserializerWithoutUnescape(DefaultFieldDeserializer):
         )
         self.field.validate(value)
         return value
+
+
+@implementer(IFieldDeserializer)
+@adapter(IRichText, IPortletAssignment, IMigrationMarker)
+class PortletRichTextFieldDeserializer(RichTextFieldDeserializerWithoutUnescape):
+    pass

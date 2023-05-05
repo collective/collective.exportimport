@@ -595,7 +595,9 @@ class ExportDiscussion(BaseExport):
     def all_discussions(self):
         results = []
         for brain in api.content.find(
-            object_provides=IContentish.__identifier__, sort_on="path"
+            object_provides=IContentish.__identifier__,
+            sort_on="path",
+            context=self.context,
         ):
             try:
                 obj = brain.getObject()
@@ -633,9 +635,8 @@ class ExportPortlets(BaseExport):
 
     def all_portlets(self):
         self.results = []
-
         portal = api.portal.get()
-        portal.ZopeFindAndApply(portal, search_sub=True, apply_func=self.get_portlets)
+        portal.ZopeFindAndApply(self.context, search_sub=True, apply_func=self.get_portlets)
         return self.results
 
     def get_portlets(self,obj, path):
@@ -652,6 +653,7 @@ class ExportPortlets(BaseExport):
         if blacklist:
             obj_results["blacklist_status"] = blacklist
         if obj_results:
+            obj_results["@id"] = obj.absolute_url()
             obj_results["uuid"] = uid
             self.results.append(obj_results)
         return

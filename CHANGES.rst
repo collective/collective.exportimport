@@ -5,8 +5,17 @@ Changelog
 1.9 (unreleased)
 ----------------
 
+- Fix portlet richtext field import
+  [mpeeters]
+
+- Add portlet location on exported data
+  [mpeeters]
+
 - Migrate root of portlets that used a path in plone4 to using a uid (navigation, search, events, collection).
   [pbauer]
+
+- Make export of discussions and portlets contextual
+  [mpeeters]
 
 - Fix critical bug when importing groups: Do not import groups that a groups belongs to as members of the new group.
   This could have caused groups to have more privileges than they should.
@@ -18,6 +27,7 @@ Changelog
 
 - Import: run set_uuid method before we call custom hooks, so the hooks have access to
   the item UUID. Fix #185.
+- Document COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY in README.
   [fredvd]
 
 - Add Spanish translation.

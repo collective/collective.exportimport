@@ -3,6 +3,7 @@ from Acquisition import aq_base
 from BTrees.LLBTree import LLSet
 from collective.exportimport import _
 from collective.exportimport import config
+from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
@@ -26,6 +27,7 @@ from zope.component import queryUtility
 from zope.component.interfaces import IFactory
 from zope.container.interfaces import INameChooser
 from zope.globalrequest import getRequest
+from zope.interface import alsoProvides
 from ZPublisher.HTTPRequest import FileUpload
 
 import dateutil
@@ -664,6 +666,7 @@ class ImportPortlets(BrowserView):
     """Import portlets"""
 
     def __call__(self, jsonfile=None, return_json=False):
+        alsoProvides(self.request, IMigrationMarker)
         if jsonfile:
             self.portal = api.portal.get()
             status = "success"
