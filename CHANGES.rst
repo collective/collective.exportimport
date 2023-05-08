@@ -5,6 +5,9 @@ Changelog
 1.9 (unreleased)
 ----------------
 
+- Fix blob export when Connection uses TmpStore
+  [gotcha, pbauer]
+
 - Fix portlet richtext field import
   [mpeeters]
 

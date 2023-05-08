@@ -65,17 +65,15 @@ IMAGE_SIZE_WARNING = 5000000
 logger = logging.getLogger(__name__)
 
 
-# Custom Serializers for Dexterity
-
 def get_blob_path(blob):
     """Get the path of a ZODB.blob.Blob instance"""
     connection = blob._p_jar
     connection.setstate(blob)
-    db = blob._p_jar.db()
-    oid = blob._p_oid
-    tid = blob._p_serial
-    return connection._storage.fshelper.layout.getBlobFilePath(blob._p_oid, blob._p_serial)
+    db = connection.db()
+    return db.storage.fshelper.layout.getBlobFilePath(blob._p_oid, blob._p_serial)
 
+
+# Custom Serializers for Dexterity
 
 @adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
 class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
