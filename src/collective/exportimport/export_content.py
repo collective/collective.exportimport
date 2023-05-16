@@ -166,11 +166,13 @@ class ExportContent(BrowserView):
             alsoProvides(self.request, IMigrationMarker)
 
         # to get a useful filename...
-        if self.portal_type and len(self.portal_type) == 1:
-            filename = self.portal_type[0]
-        else:
-            filename = self.path.split("/")[-1]
-        filename = "{}.json".format(filename)
+        filename = self.request.form.get("filename")
+        if not filename:
+            if self.portal_type and len(self.portal_type) == 1:
+                filename = self.portal_type[0]
+            else:
+                filename = self.path.split("/")[-1]
+            filename = "{}.json".format(filename)
 
         content_generator = self.export_content()
 
