@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.9 (unreleased)
+1.9 (2023-05-18)
 ----------------
 
 - Allow passing custom filenames to exports
