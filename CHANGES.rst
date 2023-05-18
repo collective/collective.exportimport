@@ -5,6 +5,12 @@ Changelog
 1.9 (unreleased)
 ----------------
 
+- Allow passing custom filenames to exports
+  [pbauer]
+
+- Support export and import of Plone Site root (using update strategy).
+  [pbauer]
+
 - Fix blob export when Connection uses TmpStore
   [gotcha, pbauer]
 
