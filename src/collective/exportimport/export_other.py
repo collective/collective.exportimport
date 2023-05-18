@@ -79,7 +79,9 @@ class BaseExport(BrowserView):
     """Just DRY"""
 
     def download(self, data):
-        filename = u"{}.json".format(self.__name__)
+        filename = self.request.form.get("filename")
+        if not filename:
+            filename = u"{}.json".format(self.__name__)
         if not data:
             msg = _(u"No data to export for {}").format(self.__name__)
             logger.info(msg)
