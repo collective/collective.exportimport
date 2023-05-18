@@ -427,8 +427,9 @@ class ImportContent(BrowserView):
 
         # import using plone.restapi deserializers
         deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
+        self.request["BODY"] = json.dumps(item)
         try:
-            new = deserializer(validate_all=False, data=item)
+            new = deserializer(validate_all=False)
         except Exception:
             logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
             raise
@@ -879,6 +880,9 @@ class ImportContent(BrowserView):
             brains = api.content.find(UID=item["parent"]["UID"])
             if brains:
                 return brains[0].getObject()
+
+        if item["@type"] == "Plone Site":
+            return api.portal.get().__parent__
 
         if item["parent"]["@type"] == "Plone Site":
             return api.portal.get()

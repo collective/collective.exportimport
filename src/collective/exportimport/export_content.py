@@ -14,6 +14,7 @@ from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
+from Products.CMFPlone.interfaces import IPloneSiteRoot
 from Products.CMFPlone.interfaces.constrains import ENABLED
 from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.utils import safe_unicode
@@ -302,7 +303,9 @@ class ExportContent(BrowserView):
             try:
                 self.safe_portal_type = fix_portal_type(obj.portal_type)
                 serializer = getMultiAdapter((obj, self.request), ISerializeToJson)
-                if getattr(aq_base(obj), "isPrincipiaFolderish", False):
+                if IPloneSiteRoot.providedBy(obj):
+                    item = serializer()
+                elif getattr(aq_base(obj), "isPrincipiaFolderish", False):
                     item = serializer(include_items=False)
                 else:
                     item = serializer()
@@ -467,8 +470,9 @@ class ExportContent(BrowserView):
         parent_url = obj.__parent__.absolute_url()
         if item["@id"] != obj_url:
             item["@id"] = obj_url
-        if item["parent"]["@id"] != parent_url:
-            item["parent"]["@id"] = parent_url
+        if "@id" in item["parent"]:
+            if item["parent"]["@id"] != parent_url:
+                item["parent"]["@id"] = parent_url
         return item
 
     def export_constraints(self, item, obj):
