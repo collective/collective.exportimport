@@ -302,11 +302,13 @@ class ExportContent(BrowserView):
                 obj = brain.getObject()
             except Exception:
                 msg = f"Error getting brain {brain.getPath()}"
-                self.errors.append((None, msg))
+                self.errors.append({'path':None, 'message': msg})
                 logger.exception(msg, exc_info=True)
                 continue
             if obj is None:
-                logger.error(u"brain.getObject() is None %s", brain.getPath())
+                msg = f'brain.getObject() is None {brain.getPath()}'
+                logger.error(msg)
+                self.errors.append({'path':None, 'message': msg})
                 continue
             obj = self.global_obj_hook(obj)
             if not obj:
@@ -325,7 +327,7 @@ class ExportContent(BrowserView):
                 yield item
             except Exception:
                 msg = f"Error exporting {obj.absolute_url()}"
-                self.errors.append((obj.absolute_url(), msg))
+                self.errors.append({'path':obj.absolute_url(), 'message':msg})
                 logger.exception(msg, exc_info=True)
 
     def portal_types(self):
