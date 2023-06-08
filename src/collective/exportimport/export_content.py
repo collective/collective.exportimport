@@ -142,6 +142,7 @@ class ExportContent(BrowserView):
             ("2", _(u"as blob paths")),
         )
         self.include_revisions = include_revisions
+        self.write_errors = write_errors or self.request.form.get("write_errors")
 
         self.update()
 
@@ -175,8 +176,6 @@ class ExportContent(BrowserView):
             else:
                 filename = self.path.split("/")[-1]
             filename = "{}.json".format(filename)
-
-        self.write_errors = write_errors or self.request.form.get("write_errors")
 
         self.errors = []
         content_generator = self.export_content()
