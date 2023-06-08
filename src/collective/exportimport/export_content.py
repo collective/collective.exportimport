@@ -201,6 +201,7 @@ class ExportContent(BrowserView):
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
                     if self.errors and self.write_errors:
+                        f.write(",")
                         errors = {"unexported_paths": self.errors}
                         json.dump(errors, f, indent=4)
                     f.write("]")
@@ -228,6 +229,7 @@ class ExportContent(BrowserView):
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
                     if  self.errors and self.write_errors:
+                        f.write(",")
                         errors = {"unexported_paths": self.errors}
                         json.dump(errors, f, indent=4)
                     f.write("]")
