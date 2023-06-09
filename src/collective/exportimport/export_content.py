@@ -308,7 +308,7 @@ class ExportContent(BrowserView):
                 logger.exception(msg, exc_info=True)
                 continue
             if obj is None:
-                msg = u"brain.getObject() is None {}}".format(brain.getPath())
+                msg = u"brain.getObject() is None {}".format(brain.getPath())
                 logger.error(msg)
                 self.errors.append({'path':None, 'message': msg})
                 continue
@@ -328,7 +328,7 @@ class ExportContent(BrowserView):
 
                 yield item
             except Exception:
-                msg = u"Error exporting {}}".format(obj.absolute_url())
+                msg = u"Error exporting {}".format(obj.absolute_url())
                 self.errors.append({'path':obj.absolute_url(), 'message':msg})
                 logger.exception(msg, exc_info=True)
 
