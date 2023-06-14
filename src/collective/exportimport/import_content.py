@@ -301,6 +301,7 @@ class ImportContent(BrowserView):
 
             if not index % 100:
                 logger.info("Imported {} items...".format(index))
+                transaction.savepoint()
 
             new_id = unquote(item["@id"]).split("/")[-1]
             if new_id != item["id"]:
