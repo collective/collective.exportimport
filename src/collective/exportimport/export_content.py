@@ -112,6 +112,7 @@ class ExportContent(BrowserView):
         download_to_server=False,
         migration=True,
         include_revisions=False,
+        write_errors=False
     ):
         self.portal_type = portal_type or []
         if isinstance(self.portal_type, str):
@@ -141,6 +142,7 @@ class ExportContent(BrowserView):
             ("2", _(u"as blob paths")),
         )
         self.include_revisions = include_revisions
+        self.write_errors = write_errors or self.request.form.get("write_errors")
 
         self.update()
 
@@ -175,6 +177,7 @@ class ExportContent(BrowserView):
                 filename = self.path.split("/")[-1]
             filename = "{}.json".format(filename)
 
+        self.errors = []
         content_generator = self.export_content()
 
         number = 0
@@ -197,9 +200,13 @@ class ExportContent(BrowserView):
                         f.write(",")
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
+                    if self.errors and self.write_errors:
+                        f.write(",")
+                        errors = {"unexported_paths": self.errors}
+                        json.dump(errors, f, indent=4)
                     f.write("]")
-            msg = _(u"Exported {} items ({}) as {} to {}").format(
-                number, ", ".join(self.portal_type), filename, filepath
+            msg = _(u"Exported {} items ({}) as {} to {} with {} errors").format(
+                number, ", ".join(self.portal_type), filename, filepath, len(self.errors)
             )
             logger.info(msg)
             api.portal.show_message(msg, self.request)
@@ -221,8 +228,12 @@ class ExportContent(BrowserView):
                         f.write(",")
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
+                    if  self.errors and self.write_errors:
+                        f.write(",")
+                        errors = {"unexported_paths": self.errors}
+                        json.dump(errors, f, indent=4)
                     f.write("]")
-                msg = _(u"Exported {} {}").format(number, self.portal_type)
+                msg = _(u"Exported {} {} with {} errors").format(number, self.portal_type, len(self.errors))
                 logger.info(msg)
                 api.portal.show_message(msg, self.request)
                 response = self.request.response
@@ -292,10 +303,14 @@ class ExportContent(BrowserView):
             try:
                 obj = brain.getObject()
             except Exception:
-                logger.exception(u"Error getting brain %s", brain.getPath(), exc_info=True)
+                msg = u"Error getting brain {}".format(brain.getPath())
+                self.errors.append({'path':None, 'message': msg})
+                logger.exception(msg, exc_info=True)
                 continue
             if obj is None:
-                logger.error(u"brain.getObject() is None %s", brain.getPath())
+                msg = u"brain.getObject() is None {}".format(brain.getPath())
+                logger.error(msg)
+                self.errors.append({'path':None, 'message': msg})
                 continue
             obj = self.global_obj_hook(obj)
             if not obj:
@@ -313,7 +328,9 @@ class ExportContent(BrowserView):
 
                 yield item
             except Exception:
-                logger.exception(u"Error exporting %s", obj.absolute_url(), exc_info=True)
+                msg = u"Error exporting {}".format(obj.absolute_url())
+                self.errors.append({'path':obj.absolute_url(), 'message':msg})
+                logger.exception(msg, exc_info=True)
 
     def portal_types(self):
         """A list with info on all content types with existing items."""
