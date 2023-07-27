@@ -428,9 +428,15 @@ class ImportContent(BrowserView):
 
         # import using plone.restapi deserializers
         deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
-        self.request["BODY"] = json.dumps(item)
         try:
-            new = deserializer(validate_all=False)
+            try:
+                new = deserializer(validate_all=False, data=item)
+            except TypeError as error:
+                if 'unexpected keyword argument' in str(error):
+                    self.request["BODY"] = json.dumps(item)
+                    new = deserializer(validate_all=False)
+                else:
+                    raise error
         except Exception:
             logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
             raise
