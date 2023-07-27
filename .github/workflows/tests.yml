@@ -24,11 +24,6 @@ jobs:
     name: ${{ matrix.config[1] }}
     steps:
     - uses: actions/checkout@v3
-    - name: Install lxml dev libraries
-      # Needed to avoid error on Plone 5.0.
-      # Error: Please make sure the libxml2 and libxslt development packages are installed.
-      run: sudo apt-get install libxml2-dev libxslt1-dev
-      if: matrix.config[1] == 'plone50-py27'
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -76,11 +71,6 @@ jobs:
     name: ${{ matrix.config[1] }}
     steps:
     - uses: actions/checkout@v3
-    - name: Install lxml dev libraries
-      # Needed to avoid error on Plone 5.0.
-      # Error: Please make sure the libxml2 and libxslt development packages are installed.
-      run: sudo apt-get install libxml2-dev libxslt1-dev
-      if: matrix.config[1] == 'plone50-py27'
     - name: Pip cache
       uses: actions/cache@v3
       with:
