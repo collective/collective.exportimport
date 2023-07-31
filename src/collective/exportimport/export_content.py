@@ -542,6 +542,7 @@ class ExportContent(BrowserView):
                 item["exportimport.versions"][version_id]["changeActor"] = principal
         # current changenote
         item["changeNote"] = history_metadata.retrieve(-1)["metadata"]["sys_metadata"]["comment"]
+        item["changeActor"] = history_metadata.retrieve(-1)["metadata"]["sys_metadata"]["principal"]
         return item
 
 
