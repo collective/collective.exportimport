@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-1.10 (unreleased)
------------------
+1.10.rc1 (2023-07-31)
+---------------------
 
 - Don't re-use `mapping` variable when migrating portlet data.
   [witsch]
