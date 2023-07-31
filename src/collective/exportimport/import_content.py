@@ -27,6 +27,7 @@ from zope.component import getUtility
 from zope.interface import alsoProvides
 from ZPublisher.HTTPRequest import FileUpload
 
+from decimal import Decimal
 import dateutil
 import ijson
 import json
@@ -45,6 +46,14 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 BLOB_HOME = os.getenv("COLLECTIVE_EXPORTIMPORT_BLOB_HOME", "")
+
+
+class JSONEncoder(json.JSONEncoder):
+    """JSON encoder that can handle Decimals."""
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return json.JSONEncoder.default(self, obj)
 
 
 def get_absolute_blob_path(obj, blob_path):
@@ -428,7 +437,7 @@ class ImportContent(BrowserView):
 
         # import using plone.restapi deserializers
         deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
-        self.request["BODY"] = json.dumps(item)
+        self.request["BODY"] = json.dumps(item, cls=JSONEncoder)
         try:
             new = deserializer(validate_all=False)
         except Exception:
