@@ -8,6 +8,7 @@ Changelog
 - Don't re-use `mapping` variable when migrating portlet data.
   [witsch]
 - Fix import content Decimal json.dumps - refs #212
+- Fix editing revision author - refs #216
   [avoinea]
 
 
