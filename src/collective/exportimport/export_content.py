@@ -537,6 +537,9 @@ class ExportContent(BrowserView):
             comment = history_metadata.retrieve(version_id)["metadata"]["sys_metadata"]["comment"]
             if comment and comment != item["exportimport.versions"][version_id].get("changeNote"):
                 item["exportimport.versions"][version_id]["changeNote"] = comment
+            principal = history_metadata.retrieve(version_id)["metadata"]["sys_metadata"]["principal"]
+            if principal and principal != item["exportimport.versions"][version_id].get("changeActor"):
+                item["exportimport.versions"][version_id]["changeActor"] = principal
         # current changenote
         item["changeNote"] = history_metadata.retrieve(-1)["metadata"]["sys_metadata"]["comment"]
         return item

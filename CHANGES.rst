@@ -7,6 +7,8 @@ Changelog
 
 - Don't re-use `mapping` variable when migrating portlet data.
   [witsch]
+- Fix editing revision author - refs #216
+  [avoinea]
 
 
 1.9 (2023-05-18)

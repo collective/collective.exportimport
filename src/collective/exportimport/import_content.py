@@ -620,6 +620,7 @@ class ImportContent(BrowserView):
             "comment": comment,
             "timestamp": timestamp,
             "originator": None,
+            "principal": item.get("changeActor"),
         }
         rt._recursiveSave(
             obj, app_metadata={}, sys_metadata=sys_metadata, autoapply=True
