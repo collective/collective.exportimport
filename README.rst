@@ -368,7 +368,7 @@ Import Example
             """Use this to specify the container in which to create the item in.
             Return the container for this particular object.
             """
-            return return self.portal['imported_files']
+            return self.portal['imported_files']
 
 Register it:
 
