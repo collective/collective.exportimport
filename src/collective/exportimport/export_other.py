@@ -639,12 +639,16 @@ class ExportPortlets(BaseExport):
         self.results = []
         portal = api.portal.get()
         portal.ZopeFindAndApply(self.context, search_sub=True, apply_func=self.get_portlets)
+        self.get_root_portlets()
         return self.results
 
-    def get_portlets(self,obj, path):
+    def get_portlets(self, obj, path):
         uid = IUUID(obj, None)
         if not uid:
             return
+        self._get_portlets(obj, uid)
+
+    def _get_portlets(self, obj):
         portlets = export_local_portlets(obj)
         blacklist = export_portlets_blacklist(obj)
         portlets = self.local_portlets_hook(portlets)
@@ -658,6 +662,11 @@ class ExportPortlets(BaseExport):
             obj_results["@id"] = obj.absolute_url()
             obj_results["uuid"] = uid
             self.results.append(obj_results)
+        return
+    
+    def get_root_portlets(self):
+        site = api.portal.get()
+        self._get_portlets(site, PORTAL_PLACEHOLDER)
         return
 
     def local_portlets_hook(self, portlets):
