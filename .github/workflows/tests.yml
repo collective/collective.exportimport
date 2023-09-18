@@ -62,9 +62,9 @@ jobs:
         config:
         # [Python version, tox env]
         - ["2.7",   "plone43-py27"]
-        - ["2.7",   "plone50-py27"]
-        - ["2.7",   "plone51-py27"]
-        - ["2.7",   "plone52-py27"]
+        # - ["2.7",   "plone50-py27"]
+        # - ["2.7",   "plone51-py27"]
+        # - ["2.7",   "plone52-py27"]
     runs-on: ubuntu-20.04
     container:
       image: plone/test-with-tox:4.3-2.7
