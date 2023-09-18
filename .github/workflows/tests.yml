@@ -74,7 +74,7 @@ jobs:
     - name: Pip cache
       uses: actions/cache@v3
       with:
-        path: ~/.cache/pip
+        path: /github/home/.cache/pip
         key: ${{ runner.os }}-pip-${{ matrix.config[0] }}-${{ hashFiles('setup.*', 'tox.ini') }}
         restore-keys: |
           ${{ runner.os }}-pip-${{ matrix.config[0] }}-
@@ -85,13 +85,13 @@ jobs:
         pip install tox
     - name: Prepare buildout egg cache
       run: |
-        mkdir ~/.buildout
-        echo "[buildout]" >> ~/.buildout/default.cfg
-        echo "eggs-directory = ~/eggs" >> ~/.buildout/default.cfg
+        mkdir /github/home/.buildout
+        echo "[buildout]" >> /github/home/.buildout/default.cfg
+        echo "eggs-directory = /github/home/eggs" >> /github/home/.buildout/default.cfg
     - name: Cache eggs
       uses: actions/cache@v3
       with:
-        path: ~/eggs
+        path: /github/home/eggs
         key: ${{ runner.os }}-eggs-${{ matrix.config[0] }}-${{ matrix.config[1] }}-${{ hashFiles('*cfg') }}
         restore-keys: |
           ${{ runner.os }}-eggs-${{ matrix.config[0] }}-${{ matrix.config[1] }}-
