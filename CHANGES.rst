@@ -8,6 +8,8 @@ Changelog
 - Don't re-use `mapping` variable when migrating portlet data.
   [witsch]
 
+- Better support for portal import which avoids parsing JSON twice.
+  [gotcha]
 
 1.9 (2023-05-18)
 ----------------
