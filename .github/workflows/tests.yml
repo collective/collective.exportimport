@@ -13,10 +13,6 @@ jobs:
       matrix:
         config:
         # [Python version, tox env]
-        - ["2.7",   "plone43-py27"]
-        - ["2.7",   "plone50-py27"]
-        - ["2.7",   "plone51-py27"]
-        - ["2.7",   "plone52-py27"]
         - ["3.6",   "plone52-py36"]
         - ["3.7",   "plone52-py37"]
         - ["3.8",   "plone52-py38"]
@@ -28,11 +24,6 @@ jobs:
     name: ${{ matrix.config[1] }}
     steps:
     - uses: actions/checkout@v3
-    - name: Install lxml dev libraries
-      # Needed to avoid error on Plone 5.0.
-      # Error: Please make sure the libxml2 and libxslt development packages are installed.
-      run: sudo apt-get install libxml2-dev libxslt1-dev
-      if: matrix.config[1] == 'plone50-py27'
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -64,3 +55,21 @@ jobs:
           ${{ runner.os }}-eggs-${{ matrix.config[0] }}-
     - name: Test
       run: tox -e ${{ matrix.config[1] }}
+  build-27:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        # [tox env, docker image]
+        - ["plone43-py27", "plone/test-with-tox:4.3-2.7"]
+        - ["plone50-py27", "plone/test-with-tox:5.0-2.7"]
+        - ["plone51-py27", "plone/test-with-tox:5.1-2.7"]
+        - ["plone52-py27", "plone/test-with-tox:5.2-2.7"]
+    runs-on: ubuntu-20.04
+    container:
+      image: ${{ matrix.config[1] }}
+    name: ${{ matrix.config[0] }}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Test
+      run: tox -e ${{ matrix.config[0] }}
