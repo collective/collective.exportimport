@@ -700,7 +700,11 @@ class ImportPortlets(BrowserView):
         for item in data:
             obj = api.content.get(UID=item["uuid"])
             if not obj:
-                continue
+                if item["uuid"] == PORTAL_PLACEHOLDER:
+                    obj = api.portal.get()
+                else:
+                    logger.info("Could not find object to set portlet on UUID: {}".format(item["uuid"]))
+                    continue
             registered_portlets = register_portlets(obj, item)
             results += registered_portlets
         return results
