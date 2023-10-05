@@ -21,6 +21,8 @@
 collective.exportimport
 =======================
 
+UniBo Migration
+
 Export and import content, members, relations, translations, localroles and much more.
 
 Export and import all kinds of data from and to Plone sites using a intermediate json-format.
