@@ -181,7 +181,50 @@ class ExportContent(BrowserView):
         content_generator = self.export_content()
 
         number = 0
-        if download_to_server:
+
+        # Export each item to a separate json-file
+        if download_to_server == 2:
+            directory = config.CENTRAL_DIRECTORY
+            if directory:
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                    logger.info("Created central export/import directory %s", directory)
+            else:
+                cfg = getConfiguration()
+                directory = cfg.clienthome
+
+            # Use the filename (Plone.json) as target for files (Plone/1.json)
+            directory = os.path.join(directory, filename[:-5])
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+                logger.info("Created directory to hold content: %s", directory)
+
+            self.start()
+            for number, datum in enumerate(content_generator, start=1):
+                filename = "{}.json".format(number)
+                filepath = os.path.join(directory, filename)
+                with open(filepath, "w") as f:
+                    json.dump(datum, f, sort_keys=True, indent=4)
+            if number:
+                if self.errors and self.write_errors:
+                    errors = {"unexported_paths": self.errors}
+                    json.dump(errors, f, indent=4)
+            msg = _(u"Exported {} items ({}) to {} with {} errors").format(
+                number, ", ".join(self.portal_type), directory, len(self.errors)
+            )
+            logger.info(msg)
+            api.portal.show_message(msg, self.request)
+
+            if self.include_blobs == 1:
+                # remove marker interface
+                noLongerProvides(self.request, IBase64BlobsMarker)
+            elif self.include_blobs == 2:
+                noLongerProvides(self.request, IPathBlobsMarker)
+            self.finish()
+            self.request.response.redirect(self.request["ACTUAL_URL"])
+
+        # Export all items into one json-file in the filesystem
+        elif download_to_server:
             directory = config.CENTRAL_DIRECTORY
             if directory:
                 if not os.path.exists(directory):
@@ -218,6 +261,8 @@ class ExportContent(BrowserView):
                 noLongerProvides(self.request, IPathBlobsMarker)
             self.finish()
             self.request.response.redirect(self.request["ACTUAL_URL"])
+
+        # Export as one json-file through the browser
         else:
             with tempfile.TemporaryFile(mode="w+") as f:
                 self.start()
