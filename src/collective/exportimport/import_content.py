@@ -7,7 +7,6 @@ from datetime import datetime
 from DateTime import DateTime
 from datetime import timedelta
 from Persistence import PersistentMapping
-from pathlib import Path
 from plone import api
 from plone.api.exc import InvalidParameterError
 from plone.dexterity.interfaces import IDexterityFTI
@@ -43,6 +42,11 @@ try:
     HAS_COLLECTION_FIX = True
 except ImportError:
     HAS_COLLECTION_FIX = False
+
+if six.PY2:
+    from pathlib2 import Path
+else:
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 BLOB_HOME = os.getenv("COLLECTIVE_EXPORTIMPORT_BLOB_HOME", "")
