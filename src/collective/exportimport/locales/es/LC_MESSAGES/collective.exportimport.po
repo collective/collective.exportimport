@@ -134,7 +134,7 @@ msgstr "Exportado a {}"
 
 #: ../export_content.py:209
 msgid "Exported {} items ({}) as {} to {} with {} errors"
-msgstr "Exportados {} elementos ({}) como {} a {}"
+msgstr "Exportados {} elementos ({}) como {} a {} con {} errores"
 
 #: ../export_content.py:239
 msgid "Exported {} {} with {} errors"
