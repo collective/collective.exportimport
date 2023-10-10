@@ -236,8 +236,9 @@ class ExportContent(BrowserView):
                 FileSystemContentExporter(rootpath, datum).save()
             self.finish()
 
-            msg = _(u"Exported {} {} with {} errors").format(
-                number, self.portal_type, len(self.errors)
+            msg = _(
+                u"Exported {} items ({}) as {} to {} with {} errors").format(
+                number, ", ".join(self.portal_type), filename, rootpath, len(self.errors)
             )
             logger.info(msg)
             api.portal.show_message(msg, self.request)
@@ -252,7 +253,7 @@ class ExportContent(BrowserView):
                         f.write(",")
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
-                    if  self.errors and self.write_errors:
+                    if self.errors and self.write_errors:
                         f.write(",")
                         errors = {"unexported_paths": self.errors}
                         json.dump(errors, f, indent=4)
