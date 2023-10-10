@@ -1,28 +1,29 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
 from BTrees.LLBTree import LLSet
-from collective.exportimport import _, config
-from collective.exportimport.export_other import PORTAL_PLACEHOLDER
+from collective.exportimport import _
+from collective.exportimport import config
 from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
+from collective.exportimport.export_other import PORTAL_PLACEHOLDER
 from plone import api
 from plone.app.discussion.comment import Comment
 from plone.app.discussion.interfaces import IConversation
 from plone.app.portlets.interfaces import IPortletTypeInterface
 from plone.app.redirector.interfaces import IRedirectionStorage
-from plone.portlets.interfaces import (
-    ILocalPortletAssignmentManager,
-    IPortletAssignmentMapping,
-    IPortletAssignmentSettings,
-    IPortletManager,
-)
+from plone.portlets.interfaces import ILocalPortletAssignmentManager
+from plone.portlets.interfaces import IPortletAssignmentMapping
+from plone.portlets.interfaces import IPortletAssignmentSettings
+from plone.portlets.interfaces import IPortletManager
 from plone.restapi.interfaces import IFieldDeserializer
 from Products.Five import BrowserView
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.annotation.interfaces import IAnnotations
-from zope.component import getUtility, queryMultiAdapter, queryUtility
+from zope.component import getUtility
+from zope.component import queryMultiAdapter
+from zope.component import queryUtility
 from zope.component.interfaces import IFactory
 from zope.container.interfaces import INameChooser
 from zope.globalrequest import getRequest
@@ -34,7 +35,6 @@ import json
 import logging
 import six
 import transaction
-
 
 try:
     from collective.relationhelpers import api as relapi
@@ -90,7 +90,7 @@ if HAS_PAM:  # noqa: C901
                     status = "error"
                     msg = e
                     api.portal.show_message(
-                        _("Failure while uploading: {}").format(e),
+                        _(u"Failure while uploading: {}").format(e),
                         request=self.request,
                     )
                 else:
@@ -135,7 +135,7 @@ if HAS_PAM:  # noqa: C901
 
                 if len(tg_with_obj) < 2:
                     less_than_2.append(translationgroup)
-                    logger.info("Only one item: {}".format(translationgroup))
+                    logger.info(u"Only one item: {}".format(translationgroup))
                     continue
 
                 imported += 1
@@ -146,7 +146,7 @@ if HAS_PAM:  # noqa: C901
                         translation = obj
                         link_translations(canonical, translation, lang)
             logger.info(
-                "Imported {} translation-groups. For {} groups we found only one item. {} groups without content dropped".format(
+                u"Imported {} translation-groups. For {} groups we found only one item. {} groups without content dropped".format(
                     imported, len(less_than_2), len(empty)
                 )
             )
@@ -167,10 +167,9 @@ if HAS_PAM:  # noqa: C901
         try:
             ITranslationManager(obj).register_translation(language, translation)
         except TypeError as e:
-            logger.info("Item is not translatable: {}".format(e))
+            logger.info(u"Item is not translatable: {}".format(e))
 
 else:
-
     class ImportTranslations(BrowserView):
         def __call__(self, jsonfile=None, return_json=False):
             return "This view only works when using plone.app.multilingual >= 2.0.0"
@@ -195,13 +194,13 @@ class ImportMembers(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    _("Failure while uploading: {}").format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
                 groups = self.import_groups(data["groups"])
                 members = self.import_members(data["members"])
-                msg = _("Imported {} groups and {} members").format(groups, members)
+                msg = _(u"Imported {} groups and {} members").format(groups, members)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
@@ -248,18 +247,22 @@ class ImportMembers(BrowserView):
         for item in data:
             username = item["username"]
             if api.user.get(username=username) is not None:
-                logger.error("Skipping: User {} already exists!".format(username))
+                logger.error(u"Skipping: User {} already exists!".format(username))
                 continue
             password = item.pop("password")
             roles = item.pop("roles")
             groups = item.pop("groups")
             if not item["email"]:
-                logger.info("Skipping user {} without email: {}".format(username, item))
+                logger.info(
+                    u"Skipping user {} without email: {}".format(username, item)
+                )
                 continue
             try:
                 pr.addMember(username, password, roles, [], item)
             except ValueError:
-                logger.info("ValueError {} : {}".format(username, item))
+                logger.info(
+                    u"ValueError {} : {}".format(username, item)
+                )
                 continue
             for group in groups:
                 if group not in groupsDict.keys():
@@ -271,6 +274,7 @@ class ImportMembers(BrowserView):
 
 
 class ImportRelations(BrowserView):
+
     # Overwrite to handle scustom relations
     RELATIONSHIP_FIELD_MAPPING = {
         # default relations of Plone 4 > 5
@@ -279,11 +283,10 @@ class ImportRelations(BrowserView):
     }
 
     def __call__(self, jsonfile=None, return_json=False):
+
         if not HAS_RELAPI and not HAS_PLONE6:
             api.portal.show_message(
-                _(
-                    "You need either Plone 6 or collective.relationhelpers to import relations"
-                ),
+                _("You need either Plone 6 or collective.relationhelpers to import relations"),
                 self.request,
             )
             return self.index()
@@ -302,7 +305,7 @@ class ImportRelations(BrowserView):
             except Exception as e:
                 status = "error"
                 logger.error(e)
-                msg = _("Failure while uploading: {}").format(e)
+                msg = _(u"Failure while uploading: {}").format(e)
                 api.portal.show_message(msg, request=self.request)
             else:
                 msg = self.do_import(data)
@@ -382,12 +385,12 @@ class ImportLocalRoles(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    _("Failure while uploading: {}").format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
                 localroles = self.import_localroles(data)
-                msg = _("Imported {} localroles").format(localroles)
+                msg = _(u"Imported {} localroles").format(localroles)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
@@ -404,29 +407,25 @@ class ImportLocalRoles(BrowserView):
                 if item["uuid"] == PORTAL_PLACEHOLDER:
                     obj = api.portal.get()
                 else:
-                    logger.info(
-                        "Could not find object to set localroles on. UUID: {}".format(
-                            item["uuid"]
-                        )
-                    )
+                    logger.info("Could not find object to set localroles on. UUID: {}".format(item["uuid"]))
                     continue
             if item.get("localroles"):
                 localroles = item["localroles"]
                 for userid in localroles:
                     obj.manage_setLocalRoles(userid=userid, roles=localroles[userid])
                 logger.debug(
-                    "Set roles on {}: {}".format(obj.absolute_url(), localroles)
+                    u"Set roles on {}: {}".format(obj.absolute_url(), localroles)
                 )
             if item.get("block"):
                 obj.__ac_local_roles_block__ = 1
                 logger.debug(
-                    "Disable acquisition of local roles on {}".format(
+                    u"Disable acquisition of local roles on {}".format(
                         obj.absolute_url()
                     )
                 )
             if not index % 1000:
                 logger.info(
-                    "Set local roles on {} ({}%) of {} items".format(
+                    u"Set local roles on {} ({}%) of {} items".format(
                         index, round(index / total * 100, 2), total
                     )
                 )
@@ -458,7 +457,7 @@ class ImportOrdering(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    _("Failure while uploading: {}").format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
@@ -466,9 +465,7 @@ class ImportOrdering(BrowserView):
                 orders = self.import_ordering(data)
                 end = datetime.now()
                 delta = end - start
-                msg = _("Imported {} orders in {} seconds").format(
-                    orders, delta.seconds
-                )
+                msg = _(u"Imported {} orders in {} seconds").format(orders, delta.seconds)
                 logger.info(msg)
                 api.portal.show_message(msg, self.request)
             if return_json:
@@ -490,7 +487,7 @@ class ImportOrdering(BrowserView):
             ordered.moveObjectToPosition(obj.getId(), item["order"])
             if not index % 1000:
                 logger.info(
-                    "Ordered {} ({}%) of {} items".format(
+                    u"Ordered {} ({}%) of {} items".format(
                         index, round(index / total * 100, 2), total
                     )
                 )
@@ -516,12 +513,12 @@ class ImportDefaultPages(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    "Failure while uploading: {}".format(e),
+                    u"Failure while uploading: {}".format(e),
                     request=self.request,
                 )
             else:
                 defaultpages = self.import_default_pages(data)
-                msg = _("Changed {} default pages").format(defaultpages)
+                msg = _(u"Changed {} default pages").format(defaultpages)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
@@ -549,7 +546,7 @@ class ImportDefaultPages(BrowserView):
                 default_page = item["default_page"]
             if default_page not in obj:
                 logger.info(
-                    "Default page not a child: %s not in %s",
+                    u"Default page not a child: %s not in %s",
                     default_page,
                     obj.absolute_url(),
                 )
@@ -564,7 +561,7 @@ class ImportDefaultPages(BrowserView):
             else:
                 obj.setDefaultPage(default_page)
             logger.debug(
-                "Set %s as default page for %s", default_page, obj.absolute_url()
+                u"Set %s as default page for %s", default_page, obj.absolute_url()
             )
             results += 1
         return results
@@ -589,12 +586,12 @@ class ImportDiscussion(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    _("Failure while uploading: {}").format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
                 results = self.import_data(data)
-                msg = _("Imported {} comments").format(results)
+                msg = _(u"Imported {} comments").format(results)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
@@ -612,6 +609,7 @@ class ImportDiscussion(BrowserView):
             conversation = IConversation(obj)
 
             for item in conversation_data["conversation"]["items"]:
+
                 if isinstance(item["text"], dict) and item["text"].get("data"):
                     item["text"] = item["text"]["data"]
 
@@ -626,7 +624,9 @@ class ImportDiscussion(BrowserView):
                 comment.author_username = item["author_username"]
                 comment.creator = item["author_username"]
                 comment.text = unescape(
-                    item["text"].replace("\r<br />", "\r\n").replace("<br />", "\r\n")
+                    item["text"]
+                    .replace(u"\r<br />", u"\r\n")
+                    .replace(u"<br />", u"\r\n")
                 )
 
                 if item["user_notification"]:
@@ -682,12 +682,12 @@ class ImportPortlets(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    _("Failure while uploading: {}").format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
                 portlets = self.import_portlets(data)
-                msg = _("Created {} portlets").format(portlets)
+                msg = _(u"Created {} portlets").format(portlets)
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}
@@ -703,11 +703,7 @@ class ImportPortlets(BrowserView):
                 if item["uuid"] == PORTAL_PLACEHOLDER:
                     obj = api.portal.get()
                 else:
-                    logger.info(
-                        "Could not find object to set portlet on UUID: {}".format(
-                            item["uuid"]
-                        )
-                    )
+                    logger.info("Could not find object to set portlet on UUID: {}".format(item["uuid"]))
                     continue
             registered_portlets = register_portlets(obj, item)
             results += registered_portlets
@@ -725,7 +721,7 @@ def register_portlets(obj, item):
     for manager_name, portlets in item.get("portlets", {}).items():
         manager = queryUtility(IPortletManager, manager_name)
         if not manager:
-            logger.info("No portlet manager {}".format(manager_name))
+            logger.info(u"No portlet manager {}".format(manager_name))
             continue
         mapping = queryMultiAdapter((obj, manager), IPortletAssignmentMapping)
         namechooser = INameChooser(mapping)
@@ -736,7 +732,7 @@ def register_portlets(obj, item):
             portlet_type = portlet_data["type"]
             portlet_factory = queryUtility(IFactory, name=portlet_type)
             if not portlet_factory:
-                logger.info("No factory for portlet {}".format(portlet_type))
+                logger.info(u"No factory for portlet {}".format(portlet_type))
                 continue
 
             assignment = portlet_factory()
@@ -813,7 +809,7 @@ def register_portlets(obj, item):
                         value = deserializer(value)
                     except Exception as e:
                         logger.info(
-                            "Could not import portlet data {} for field {} on {}: {}".format(
+                            u"Could not import portlet data {} for field {} on {}: {}".format(
                                 value, field, obj.absolute_url(), str(e)
                             )
                         )
@@ -821,7 +817,7 @@ def register_portlets(obj, item):
                 field.set(assignment, value)
 
             logger.info(
-                "Added {} '{}' to {} of {}".format(
+                u"Added {} '{}' to {} of {}".format(
                     portlet_type, name, manager_name, obj.absolute_url()
                 )
             )
@@ -869,12 +865,12 @@ class ImportRedirects(BrowserView):
                 status = "error"
                 logger.error(e)
                 api.portal.show_message(
-                    _("Failure while uploading: {}").format(e),
+                    _(u"Failure while uploading: {}").format(e),
                     request=self.request,
                 )
             else:
                 import_plone_redirects(data)
-                msg = _("Redirects imported")
+                msg = _(u"Redirects imported")
                 api.portal.show_message(msg, self.request)
             if return_json:
                 msg = {"state": status, "msg": msg}

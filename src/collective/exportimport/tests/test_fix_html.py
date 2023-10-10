@@ -3,13 +3,13 @@ from collective.exportimport.fix_html import html_fixer
 from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_INTEGRATION_TESTING
 from importlib import import_module
 from plone import api
-from plone.app.testing import login, SITE_OWNER_NAME
+from plone.app.testing import login
+from plone.app.testing import SITE_OWNER_NAME
 from plone.app.textfield.value import RichTextValue
 from plone.namedfile.file import NamedImage
 from Products.CMFPlone.tests import dummy
 
 import unittest
-
 
 HAS_PLONE_6 = getattr(
     import_module("Products.CMFPlone.factory"), "PLONE60MARKER", False
@@ -41,26 +41,26 @@ class TestFixHTML(unittest.TestCase):
             container=portal,
             type="Folder",
             id="about",
-            title="About",
+            title=u"About",
         )
         self.team = api.content.create(
             container=self.about,
             type="Document",
             id="team",
-            title="Team",
+            title=u"Team",
         )
         self.contact = api.content.create(
             container=self.about,
             type="Document",
             id="contact",
-            title="Contact",
+            title=u"Contact",
         )
         self.image = api.content.create(
             container=portal,
             type="Image",
-            title="Image",
+            title=u"Image",
             id="image",
-            image=NamedImage(dummy.Image(), "image/gif", "test.gif"),
+            image=NamedImage(dummy.Image(), "image/gif", u"test.gif"),
         )
 
     def test_html_fixer(self):
@@ -121,25 +121,19 @@ class TestFixHTML(unittest.TestCase):
 
         # image with srcset
         old_text = '<img srcset="image/@@images/image/large 280w,image/@@images/image/icon 64w" />'
-        fixed_html = '<img class="image-richtext image-inline" data-linktype="image" srcset="resolveuid/{0}/@@images/image/large 280w,resolveuid/{0}/@@images/image/icon 64w"/>'.format(
-            self.image.UID()
-        )
+        fixed_html = '<img class="image-richtext image-inline" data-linktype="image" srcset="resolveuid/{0}/@@images/image/large 280w,resolveuid/{0}/@@images/image/icon 64w"/>'.format(self.image.UID())
         output = html_fixer(old_text, self.team)
         self.assertEqual(output, fixed_html)
 
         # relative embed of content
         old_text = '<p><iframe src="team"></iframe></p>'
-        fixed_html = '<p><iframe data-linktype="internal" data-val="{0}" src="resolveuid/{0}"></iframe></p>'.format(
-            self.team.UID()
-        )
+        fixed_html = '<p><iframe data-linktype="internal" data-val="{0}" src="resolveuid/{0}"></iframe></p>'.format(self.team.UID())
         output = html_fixer(old_text, self.team)
         self.assertEqual(output, fixed_html)
 
         # relative video/audio embed
         old_text = '<p><video src="team"></video><audio src="team"></audio></p>'
-        fixed_html = '<p><video data-linktype="internal" data-val="{0}" src="resolveuid/{0}"></video><audio data-linktype="internal" data-val="{0}" src="resolveuid/{0}"></audio></p>'.format(
-            self.team.UID()
-        )
+        fixed_html = '<p><video data-linktype="internal" data-val="{0}" src="resolveuid/{0}"></video><audio data-linktype="internal" data-val="{0}" src="resolveuid/{0}"></audio></p>'.format(self.team.UID())
         output = html_fixer(old_text, self.team)
         self.assertEqual(output, fixed_html)
 
@@ -177,16 +171,12 @@ class TestFixHTML(unittest.TestCase):
         form = self.portal.restrictedTraverse("@@fix_html")
         html = form()
         self.assertIn("Fix links to content and images in richtext", html)
-        self.request.form.update(
-            {
-                "form.submitted": True,
-                "form.commit": False,
-            }
-        )
+        self.request.form.update({
+            "form.submitted": True,
+            "form.commit": False,
+        })
         html = form()
-        self.assertIn(
-            "Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.", html
-        )
+        self.assertIn("Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.", html)
         fixed_html = """
 <p><a class="some-class" data-linktype="internal" data-val="{0}" href="resolveuid/{0}">Links to uuid</a></p>
 <p><a href="delete_confirmation">Link to view/form</a></p>
@@ -210,9 +200,7 @@ class TestFixHTML(unittest.TestCase):
 <img class="image-richtext image-inline picture-variant-medium" data-linktype="image" data-picturevariant="medium" data-scale="" data-val="{2}" src="resolveuid/{2}/@@images/image"/>
 <img class="image-richtext image-inline picture-variant-large" data-linktype="image" data-picturevariant="large" data-scale="large" data-val="{2}" src="resolveuid/{2}/@@images/image/large"/>
 <p><a href="image/image_preview"><img class="image-richtext image-inline picture-variant-small" data-linktype="image" data-picturevariant="small" data-scale="preview" data-val="{2}" src="resolveuid/{2}/@@images/image/preview"/></a></p>
-""".format(
-                self.contact.UID(), self.team.UID(), self.image.UID()
-            )
+""".format(self.contact.UID(), self.team.UID(), self.image.UID())
 
         self.assertEqual(fixed_html, doc.text.raw)
 
@@ -230,12 +218,10 @@ class TestFixHTML(unittest.TestCase):
         form = self.portal.restrictedTraverse("@@fix_html")
         html = form()
         self.assertIn("Fix links to content and images in richtext", html)
-        self.request.form.update(
-            {
-                "form.submitted": True,
-                "form.commit": False,
-            }
-        )
+        self.request.form.update({
+            "form.submitted": True,
+            "form.commit": False,
+        })
         html = form()
         self.assertIn(
             "Fixed HTML for 1 fields in content items. Fixed HTML for 0 portlets.",
@@ -254,18 +240,14 @@ class TestFixHTML(unittest.TestCase):
         )
         form = self.portal.restrictedTraverse("@@fix_html")
         html = form()
-        self.request.form.update(
-            {
-                "form.submitted": True,
-                "form.commit": False,
-            }
-        )
+        self.request.form.update({
+            "form.submitted": True,
+            "form.commit": False,
+        })
         html = form()
         fixed_html = '<a href="http://www.googlefight.com/cgi-bin/compare.pl?q1=Rudd-O&amp;q2=Andufo&amp;B1=Make a fight%21&amp;compare=1&amp;langue=us">Result for the fight between Rudd-O and Andufo</a>'
         self.assertEqual(fixed_html, doc.text.raw)
-        self.assertIn(
-            "Fixed HTML for 0 fields in content items. Fixed HTML for 0 portlets.", html
-        )
+        self.assertIn("Fixed HTML for 0 fields in content items. Fixed HTML for 0 portlets.", html)
 
     def test_html_fixer_commas_in_href(self):
         self.create_demo_content()

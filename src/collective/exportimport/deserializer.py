@@ -15,7 +15,6 @@ class RichTextFieldDeserializerWithoutUnescape(DefaultFieldDeserializer):
     """Override default RichTextFieldDeserializer without using html_parser.unescape().
     Fixes https://github.com/collective/collective.exportimport/issues/99
     """
-
     def __call__(self, value):
         content_type = self.field.default_mime_type
         encoding = "utf8"
