@@ -2,6 +2,7 @@
 from Acquisition import aq_base
 from collective.exportimport import _
 from collective.exportimport import config
+from collective.exportimport.filesystem_importer import FileSystemContentImporter
 from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
 from DateTime import DateTime
@@ -112,6 +113,7 @@ class ImportContent(BrowserView):
         return_json=False,
         limit=None,
         server_file=None,
+        server_tree_file=None,
         iterator=None
     ):
         request = self.request
@@ -136,7 +138,7 @@ class ImportContent(BrowserView):
         status = "success"
         msg = ""
 
-        if server_file and jsonfile:
+        if server_file and jsonfile and server_tree_file:
             # This is an error.  But when you upload 10 GB AND select a server file,
             # it is a pity when you would have to upload again.
             api.portal.show_message(
@@ -146,7 +148,7 @@ class ImportContent(BrowserView):
             )
             server_file = None
             status = "error"
-        if server_file and not jsonfile:
+        if server_file and not jsonfile and not server_tree_file:
             if server_file in self.server_files:
                 for path in self.import_paths:
                     full_path = os.path.join(path, server_file)
@@ -190,6 +192,12 @@ class ImportContent(BrowserView):
         if not jsonfile and iterator:
             self.start()
             msg = self.do_import(iterator)
+            api.portal.show_message(msg, self.request)
+
+        if server_tree_file and not server_file and not jsonfile:
+            msg = self.do_import(
+                FileSystemContentImporter(server_tree_file).get_hierarchical_files()
+            )
             api.portal.show_message(msg, self.request)
 
         self.finish()
