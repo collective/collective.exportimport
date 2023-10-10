@@ -34,6 +34,23 @@
               </div>
             </tal:block>
 
+            <tal:block define="server_files view/import_tree_parts">
+              <p i18n:translate="server_paths_list">Or you can choose from a tree export in the server in one of these paths:</p>
+              <ul>
+                <li tal:repeat="path view/import_tree_parts"><code tal:content="path" /></li>
+              </ul>
+              <p tal:condition="not:server_files" i18n:translate="">No files found.</p>
+              <div class="field mb-3" tal:condition="server_files">
+                <label for="server_file" i18n:translate="">File on server to import:</label>
+                <br />
+                <select id="server_tree_file" name="server_tree_file">
+                  <option selected="" value="" title="" i18n:translate="">Choose one</option>
+                  <option tal:repeat="filename server_files" tal:content="filename" tal:attributes="value filename">
+                  </option>
+                </select>
+              </div>
+            </tal:block>
+
             <div class="field mb-3">
               <label for="include_blobs" i18n:translate="">Handle existing content</label>
               <span class="formHelp" i18n:translate="">
