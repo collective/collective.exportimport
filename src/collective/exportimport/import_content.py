@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
+from App.config import getConfiguration
 from collective.exportimport import _
 from collective.exportimport import config
 from collective.exportimport.filesystem_importer import FileSystemContentImporter
@@ -250,6 +251,18 @@ class ImportContent(BrowserView):
             ]
         listing.sort()
         return listing
+
+    @property
+    def import_tree_parts(self):
+        """Returns subdirectories in export tree"""
+        directory = config.CENTRAL_DIRECTORY
+        if not directory:
+            cfg = getConfiguration()
+            directory = cfg.clienthome
+        base_path = os.path.join(directory, config.TREE_DIRECTORY)
+        if os.path.isdir(base_path):
+            return [os.path.join(base_path, d, "content") for d in os.listdir(base_path)]
+        return []
 
     def do_import(self, data):
         start = datetime.now()
