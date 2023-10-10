@@ -1,32 +1,28 @@
 # -*- coding: utf-8 -*-
-from collective.exportimport.interfaces import IBase64BlobsMarker
-from collective.exportimport.interfaces import IMigrationMarker
-from collective.exportimport.interfaces import IPathBlobsMarker
-from collective.exportimport.interfaces import IRawRichTextMarker
-from collective.exportimport.interfaces import ITalesField
+from collective.exportimport.interfaces import (
+    IBase64BlobsMarker,
+    IMigrationMarker,
+    IPathBlobsMarker,
+    IRawRichTextMarker,
+    ITalesField,
+)
 from hurry.filesize import size
 from plone.app.textfield.interfaces import IRichText
 from plone.dexterity.interfaces import IDexterityContent
-from plone.namedfile.interfaces import INamedFileField
-from plone.namedfile.interfaces import INamedImageField
-from plone.restapi.interfaces import IFieldSerializer
-from plone.restapi.interfaces import IJsonCompatible
+from plone.namedfile.interfaces import INamedFileField, INamedImageField
+from plone.restapi.interfaces import IFieldSerializer, IJsonCompatible
 from plone.restapi.serializer.converters import json_compatible
 from plone.restapi.serializer.dxfields import DefaultFieldSerializer
 from Products.CMFCore.utils import getToolByName
-from zope.component import adapter
-from zope.component import getUtility
-from zope.interface import implementer
-from zope.interface import Interface
-from zope.schema.interfaces import IChoice
-from zope.schema.interfaces import ICollection
-from zope.schema.interfaces import IField
-from zope.schema.interfaces import IVocabularyTokenized
+from zope.component import adapter, getUtility
+from zope.interface import implementer, Interface
+from zope.schema.interfaces import IChoice, ICollection, IField, IVocabularyTokenized
 
 import base64
 import logging
 import pkg_resources
 import six
+
 
 try:
     pkg_resources.get_distribution("Products.Archetypes")
@@ -74,6 +70,7 @@ def get_blob_path(blob):
 
 
 # Custom Serializers for Dexterity
+
 
 @adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
 class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
@@ -130,9 +127,9 @@ class RichttextFieldSerializerWithRawText(DefaultFieldSerializer):
         if value:
             output = value.raw
             return {
-                u"data": json_compatible(output),
-                u"content-type": json_compatible(value.mimeType),
-                u"encoding": json_compatible(value.encoding),
+                "data": json_compatible(output),
+                "content-type": json_compatible(value.mimeType),
+                "encoding": json_compatible(value.encoding),
             }
 
 
@@ -161,7 +158,13 @@ class CollectionFieldSerializer(DefaultFieldSerializer):
                 except LookupError:
                     # TODO: handle defaultFactory?
                     if v not in [self.field.default, self.field.missing_value]:
-                        logger.info("Term lookup error: %r not in vocabulary %r for field %r of %r", v, value_type.vocabularyName, self.field.__name__, self.context)
+                        logger.info(
+                            "Term lookup error: %r not in vocabulary %r for field %r of %r",
+                            v,
+                            value_type.vocabularyName,
+                            self.field.__name__,
+                            self.context,
+                        )
         return json_compatible(value)
 
 
@@ -184,7 +187,13 @@ class ChoiceFieldSerializer(DefaultFieldSerializer):
             except LookupError:
                 # TODO: handle defaultFactory?
                 if value not in [self.field.default, self.field.missing_value]:
-                    logger.info("Term lookup error: %r not in vocabulary %r for field %r of %r", value, self.field.vocabularyName, self.field.__name__, self.context)
+                    logger.info(
+                        "Term lookup error: %r not in vocabulary %r for field %r of %r",
+                        value,
+                        self.field.vocabularyName,
+                        self.field.__name__,
+                        self.context,
+                    )
         return json_compatible(value)
 
 
@@ -193,20 +202,17 @@ class ChoiceFieldSerializer(DefaultFieldSerializer):
 
 if HAS_AT:
     from OFS.Image import Pdata
-    from plone.app.blob.interfaces import IBlobField
-    from plone.app.blob.interfaces import IBlobImageField
+    from plone.app.blob.interfaces import IBlobField, IBlobImageField
     from plone.restapi.serializer.atfields import (
         DefaultFieldSerializer as ATDefaultFieldSerializer,
     )
     from Products.Archetypes.atapi import RichWidget
     from Products.Archetypes.interfaces import IBaseObject
-    from Products.Archetypes.interfaces.field import IFileField
-    from Products.Archetypes.interfaces.field import IImageField
-    from Products.Archetypes.interfaces.field import ITextField
+    from Products.Archetypes.interfaces.field import IFileField, IImageField, ITextField
 
     if HAS_TALES:
-        from zope.interface import classImplements
         from Products.TALESField._field import TALESString
+        from zope.interface import classImplements
 
         # Products.TalesField does not implements any interface
         # we mark the field class to let queryMultiAdapter intercept
@@ -230,7 +236,7 @@ if HAS_AT:
             data = image.data.data if isinstance(image.data, Pdata) else image.data
             if len(data) > IMAGE_SIZE_WARNING:
                 logger.info(
-                    u"Large image for {}: {}".format(
+                    "Large image for {}: {}".format(
                         self.context.absolute_url(), size(len(data))
                     )
                 )
@@ -261,7 +267,7 @@ if HAS_AT:
             )
             if len(data) > FILE_SIZE_WARNING:
                 logger.info(
-                    u"Large file for {}: {}".format(
+                    "Large file for {}: {}".format(
                         self.context.absolute_url(), size(len(data))
                     )
                 )
@@ -284,7 +290,7 @@ if HAS_AT:
             data = image.data.data if isinstance(image.data, Pdata) else image.data
             if len(data) > IMAGE_SIZE_WARNING:
                 logger.info(
-                    u"Large image for {}: {}".format(
+                    "Large image for {}: {}".format(
                         self.context.absolute_url(), size(len(data))
                     )
                 )
@@ -310,7 +316,7 @@ if HAS_AT:
             )
             if len(data) > FILE_SIZE_WARNING:
                 logger.info(
-                    u"Large File for {}: {}".format(
+                    "Large File for {}: {}".format(
                         self.context.absolute_url(), size(len(data))
                     )
                 )
@@ -416,28 +422,43 @@ if HAS_AT and HAS_PAC:
             registry = reader.parseRegistry()
 
             # Inject new selection-operators that were added in Plone 5
-            selection = registry["plone"]["app"]["querystring"]["operation"]["selection"]
+            selection = registry["plone"]["app"]["querystring"]["operation"][
+                "selection"
+            ]
             new_operators = ["all", "any", "none"]
-            for operator  in new_operators:
+            for operator in new_operators:
                 if operator not in selection:
                     # just a dummy method to pass validation
                     selection[operator] = {"operation": "collective.exportimport"}
 
             # Inject any operator for some fields
             any_operator = "plone.app.querystring.operation.selection.any"
-            fields_with_any_operator = ['Creator', 'Subject', 'portal_type', 'review_state']
+            fields_with_any_operator = [
+                "Creator",
+                "Subject",
+                "portal_type",
+                "review_state",
+            ]
             for field in fields_with_any_operator:
-                operations = registry["plone"]["app"]["querystring"]["field"][field]["operations"]
+                operations = registry["plone"]["app"]["querystring"]["field"][field][
+                    "operations"
+                ]
                 if any_operator not in operations:
-                    registry["plone"]["app"]["querystring"]["field"][field]["operations"].append(any_operator)
+                    registry["plone"]["app"]["querystring"]["field"][field][
+                        "operations"
+                    ].append(any_operator)
 
             # Inject all operator for Subject
-            all_operator= "plone.app.querystring.operation.selection.all"
+            all_operator = "plone.app.querystring.operation.selection.all"
             fields_with_any_operator = ["Subject"]
             for field in fields_with_any_operator:
-                operations = registry["plone"]["app"]["querystring"]["field"][field]["operations"]
+                operations = registry["plone"]["app"]["querystring"]["field"][field][
+                    "operations"
+                ]
                 if all_operator not in operations:
-                    registry["plone"]["app"]["querystring"]["field"][field]["operations"].append(all_operator)
+                    registry["plone"]["app"]["querystring"]["field"][field][
+                        "operations"
+                    ].append(all_operator)
 
             # 3. Migrate criteria using the converters from p.a.contenttypes
             criteria = self.context.listCriteria()
@@ -451,14 +472,18 @@ if HAS_AT and HAS_PAC:
 
                 converter = CONVERTERS.get(type_)
                 if converter is None:
-                    msg = u"Unsupported criterion {0}".format(type_)
+                    msg = "Unsupported criterion {0}".format(type_)
                     logger.error(msg)
                     raise ValueError(msg)
                 before = len(query)
                 try:
                     converter(query, criterion, registry)
                 except Exception:
-                    logger.info(u"Error converting criterion %s", criterion.__dict__, exc_info=True)
+                    logger.info(
+                        "Error converting criterion %s",
+                        criterion.__dict__,
+                        exc_info=True,
+                    )
                     pass
 
                 # Try to manually convert when no criterion was added
@@ -468,21 +493,22 @@ if HAS_AT and HAS_PAC:
                     if fixed:
                         query.append(fixed)
                     else:
-                        logger.info(u"Check maybe broken collection %s", self.context.absolute_url())
+                        logger.info(
+                            "Check maybe broken collection %s",
+                            self.context.absolute_url(),
+                        )
 
             # 4. So some manual fixes in the migrated query
             indexes_to_fix = [
-                u"portal_type",
-                u"review_state",
-                u"Creator",
-                u"Subject",
+                "portal_type",
+                "review_state",
+                "Creator",
+                "Subject",
             ]
             operator_mapping = {
                 # old -> new
-                u"plone.app.querystring.operation.selection.is":
-                    u"plone.app.querystring.operation.selection.any",
-                u"plone.app.querystring.operation.string.is":
-                    u"plone.app.querystring.operation.selection.any",
+                "plone.app.querystring.operation.selection.is": "plone.app.querystring.operation.selection.any",
+                "plone.app.querystring.operation.string.is": "plone.app.querystring.operation.selection.any",
             }
             fixed_query = []
             for crit in query:
@@ -493,7 +519,7 @@ if HAS_AT and HAS_PAC:
                     for old_operator, new_operator in operator_mapping.items():
                         if crit["o"] == old_operator:
                             crit["o"] = new_operator
-                if crit["o"] == u"plone.app.querystring.operation.string.currentUser":
+                if crit["o"] == "plone.app.querystring.operation.string.currentUser":
                     crit["v"] = ""
                 fixed_query.append(crit)
             query = fixed_query

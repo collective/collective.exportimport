@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
 from App.config import getConfiguration
-from collective.exportimport import _
-from collective.exportimport import config
+from collective.exportimport import _, config
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
@@ -11,14 +10,18 @@ from plone.app.portlets.interfaces import IPortletTypeInterface
 from plone.app.redirector.interfaces import IRedirectionStorage
 from plone.app.textfield.value import RichTextValue
 from plone.app.uuid.utils import uuidToObject
-from plone.portlets.constants import CONTENT_TYPE_CATEGORY
-from plone.portlets.constants import CONTEXT_CATEGORY
-from plone.portlets.constants import GROUP_CATEGORY
-from plone.portlets.constants import USER_CATEGORY
-from plone.portlets.interfaces import ILocalPortletAssignmentManager
-from plone.portlets.interfaces import IPortletAssignmentMapping
-from plone.portlets.interfaces import IPortletAssignmentSettings
-from plone.portlets.interfaces import IPortletManager
+from plone.portlets.constants import (
+    CONTENT_TYPE_CATEGORY,
+    CONTEXT_CATEGORY,
+    GROUP_CATEGORY,
+    USER_CATEGORY,
+)
+from plone.portlets.interfaces import (
+    ILocalPortletAssignmentManager,
+    IPortletAssignmentMapping,
+    IPortletAssignmentSettings,
+    IPortletManager,
+)
 from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
@@ -26,11 +29,13 @@ from Products.CMFCore.interfaces import IContentish
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.interfaces import IPloneSiteRoot
 from Products.Five import BrowserView
-from zope.component import getMultiAdapter
-from zope.component import getUtilitiesFor
-from zope.component import getUtility
-from zope.component import queryMultiAdapter
-from zope.component import queryUtility
+from zope.component import (
+    getMultiAdapter,
+    getUtilitiesFor,
+    getUtility,
+    queryMultiAdapter,
+    queryUtility,
+)
 from zope.interface import providedBy
 
 import json
@@ -38,6 +43,7 @@ import logging
 import os
 import pkg_resources
 import six
+
 
 try:
     pkg_resources.get_distribution("Products.Archetypes")
@@ -81,9 +87,9 @@ class BaseExport(BrowserView):
     def download(self, data):
         filename = self.request.form.get("filename")
         if not filename:
-            filename = u"{}.json".format(self.__name__)
+            filename = "{}.json".format(self.__name__)
         if not data:
-            msg = _(u"No data to export for {}").format(self.__name__)
+            msg = _("No data to export for {}").format(self.__name__)
             logger.info(msg)
             api.portal.show_message(msg, self.request)
             return self.request.response.redirect(self.request["ACTUAL_URL"])
@@ -100,7 +106,7 @@ class BaseExport(BrowserView):
             filepath = os.path.join(directory, filename)
             with open(filepath, "w") as f:
                 json.dump(data, f, sort_keys=True, indent=4)
-            msg = _(u"Exported to {}").format(filepath)
+            msg = _("Exported to {}").format(filepath)
             logger.info(msg)
             api.portal.show_message(msg, self.request)
             return self.request.response.redirect(self.request["ACTUAL_URL"])
@@ -124,13 +130,13 @@ class ExportRelations(BaseExport):
     def __call__(
         self, download_to_server=False, debug=False, include_linkintegrity=False
     ):
-        self.title = _(u"Export relations")
+        self.title = _("Export relations")
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
-        logger.info(u"Exporting relations...")
+        logger.info("Exporting relations...")
         data = self.get_all_references(debug, include_linkintegrity)
-        logger.info(u"Exported %s relations", len(data))
+        logger.info("Exported %s relations", len(data))
         self.download(data)
 
     def get_all_references(self, debug=False, include_linkintegrity=False):
@@ -232,7 +238,7 @@ class ExportMembers(BaseExport):
     def __init__(self, context, request):
         super(ExportMembers, self).__init__(context, request)
         self.pms = api.portal.get_tool("portal_membership")
-        self.title = _(u"Export members, groups and roles")
+        self.title = _("Export members, groups and roles")
         self.group_roles = {}
 
     def __call__(self, download_to_server=False):
@@ -241,10 +247,10 @@ class ExportMembers(BaseExport):
             return self.index()
 
         data = {}
-        logger.info(u"Exporting groups and users...")
+        logger.info("Exporting groups and users...")
         data["groups"] = self.export_groups()
         data["members"] = [i for i in self.export_members()]
-        msg = u"Exported {} groups and {} members".format(
+        msg = "Exported {} groups and {} members".format(
             len(data["groups"]), len(data["members"])
         )
         logger.info(msg)
@@ -326,18 +332,17 @@ class ExportMembers(BaseExport):
 
 
 class ExportTranslations(BaseExport):
-
     DROP_PATH = []
 
     def __call__(self, download_to_server=False):
-        self.title = _(u"Export translations")
+        self.title = _("Export translations")
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        logger.info(u"Exporting translations...")
+        logger.info("Exporting translations...")
         data = self.all_translations()
-        logger.info(u"Exported %s groups of translations", len(data))
+        logger.info("Exported %s groups of translations", len(data))
         self.download(data)
 
     def all_translations(self):  # noqa: C901
@@ -377,7 +382,7 @@ class ExportTranslations(BaseExport):
         # Archetypes and Dexterity with plone.app.multilingual
         portal_catalog = api.portal.get_tool("portal_catalog")
         if "TranslationGroup" not in portal_catalog.indexes():
-            logger.debug(u"No index TranslationGroup (p.a.multilingual not installed)")
+            logger.debug("No index TranslationGroup (p.a.multilingual not installed)")
             return results
 
         for uid in portal_catalog.uniqueValuesFor("TranslationGroup"):
@@ -397,7 +402,7 @@ class ExportTranslations(BaseExport):
                         skip = True
                 if not skip and brain.Language in item:
                     logger.info(
-                        u"Duplicate language for {}: {}".format(
+                        "Duplicate language for {}: {}".format(
                             uid, [i.getPath() for i in brains]
                         )
                     )
@@ -412,14 +417,14 @@ class ExportLocalRoles(BaseExport):
     """Export all local roles"""
 
     def __call__(self, download_to_server=False):
-        self.title = _(u"Export local roles")
+        self.title = _("Export local roles")
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        logger.info(u"Exporting local roles...")
+        logger.info("Exporting local roles...")
         data = self.all_localroles()
-        logger.info(u"Exported local roles for %s items", len(data))
+        logger.info("Exported local roles for %s items", len(data))
         self.download(data)
 
     def all_localroles(self):
@@ -469,14 +474,14 @@ class ExportOrdering(BaseExport):
     """Export all local roles"""
 
     def __call__(self, download_to_server=False):
-        self.title = _(u"Export ordering")
+        self.title = _("Export ordering")
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        logger.info(u"Exporting positions in parent...")
+        logger.info("Exporting positions in parent...")
         data = self.all_orders()
-        logger.info(u"Exported %s positions in parent", len(data))
+        logger.info("Exported %s positions in parent", len(data))
         self.download(data)
 
     def all_orders(self):
@@ -505,14 +510,14 @@ class ExportDefaultPages(BaseExport):
     """Export all default_page settings."""
 
     def __call__(self, download_to_server=False):
-        self.title = _(u"Export default pages")
+        self.title = _("Export default pages")
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        logger.info(u"Exporting default pages...")
+        logger.info("Exporting default pages...")
         data = self.all_default_pages()
-        logger.info(u"Exported %s default pages", len(data))
+        logger.info("Exported %s default pages", len(data))
         self.download(data)
 
     def all_default_pages(self):
@@ -524,10 +529,10 @@ class ExportDefaultPages(BaseExport):
             try:
                 obj = brain.getObject()
             except Exception:
-                logger.info(u"Error getting obj for %s", brain.getURL(), exc_info=True)
+                logger.info("Error getting obj for %s", brain.getURL(), exc_info=True)
                 continue
             if obj is None:
-                logger.error(u"brain.getObject() is None %s", brain.getPath())
+                logger.error("brain.getObject() is None %s", brain.getPath())
                 continue
             if IPloneSiteRoot.providedBy(obj):
                 # Site root is handled below (in Plone 6 it is returned by a catalog search)
@@ -537,7 +542,7 @@ class ExportDefaultPages(BaseExport):
                 data = self.get_default_page_info(obj)
             except Exception:
                 logger.info(
-                    u"Error exporting default_page for %s",
+                    "Error exporting default_page for %s",
                     obj.absolute_url(),
                     exc_info=True,
                 )
@@ -554,7 +559,7 @@ class ExportDefaultPages(BaseExport):
                 data["uuid"] = config.SITE_ROOT
                 results.append(data)
         except Exception:
-            logger.info(u"Error exporting default_page for portal", exc_info=True)
+            logger.info("Error exporting default_page for portal", exc_info=True)
 
         return results
 
@@ -584,14 +589,14 @@ class ExportDefaultPages(BaseExport):
 
 class ExportDiscussion(BaseExport):
     def __call__(self, download_to_server=False):
-        self.title = _(u"Export comments")
+        self.title = _("Export comments")
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        logger.info(u"Exporting discussions...")
+        logger.info("Exporting discussions...")
         data = self.all_discussions()
-        logger.info(u"Exported %s discussions", len(data))
+        logger.info("Exported %s discussions", len(data))
         self.download(data)
 
     def all_discussions(self):
@@ -604,7 +609,7 @@ class ExportDiscussion(BaseExport):
             try:
                 obj = brain.getObject()
                 if obj is None:
-                    logger.error(u"brain.getObject() is None %s", brain.getPath())
+                    logger.error("brain.getObject() is None %s", brain.getPath())
                     continue
                 conversation = IConversation(obj, None)
                 if not conversation:
@@ -625,20 +630,22 @@ class ExportDiscussion(BaseExport):
 
 class ExportPortlets(BaseExport):
     def __call__(self, download_to_server=False):
-        self.title = _(u"Export portlets")
+        self.title = _("Export portlets")
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        logger.info(u"Exporting portlets...")
+        logger.info("Exporting portlets...")
         data = self.all_portlets()
-        logger.info(u"Exported info for %s items with portlets", len(data))
+        logger.info("Exported info for %s items with portlets", len(data))
         self.download(data)
 
     def all_portlets(self):
         self.results = []
         portal = api.portal.get()
-        portal.ZopeFindAndApply(self.context, search_sub=True, apply_func=self.get_portlets)
+        portal.ZopeFindAndApply(
+            self.context, search_sub=True, apply_func=self.get_portlets
+        )
         self.get_root_portlets()
         return self.results
 
@@ -663,7 +670,7 @@ class ExportPortlets(BaseExport):
             obj_results["uuid"] = uid
             self.results.append(obj_results)
         return
-    
+
     def get_root_portlets(self):
         site = api.portal.get()
         self._get_portlets(site, PORTAL_PLACEHOLDER)
@@ -674,6 +681,7 @@ class ExportPortlets(BaseExport):
 
     def portlets_blacklist_hook(self, blacklist):
         return blacklist
+
 
 def export_local_portlets(obj):
     """Serialize portlets for one content object
@@ -739,9 +747,9 @@ def export_portlets_blacklist(obj):
             obj_results = {}
             status = assignable.getBlacklistStatus(category)
             if status is True:
-                obj_results["status"] = u"block"
+                obj_results["status"] = "block"
             elif status is False:
-                obj_results["status"] = u"show"
+                obj_results["status"] = "show"
 
             if obj_results:
                 obj_results["manager"] = manager_name
@@ -776,12 +784,12 @@ def export_plone_redirects():
 
 class ExportRedirects(BaseExport):
     def __call__(self, download_to_server=False):
-        self.title = _(u"Export redirects")
+        self.title = _("Export redirects")
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
-        logger.info(u"Exporting redirects...")
+        logger.info("Exporting redirects...")
         data = export_plone_redirects()
-        logger.info(u"Exported %s redirects", len(data))
+        logger.info("Exported %s redirects", len(data))
         self.download(data)

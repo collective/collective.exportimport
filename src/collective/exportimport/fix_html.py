@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 from Acquisition import aq_parent
 from bs4 import BeautifulSoup
-from collective.exportimport import _
 from collections import defaultdict
+from collective.exportimport import _
 from logging import getLogger
 from plone import api
 from plone.api.exc import InvalidParameterError
@@ -11,18 +11,17 @@ from plone.app.textfield import RichTextValue
 from plone.app.textfield.interfaces import IRichText
 from plone.app.textfield.value import IRichTextValue
 from plone.dexterity.utils import iterSchemataForType
-from plone.portlets.interfaces import IPortletAssignmentMapping
-from plone.portlets.interfaces import IPortletManager
+from plone.portlets.interfaces import IPortletAssignmentMapping, IPortletManager
 from plone.uuid.interfaces import IUUID
 from Products.CMFCore.interfaces import IContentish
 from Products.Five import BrowserView
 from six.moves.urllib.parse import urlparse
-from zope.component import getUtilitiesFor
-from zope.component import queryMultiAdapter
+from zope.component import getUtilitiesFor, queryMultiAdapter
 from zope.interface import providedBy
 
 import six
 import transaction
+
 
 logger = getLogger(__name__)
 
@@ -40,7 +39,7 @@ FALLBACK_VARIANT = "medium"
 
 class FixHTML(BrowserView):
     def __call__(self):
-        self.title = _(u"Fix links to content and images in richtext")
+        self.title = _("Fix links to content and images in richtext")
         if not self.request.form.get("form.submitted", False):
             return self.index()
         commit = self.request.form.get("form.commit", True)
@@ -48,18 +47,18 @@ class FixHTML(BrowserView):
         msg = []
 
         fix_count = fix_html_in_content_fields(context=self.context, commit=commit)
-        msg.append(_(u"Fixed HTML for {} fields in content items").format(fix_count))
+        msg.append(_("Fixed HTML for {} fields in content items").format(fix_count))
         logger.info(msg[-1])
 
         fix_count = fix_html_in_portlets(context=self.context)
-        msg.append(_(u"Fixed HTML for {} portlets").format(fix_count))
+        msg.append(_("Fixed HTML for {} portlets").format(fix_count))
         logger.info(msg[-1])
 
         # TODO: Fix html in tiles
         # tiles = fix_html_in_tiles()
         # msg = u"Fixed html for {} tiles".format(tiles)
 
-        api.portal.show_message(u" ".join(m + u"." for m in msg), self.request)
+        api.portal.show_message(" ".join(m + "." for m in msg), self.request)
         return self.index()
 
 
@@ -235,7 +234,7 @@ def find_object(base, path):
         obj = api.portal.get()
         portal_path = obj.absolute_url_path() + "/"
         if path.startswith(portal_path):
-            path = path[len(portal_path):]
+            path = path[len(portal_path) :]
     else:
         obj = aq_parent(base)  # relative urls start at the parent...
 
@@ -320,17 +319,21 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
         query["path"] = "/".join(context.getPhysicalPath())
     brains = catalog(**query)
     total = len(brains)
-    logger.info("There are %s content items in total, starting migration...", len(brains))
+    logger.info(
+        "There are %s content items in total, starting migration...", len(brains)
+    )
     fixed_fields = 0
     fixed_items = 0
     for index, brain in enumerate(brains, start=1):
         try:
             obj = brain.getObject()
         except Exception:
-            logger.warning("Could not get object for: %s", brain.getPath(), exc_info=True)
+            logger.warning(
+                "Could not get object for: %s", brain.getPath(), exc_info=True
+            )
             continue
         if obj is None:
-            logger.error(u"brain.getObject() is None %s", brain.getPath())
+            logger.error("brain.getObject() is None %s", brain.getPath())
             continue
         try:
             changed = False
@@ -339,11 +342,19 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
                 if text and IRichTextValue.providedBy(text) and text.raw:
                     clean_text = text.raw
                     for fixer in fixers:
-                        logger.debug("Fixing html for %s with %s", obj.absolute_url(), fixer.__name__)
+                        logger.debug(
+                            "Fixing html for %s with %s",
+                            obj.absolute_url(),
+                            fixer.__name__,
+                        )
                         try:
                             clean_text = fixer(clean_text, obj)
                         except Exception:
-                            logger.info(u"Error while fixing html of %s for %s", fieldname, obj.absolute_url())
+                            logger.info(
+                                "Error while fixing html of %s for %s",
+                                fieldname,
+                                obj.absolute_url(),
+                            )
                             raise
 
                     if clean_text and clean_text != text.raw:
@@ -355,7 +366,11 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
                         )
                         setattr(obj, fieldname, textvalue)
                         changed = True
-                        logger.debug(u"Fixed html for field %s of %s", fieldname, obj.absolute_url())
+                        logger.debug(
+                            "Fixed html for field %s of %s",
+                            fieldname,
+                            obj.absolute_url(),
+                        )
                         fixed_fields += 1
             if changed:
                 fixed_items += 1
@@ -366,12 +381,21 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
         if fixed_items != 0 and not fixed_items % 1000:
             # Commit every 1000 changed items.
             logger.info(
-                u"Fix html for %s (%s) of %s items (changed %s fields in %s items)",
-                index, round(index / total * 100, 2), total, fixed_fields, fixed_items)
+                "Fix html for %s (%s) of %s items (changed %s fields in %s items)",
+                index,
+                round(index / total * 100, 2),
+                total,
+                fixed_fields,
+                fixed_items,
+            )
             if commit:
                 transaction.commit()
 
-    logger.info(u"Finished fixing html in content fields (changed %s fields in %s items)", fixed_fields, fixed_items)
+    logger.info(
+        "Finished fixing html in content fields (changed %s fields in %s items)",
+        fixed_fields,
+        fixed_items,
+    )
     if commit:
         # commit remaining items
         transaction.commit()
@@ -380,7 +404,6 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
 
 
 def fix_html_in_portlets(context=None):
-
     portlets_schemata = {
         iface: name for name, iface in getUtilitiesFor(IPortletTypeInterface)
     }

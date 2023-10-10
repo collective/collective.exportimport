@@ -20,4 +20,4 @@ class IMigrationMarker(Interface):
 
 
 class ITalesField(Interface):
-    """a marker interface to export TalesField """
+    """a marker interface to export TalesField"""

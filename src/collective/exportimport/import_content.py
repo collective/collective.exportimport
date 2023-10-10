@@ -1,29 +1,25 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
-from collective.exportimport import _
-from collective.exportimport import config
+from App.config import getConfiguration
+from collective.exportimport import _, config
+from collective.exportimport.filesystem_importer import FileSystemContentImporter
 from collective.exportimport.interfaces import IMigrationMarker
-from datetime import datetime
+from datetime import datetime, timedelta
 from DateTime import DateTime
-from datetime import timedelta
 from Persistence import PersistentMapping
 from plone import api
 from plone.api.exc import InvalidParameterError
 from plone.dexterity.interfaces import IDexterityFTI
 from plone.i18n.normalizer.interfaces import IIDNormalizer
-from plone.namedfile.file import NamedBlobFile
-from plone.namedfile.file import NamedBlobImage
+from plone.namedfile.file import NamedBlobFile, NamedBlobImage
 from plone.restapi.interfaces import IDeserializeFromJson
-from Products.CMFPlone.interfaces.constrains import ENABLED
-from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
+from Products.CMFPlone.interfaces.constrains import ENABLED, ISelectableConstrainTypes
 from Products.CMFPlone.utils import _createObjectByType
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from six.moves.urllib.parse import unquote
-from six.moves.urllib.parse import urlparse
+from six.moves.urllib.parse import unquote, urlparse
 from zExceptions import NotFound
-from zope.component import getMultiAdapter
-from zope.component import getUtility
+from zope.component import getMultiAdapter, getUtility
 from zope.interface import alsoProvides
 from ZPublisher.HTTPRequest import FileUpload
 
@@ -35,6 +31,7 @@ import os
 import random
 import six
 import transaction
+
 
 try:
     from plone.app.querystring.upgrades import fix_select_all_existing_collections
@@ -74,7 +71,6 @@ def get_absolute_blob_path(obj, blob_path):
 
 
 class ImportContent(BrowserView):
-
     template = ViewPageTemplateFile("templates/import_content.pt")
 
     # You can specify a default-target container for all items of a type.
@@ -112,7 +108,8 @@ class ImportContent(BrowserView):
         return_json=False,
         limit=None,
         server_file=None,
-        iterator=None
+        server_tree_file=None,
+        iterator=None,
     ):
         request = self.request
         self.limit = limit
@@ -136,17 +133,17 @@ class ImportContent(BrowserView):
         status = "success"
         msg = ""
 
-        if server_file and jsonfile:
+        if server_file and jsonfile and server_tree_file:
             # This is an error.  But when you upload 10 GB AND select a server file,
             # it is a pity when you would have to upload again.
             api.portal.show_message(
-                _(u"json file was uploaded, so the selected server file was ignored."),
+                _("json file was uploaded, so the selected server file was ignored."),
                 request=self.request,
                 type="warn",
             )
             server_file = None
             status = "error"
-        if server_file and not jsonfile:
+        if server_file and not jsonfile and not server_tree_file:
             if server_file in self.server_files:
                 for path in self.import_paths:
                     full_path = os.path.join(path, server_file)
@@ -161,6 +158,7 @@ class ImportContent(BrowserView):
                 api.portal.show_message(msg, request=self.request, type="warn")
                 server_file = None
                 status = "error"
+
         if jsonfile:
             self.portal = api.portal.get()
             try:
@@ -176,7 +174,7 @@ class ImportContent(BrowserView):
                 status = "error"
                 msg = str(e)
                 api.portal.show_message(
-                    _(u"Exception during upload: {}").format(e),
+                    _("Exception during upload: {}").format(e),
                     request=self.request,
                 )
             else:
@@ -192,11 +190,18 @@ class ImportContent(BrowserView):
             msg = self.do_import(iterator)
             api.portal.show_message(msg, self.request)
 
+        if server_tree_file and not server_file and not jsonfile:
+            msg = self.do_import(
+                FileSystemContentImporter(server_tree_file).get_hierarchical_files()
+            )
+            api.portal.show_message(msg, self.request)
+
         self.finish()
 
         if return_json:
             msg = {"state": status, "msg": msg}
             return json.dumps(msg)
+
         return self.template()
 
     def start(self):
@@ -207,7 +212,7 @@ class ImportContent(BrowserView):
 
     def commit_hook(self, added, index):
         """Hook to do something after importing every x items."""
-        msg = u"Committing after creating {} of {} handled items...".format(
+        msg = "Committing after creating {} of {} handled items...".format(
             len(added), index
         )
         logger.info(msg)
@@ -243,16 +248,51 @@ class ImportContent(BrowserView):
         listing.sort()
         return listing
 
+    @property
+    def import_tree_parts(self):
+        """Returns subdirectories in export tree"""
+        directory = config.CENTRAL_DIRECTORY
+        if not directory:
+            cfg = getConfiguration()
+            directory = cfg.clienthome
+        base_path = os.path.join(directory, config.TREE_DIRECTORY)
+        return [os.path.join(base_path, d, "content") for d in os.listdir(base_path)]
+
+    def process_tree_files(self, files):
+        """Reads and uploads tree files"""
+        for path in files:
+            logger.info("Using server tree file %s", path)
+            # Open the file in binary mode and use it as jsonfile.
+            with open(path, "rb") as jsonfile:
+                try:
+                    if isinstance(jsonfile, str):
+                        data = ijson.items(jsonfile, "item")
+                    elif isinstance(jsonfile, FileUpload) or hasattr(jsonfile, "read"):
+                        data = ijson.items(jsonfile, "item")
+                    else:
+                        raise RuntimeError("Data is neither text, file nor upload.")
+                except Exception as e:
+                    logger.error(str(e))
+                    msg = str(e)
+                    api.portal.show_message(
+                        _("Exception during upload: {}").format(e),
+                        request=self.request,
+                    )
+                else:
+                    self.start()
+                    msg = self.do_import(data)
+                    self.finish()
+
     def do_import(self, data):
         start = datetime.now()
         alsoProvides(self.request, IMigrationMarker)
         added = self.import_new_content(data)
         end = datetime.now()
         delta = end - start
-        msg = u"Imported {} items".format(len(added))
+        msg = "Imported {} items".format(len(added))
         transaction.get().note(msg)
         transaction.commit()
-        msg = u"{} in {} seconds".format(msg, delta.seconds)
+        msg = "{} in {} seconds".format(msg, delta.seconds)
         logger.info(msg)
         return msg
 
@@ -273,7 +313,9 @@ class ImportContent(BrowserView):
             if not self.should_include(item_path):
                 return False
             elif self.should_drop(item_path):
-                logger.info(u"Skipping %s, even though listed in INCLUDE_PATHS", item_path)
+                logger.info(
+                    "Skipping %s, even though listed in INCLUDE_PATHS", item_path
+                )
                 return False
         else:
             if self.should_drop(item_path):
@@ -285,9 +327,9 @@ class ImportContent(BrowserView):
         added = []
 
         if getattr(data, "len", None):
-            logger.info(u"Importing {} items".format(len(data)))
+            logger.info("Importing {} items".format(len(data)))
         else:
-            logger.info(u"Importing data")
+            logger.info("Importing data")
         for index, item in enumerate(data, start=1):
             if self.limit and len(added) >= self.limit:
                 break
@@ -306,7 +348,7 @@ class ImportContent(BrowserView):
             new_id = unquote(item["@id"]).split("/")[-1]
             if new_id != item["id"]:
                 logger.info(
-                    u"Conflicting ids in url ({}) and id ({}). Using {}".format(
+                    "Conflicting ids in url ({}) and id ({}). Using {}".format(
                         new_id, item["id"], new_id
                     )
                 )
@@ -334,7 +376,7 @@ class ImportContent(BrowserView):
 
             if not container:
                 logger.warning(
-                    u"No container (parent was {}) found for {} {}".format(
+                    "No container (parent was {}) found for {} {}".format(
                         item["parent"]["@type"], item["@type"], item["@id"]
                     )
                 )
@@ -342,7 +384,7 @@ class ImportContent(BrowserView):
 
             if not getattr(aq_base(container), "isPrincipiaFolderish", False):
                 logger.warning(
-                    u"Container {} for {} is not folderish".format(
+                    "Container {} for {} is not folderish".format(
                         container.absolute_url(), item["@id"]
                     )
                 )
@@ -356,7 +398,7 @@ class ImportContent(BrowserView):
                 if self.handle_existing_content == 0:
                     # Skip
                     logger.info(
-                        u"{} ({}) already exists. Skipping it.".format(
+                        "{} ({}) already exists. Skipping it.".format(
                             item["id"], item["@id"]
                         )
                     )
@@ -365,7 +407,7 @@ class ImportContent(BrowserView):
                 elif self.handle_existing_content == 1:
                     # Replace content before creating it new
                     logger.info(
-                        u"{} ({}) already exists. Replacing it.".format(
+                        "{} ({}) already exists. Replacing it.".format(
                             item["id"], item["@id"]
                         )
                     )
@@ -374,7 +416,7 @@ class ImportContent(BrowserView):
                 elif self.handle_existing_content == 2:
                     # Update existing item
                     logger.info(
-                        u"{} ({}) already exists. Updating it.".format(
+                        "{} ({}) already exists. Updating it.".format(
                             item["id"], item["@id"]
                         )
                     )
@@ -386,7 +428,7 @@ class ImportContent(BrowserView):
                     duplicate = item["id"]
                     item["id"] = "{}-{}".format(item["id"], random.randint(1000, 9999))
                     logger.info(
-                        u"{} ({}) already exists. Created as {}".format(
+                        "{} ({}) already exists. Created as {}".format(
                             duplicate, item["@id"], item["id"]
                         )
                     )
@@ -414,16 +456,17 @@ class ImportContent(BrowserView):
                 if self.commit and not len(added) % self.commit:
                     self.commit_hook(added, index)
             except Exception as e:
-                item_id = item['@id'].split('/')[-1]
+                item_id = item["@id"].split("/")[-1]
                 container.manage_delObjects(item_id)
                 logger.warning(e)
-                logger.warning("Didn't add %s %s", item["@type"], item["@id"], exc_info=True)
+                logger.warning(
+                    "Didn't add %s %s", item["@type"], item["@id"], exc_info=True
+                )
                 continue
 
         return added
 
     def handle_new_object(self, item, index, new):
-
         new, item = self.global_obj_hook_before_deserializing(new, item)
 
         # import using plone.restapi deserializers
@@ -432,13 +475,15 @@ class ImportContent(BrowserView):
             try:
                 new = deserializer(validate_all=False, data=item)
             except TypeError as error:
-                if 'unexpected keyword argument' in str(error):
+                if "unexpected keyword argument" in str(error):
                     self.request["BODY"] = json.dumps(item)
                     new = deserializer(validate_all=False)
                 else:
                     raise error
         except Exception:
-            logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
+            logger.warning(
+                "Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True
+            )
             raise
 
         # Blobs can be exported as only a path in the blob storage.
@@ -454,9 +499,7 @@ class ImportContent(BrowserView):
             # Happens only when we import content that doesn't have a UID
             # for instance when importing from non Plone systems.
             logger.info(
-                "Created new UID for item %s with type %s.",
-                item["@id"],
-                item["@type"]
+                "Created new UID for item %s with type %s.", item["@id"], item["@type"]
             )
             item["UID"] = uuid
 
@@ -482,9 +525,7 @@ class ImportContent(BrowserView):
             new.creation_date = creation_date
             new.aq_base.creation_date_migrated = creation_date
         logger.info(
-            "Created item #{}: {} {}".format(
-                index, item["@type"], new.absolute_url()
-            )
+            "Created item #{}: {} {}".format(index, item["@type"], new.absolute_url())
         )
         return new
 
@@ -546,7 +587,12 @@ class ImportContent(BrowserView):
             try:
                 new = deserializer(validate_all=False, data=version)
             except Exception:
-                logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
+                logger.warning(
+                    "Cannot deserialize %s %s",
+                    item["@type"],
+                    item["@id"],
+                    exc_info=True,
+                )
                 return
 
             self.save_revision(new, version, initial)
@@ -557,7 +603,9 @@ class ImportContent(BrowserView):
         try:
             new = deserializer(validate_all=False, data=item)
         except Exception:
-            logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
+            logger.warning(
+                "Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True
+            )
             return
 
         self.import_blob_paths(new, item)
@@ -619,7 +667,7 @@ class ImportContent(BrowserView):
         from plone.app.versioningbehavior import _ as PAV
 
         if initial:
-            comment = PAV(u"initial_version_changeNote", default=u"Initial version")
+            comment = PAV("initial_version_changeNote", default="Initial version")
         else:
             comment = item.get("changeNote")
         sys_metadata = {
@@ -726,15 +774,12 @@ class ImportContent(BrowserView):
             return
         constrains.setConstrainTypesMode(ENABLED)
 
-        locally_allowed_types = item["exportimport.constrains"][
-            "locally_allowed_types"
-        ]
+        locally_allowed_types = item["exportimport.constrains"]["locally_allowed_types"]
         try:
             constrains.setLocallyAllowedTypes(locally_allowed_types)
         except ValueError:
             logger.warning(
-                "Cannot setLocallyAllowedTypes on %s", item["@id"],
-                exc_info=True
+                "Cannot setLocallyAllowedTypes on %s", item["@id"], exc_info=True
             )
 
         immediately_addable_types = item["exportimport.constrains"][
@@ -744,8 +789,7 @@ class ImportContent(BrowserView):
             constrains.setImmediatelyAddableTypes(immediately_addable_types)
         except ValueError:
             logger.warning(
-                "Cannot setImmediatelyAddableTypes on %s", item["@id"],
-                exc_info=True
+                "Cannot setImmediatelyAddableTypes on %s", item["@id"], exc_info=True
             )
 
     def import_review_state(self, obj, item):
@@ -832,7 +876,7 @@ class ImportContent(BrowserView):
             container = api.content.get(path=container_path)
             if not container:
                 raise RuntimeError(
-                    u"Target folder {} for type {} is missing".format(
+                    "Target folder {} for type {} is missing".format(
                         container_path, item["@type"]
                     )
                 )
@@ -944,7 +988,9 @@ class ImportContent(BrowserView):
 
         # Handle folderish Documents provided by plone.volto
         fti = getUtility(IDexterityFTI, name="Document")
-        parent_type = "Document" if fti.klass.endswith("FolderishDocument") else "Folder"
+        parent_type = (
+            "Document" if fti.klass.endswith("FolderishDocument") else "Folder"
+        )
         # create original structure for imported content
         for element in parent_path:
             if element not in folder:
@@ -954,7 +1000,11 @@ class ImportContent(BrowserView):
                     id=element,
                     title=element,
                 )
-                logger.info(u"Created container %s to hold %s", folder.absolute_url(), item["@id"])
+                logger.info(
+                    "Created container %s to hold %s",
+                    folder.absolute_url(),
+                    item["@id"],
+                )
             else:
                 folder = folder[element]
 
@@ -989,16 +1039,18 @@ def fix_portal_type(portal_type):
 
 class ResetModifiedAndCreatedDate(BrowserView):
     def __call__(self):
-        self.title = _(u"Reset creation and modification date")
-        self.help_text = _("<p>Creation- and modification-dates are changed during import." \
-                         "This resets them to the original dates of the imported content.</p>")
+        self.title = _("Reset creation and modification date")
+        self.help_text = _(
+            "<p>Creation- and modification-dates are changed during import."
+            "This resets them to the original dates of the imported content.</p>"
+        )
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         portal = api.portal.get()
 
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=reset_dates)
-        msg = _(u"Finished resetting creation and modification dates.")
+        msg = _("Finished resetting creation and modification dates.")
         logger.info(msg)
         api.portal.show_message(msg, self.request)
         return self.index()
@@ -1020,12 +1072,16 @@ def reset_dates(obj, path):
 
 class FixCollectionQueries(BrowserView):
     def __call__(self):
-        self.title = _(u"Fix collection queries")
-        self.help_text = _(u"""<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>""")
+        self.title = _("Fix collection queries")
+        self.help_text = _(
+            """<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>"""
+        )
 
         if not HAS_COLLECTION_FIX:
             api.portal.show_message(
-                _(u"plone.app.querystring.upgrades.fix_select_all_existing_collections is not available"),
+                _(
+                    "plone.app.querystring.upgrades.fix_select_all_existing_collections is not available"
+                ),
                 self.request,
             )
             return self.index()
