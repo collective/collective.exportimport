@@ -182,7 +182,7 @@ class ExportContent(BrowserView):
         content_generator = self.export_content()
 
         number = 0
-        if download_to_server:
+        if download_to_server == 1:
             directory = config.CENTRAL_DIRECTORY
             if directory:
                 if not os.path.exists(directory):
