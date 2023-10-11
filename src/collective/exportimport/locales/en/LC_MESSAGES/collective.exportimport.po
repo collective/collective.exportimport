@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2023-10-10 17:09+0000\n"
+"POT-Creation-Date: 2023-10-11 20:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI +ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -13,6 +13,10 @@ msgstr ""
 "Language-Name: English\n"
 "Preferred-Encodings: utf-8 latin1\n"
 "Domain: DOMAIN\n"
+
+#: ../templates/import_content.pt:75
+msgid "# Elements"
+msgstr ""
 
 #: ../import_content.py:1014
 msgid "<p>Creation- and modification-dates are changed during import.This resets them to the original dates of the imported content.</p>"
@@ -30,7 +34,7 @@ msgstr ""
 msgid "Changed {} default pages"
 msgstr ""
 
-#: ../templates/export_content.pt:146
+#: ../templates/export_content.pt:154
 msgid "Checking this box puts a list of object paths at the end of the export file that failed to export."
 msgstr ""
 
@@ -46,7 +50,7 @@ msgstr ""
 msgid "Created {} portlets"
 msgstr ""
 
-#: ../templates/export_content.pt:71
+#: ../templates/export_content.pt:77
 msgid "Depth"
 msgstr ""
 
@@ -54,7 +58,7 @@ msgstr ""
 msgid "Do a commit after each number of items"
 msgstr ""
 
-#: ../templates/export_content.pt:155
+#: ../templates/export_content.pt:162
 #: ../templates/export_other.pt:19
 msgid "Download to local machine"
 msgstr ""
@@ -63,7 +67,7 @@ msgstr ""
 msgid "Exception during upload: {}"
 msgstr ""
 
-#: ../templates/export_content.pt:177
+#: ../templates/export_content.pt:184
 #: ../templates/export_other.pt:32
 msgid "Export"
 msgstr ""
@@ -132,7 +136,7 @@ msgstr ""
 msgid "Exported {} items ({}) as {} to {} with {} errors"
 msgstr ""
 
-#: ../export_content.py:239
+#: ../export_content.py:261
 msgid "Exported {} {} with {} errors"
 msgstr ""
 
@@ -178,7 +182,7 @@ msgstr ""
 msgid "Fixed HTML for {} portlets"
 msgstr ""
 
-#: ../templates/export_content.pt:167
+#: ../templates/export_content.pt:174
 msgid "Generate a file for each item (as filesytem tree)"
 msgstr ""
 
@@ -208,11 +212,11 @@ msgstr ""
 msgid "Here you can upload a json-file."
 msgstr ""
 
-#: ../templates/import_content.pt:56
+#: ../templates/import_content.pt:66
 msgid "How should content be handled that exists with the same id/path?"
 msgstr ""
 
-#: ../templates/export_content.pt:88
+#: ../templates/export_content.pt:105
 msgid "How should data from image- and file-fields be included?"
 msgstr ""
 
@@ -220,7 +224,7 @@ msgstr ""
 msgid "Ignore: Create with a new id"
 msgstr ""
 
-#: ../templates/import_content.pt:109
+#: ../templates/import_content.pt:110
 #: ../templates/import_defaultpages.pt:20
 #: ../templates/import_discussion.pt:20
 msgid "Import"
@@ -258,11 +262,11 @@ msgstr ""
 msgid "Import Relations"
 msgstr ""
 
-#: ../templates/import_content.pt:88
+#: ../templates/import_content.pt:89
 msgid "Import all items into the current folder"
 msgstr ""
 
-#: ../templates/import_content.pt:100
+#: ../templates/import_content.pt:101
 msgid "Import all old revisions"
 msgstr ""
 
@@ -328,15 +332,15 @@ msgstr ""
 msgid "Imports"
 msgstr ""
 
-#: ../templates/export_content.pt:87
+#: ../templates/export_content.pt:94
 msgid "Include blobs"
 msgstr ""
 
-#: ../templates/export_content.pt:129
+#: ../templates/export_content.pt:136
 msgid "Include revisions."
 msgstr ""
 
-#: ../templates/export_content.pt:113
+#: ../templates/export_content.pt:120
 msgid "Modify exported data for migrations."
 msgstr ""
 
@@ -352,7 +356,7 @@ msgstr ""
 msgid "No files found."
 msgstr ""
 
-#: ../templates/export_content.pt:63
+#: ../templates/export_content.pt:69
 msgid "Path"
 msgstr ""
 
@@ -372,12 +376,12 @@ msgstr ""
 msgid "Reset creation and modification date"
 msgstr ""
 
-#: ../templates/export_content.pt:161
+#: ../templates/export_content.pt:168
 #: ../templates/export_other.pt:25
 msgid "Save to file on server"
 msgstr ""
 
-#: ../templates/export_content.pt:24
+#: ../templates/export_content.pt:25
 msgid "Select all/none"
 msgstr ""
 
@@ -393,15 +397,15 @@ msgstr ""
 msgid "Skip: Don't import at all"
 msgstr ""
 
-#: ../templates/export_content.pt:130
+#: ../templates/export_content.pt:138
 msgid "This exports the content-history (versioning) of each exported item. Warning: This can significantly slow down the export!"
 msgstr ""
 
-#: ../templates/import_content.pt:101
+#: ../templates/import_content.pt:103
 msgid "This will import the content-history (versioning) for each item that has revisions. Warning: This can significantly slow down the import!"
 msgstr ""
 
-#: ../templates/export_content.pt:72
+#: ../templates/export_content.pt:88
 msgid "Unlimited: this item and all children, 0: this object only, 1: only direct children of this object, 2-x: children of this object up to the specified level"
 msgstr ""
 
@@ -409,11 +413,11 @@ msgstr ""
 msgid "Update: Reuse and only overwrite imported data"
 msgstr ""
 
-#: ../templates/export_content.pt:114
+#: ../templates/export_content.pt:122
 msgid "Use this if you want to import the data in a newer version of Plone or migrate from Archetypes to Dexterity. Read the documentation to learn which changes are made by this option."
 msgstr ""
 
-#: ../templates/export_content.pt:145
+#: ../templates/export_content.pt:152
 msgid "Write out Errors to file."
 msgstr ""
 
@@ -433,7 +437,7 @@ msgstr ""
 msgid "as download urls"
 msgstr ""
 
-#: ../templates/export_content.pt:177
+#: ../templates/export_content.pt:184
 msgid "export"
 msgstr ""
 
@@ -442,7 +446,7 @@ msgid "json file was uploaded, so the selected server file was ignored."
 msgstr ""
 
 #. Default: "Toggle all"
-#: ../templates/export_content.pt:22
+#: ../templates/export_content.pt:23
 msgid "label_toggle"
 msgstr ""
 
