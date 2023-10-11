@@ -14,7 +14,7 @@
 
         <form action="." tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
             <div class="form-group">
-                <input type="file" name="jsonfile"/><br/>
+                <input class="form-control" type="file" name="jsonfile"/><br/>
             </div>
 
             <tal:block define="server_files view/server_files">
@@ -24,9 +24,9 @@
               </ul>
               <p tal:condition="not:server_files" i18n:translate="">No files found.</p>
               <div class="field mb-3" tal:condition="server_files">
-                <label for="server_file" i18n:translate="">File on server to import:</label>
+                <label class="form-label" for="server_file" i18n:translate="">File on server to import:</label>
                 <br />
-                <select id="server_file" name="server_file">
+                <select class="form-select" id="server_file" name="server_file">
                   <option selected="" value="" title="" i18n:translate="">Choose one</option>
                   <option tal:repeat="filename server_files" tal:content="filename" tal:attributes="value filename">
                   </option>
@@ -41,9 +41,9 @@
               </ul>
               <p tal:condition="not:server_files" i18n:translate="">No files found.</p>
               <div class="field mb-3" tal:condition="server_files">
-                <label for="server_file" i18n:translate="">File on server to import:</label>
+                <label class="form-label" for="server_file" i18n:translate="">File on server to import:</label>
                 <br />
-                <select id="server_tree_file" name="server_tree_file">
+                <select class="form-select" id="server_tree_file" name="server_tree_file">
                   <option selected="" value="" title="" i18n:translate="">Choose one</option>
                   <option tal:repeat="filename server_files" tal:content="filename" tal:attributes="value filename">
                   </option>
@@ -52,12 +52,9 @@
             </tal:block>
 
             <div class="field mb-3">
-              <label for="include_blobs" i18n:translate="">Handle existing content</label>
-              <span class="formHelp" i18n:translate="">
-                  How should content be handled that exists with the same id/path?
-              </span>
+              <label class="form-label" for="include_blobs" i18n:translate="">Handle existing content</label>
               <div class="widget">
-                <select name="handle_existing_content" class="">
+                <select class="form-select" name="handle_existing_content" class="">
                   <option value="0"
                           tal:repeat="current python:view.handle_existing_content_options"
                           tal:attributes="value python: current[0];
@@ -66,42 +63,46 @@
                         0
                   </option>
                 </select>
+                <div class="formHelp form-text" i18n:translate="">
+                  How should content be handled that exists with the same id/path?
+                </div>
               </div>
             </div>
 
             <div class="field mb-3">
-              <label for="commit" i18n:translate="">Do a commit after each number of items</label>
-              <div class="widget">
-                <input type="text" size="5" name="commit" id="commit" value=""
+              <label class="form-label" for="commit" i18n:translate="">Do a commit after each number of items</label>
+              <div class="widget input-group">
+                <span class="input-group-text" id="number-transactions" i18n:translate=""># Elements</span>
+                <input class="form-control" type="text" size="5" name="commit" id="commit" value=""
                        tal:attributes="value python:view.commit">
               </div>
             </div>
 
-            <div class="field">
-              <label>
-                <input
-                    type="checkbox"
-                    name="import_to_current_folder:boolean"
-                    id="import_to_current_folder"
-                    tal:attributes="checked python:'checked' if view.import_to_current_folder else None"
-                    />
+            <div class="field form-check form-switch">
+              <label class="form-check-label" >
+                <input class="form-check-input"
+                      type="checkbox"
+                      name="import_to_current_folder:boolean"
+                      id="import_to_current_folder"
+                      tal:attributes="checked python:'checked' if view.import_to_current_folder else None"
+                      />
                 <span i18n:translate="">Import all items into the current folder</span>
               </label>
             </div>
 
-            <div class="field">
-              <label>
-                <input
+            <div class="field form-check form-switch">
+              <label class="form-check-label" >
+                <input class="form-check-input"
                     type="checkbox"
                     name="import_old_revisions:boolean"
                     id="import_old_revisions"
                     tal:attributes="checked python:'checked' if view.import_old_revisions else None"
                     />
                 <span i18n:translate="">Import all old revisions</span>
-                <span class="formHelp" i18n:translate="">
-                  This will import the content-history (versioning) for each item that has revisions. Warning: This can significantly slow down the import!
-                </span>
               </label>
+              <div class="formHelp form-text" i18n:translate="">
+                This will import the content-history (versioning) for each item that has revisions. Warning: This can significantly slow down the import!
+              </div>
             </div>
 
             <div class="formControls" class="form-group">
