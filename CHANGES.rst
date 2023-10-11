@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.10 (unreleased)
+1.10 (2023-10-11)
 -----------------
 
 - Don't re-use `mapping` variable when migrating portlet data.
