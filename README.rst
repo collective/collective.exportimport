@@ -90,12 +90,12 @@ Export- and import locations
 
 If you select 'Save to file on server', the Export view will save json files in the <var> directory of your Plone instanc in /var/instance.
 The import view will look for  files under /var/instance/import.
-These directories will normally be different, under different Plone instances and possibly on different servers. 
+These directories will normally be different, under different Plone instances and possibly on different servers.
 
 You can set the environment variable 'COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY' to add a 'shared' directory on one server or maybe network share.
-With this variable set, collective.exportimport will both save to and load .json files from the same server directory. 
+With this variable set, collective.exportimport will both save to and load .json files from the same server directory.
 This saves time not having to move .json files around from the export- to the import location.
-You should be aware that the Export views will overwrite any existing previous .json file export that have the same name. 
+You should be aware that the Export views will overwrite any existing previous .json file export that have the same name.
 
 
 Use-cases
@@ -234,6 +234,17 @@ The best way depends on how you are going to import the blobs:
 - Export as base-64 encoded strings: large download, but ``collective.exportimport`` can handle the import.
 - Export as blob paths: small download and ``collective.exportimport`` can handle the import, but you need to copy ``var/blobstorage`` to the Plone Site where you do the import or set the environment variable ``COLLECTIVE_EXPORTIMPORT_BLOB_HOME`` to the old blobstorage path: ``export COLLECTIVE_EXPORTIMPORT_BLOB_HOME=/path-to-old-instance/var/blobstorage``.
   To export the blob-path you do not need to have access to the blobs!
+
+
+Format of export and import of content
+======================================
+
+By default all content is exported to and imported from one large json-file.
+To inspect such very large json-files without performance-issues you can use klogg (https://klogg.filimonov.dev).
+
+Since version 1.10 collective.exportimport also supports exporting and importing each content item as a separate json-file.
+To use that select *Save each item as a separate file on the server* in the form or specify ``download_to_server=2`` when calling the export in python.
+In the import-form you can manually select a directory on the server or specify ``server_directory="/mydir"`` when calling the import in python.
 
 
 Customize export and import
