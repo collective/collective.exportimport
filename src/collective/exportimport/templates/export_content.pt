@@ -162,6 +162,12 @@
                   Save to file on server
                 </label>
               </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="download_to_server:int" value="2" id="separate_files">
+                <label for="separate_files" class="form-check-label" i18n:translate="">
+                  Save each item as a separate file on the server
+                </label>
+              </div>
             </div>
 
 
