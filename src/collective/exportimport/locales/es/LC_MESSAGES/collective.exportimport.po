@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: collective.exportimport\n"
-"POT-Creation-Date: 2023-10-11 20:23+0000\n"
+"POT-Creation-Date: 2023-10-12 17:06+0000\n"
 "PO-Revision-Date: 2023-02-16 22:41-0400\n"
 "Last-Translator: Leonardo J. Caballero G. <leonardocaballero@gmail.com>\n"
 "Language-Team: ES <LL@li.org>\n"
@@ -18,15 +18,15 @@ msgstr ""
 "X-Generator: Virtaal 0.7.1\n"
 "X-Is-Fallback-For: es-ar es-bo es-cl es-co es-cr es-do es-ec es-es es-sv es-gt es-hn es-mx es-ni es-pa es-py es-pe es-pr es-us es-uy es-ve\n"
 
-#: ../templates/import_content.pt:75
+#: ../templates/import_content.pt:99
 msgid "# Elements"
 msgstr "Nº elementos"
 
-#: ../import_content.py:1014
+#: ../import_content.py:1066
 msgid "<p>Creation- and modification-dates are changed during import.This resets them to the original dates of the imported content.</p>"
 msgstr "<p>Las fechas de creación y modificación se cambian durante la importación. Esto las restablece a las fechas originales del contenido importado.</p>"
 
-#: ../import_content.py:1045
+#: ../import_content.py:1097
 msgid "<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>"
 msgstr "<p>Esto corrige los criterios de recopilación no válidos que se importaron de Plone 4 o 5.</p>"
 
@@ -42,7 +42,7 @@ msgstr "Se cambiaron {} páginas predeterminadas"
 msgid "Checking this box puts a list of object paths at the end of the export file that failed to export."
 msgstr "Seleccionar esta opción pone una lista de rutas, de objetos cuya exportación falló, al final del archivo de exportación"
 
-#: ../templates/import_content.pt:30
+#: ../templates/import_content.pt:33
 msgid "Choose one"
 msgstr "Elige uno"
 
@@ -58,7 +58,11 @@ msgstr "Creados {} portlets"
 msgid "Depth"
 msgstr "Profundidad"
 
-#: ../templates/import_content.pt:73
+#: ../templates/import_content.pt:46
+msgid "Directory on server to import:"
+msgstr "Directorio del servidor desde el que importar"
+
+#: ../templates/import_content.pt:97
 msgid "Do a commit after each number of items"
 msgstr "Haz una confirmación después de cada número de elementos"
 
@@ -67,11 +71,11 @@ msgstr "Haz una confirmación después de cada número de elementos"
 msgid "Download to local machine"
 msgstr "Descargar a la máquina local"
 
-#: ../import_content.py:182
+#: ../import_content.py:213
 msgid "Exception during upload: {}"
 msgstr "Excepción durante la carga: {}"
 
-#: ../templates/export_content.pt:184
+#: ../templates/export_content.pt:190
 #: ../templates/export_other.pt:32
 msgid "Export"
 msgstr "Exportar"
@@ -136,11 +140,15 @@ msgstr "Exportar traducciones"
 msgid "Exported to {}"
 msgstr "Exportado a {}"
 
-#: ../export_content.py:209
+#: ../export_content.py:243
 msgid "Exported {} items ({}) as {} to {} with {} errors"
 msgstr "Exportados {} elementos ({}) como {} a {} con {} errores"
 
-#: ../export_content.py:261
+#: ../export_content.py:213
+msgid "Exported {} items ({}) to {} with {} errors"
+msgstr "Exportados {} elementos ({}) en {} con {} errores"
+
+#: ../export_content.py:303
 msgid "Exported {} {} with {} errors"
 msgstr "Exportado {} {} con {} errores"
 
@@ -152,23 +160,23 @@ msgstr "Exportaciones"
 msgid "Failure while uploading: {}"
 msgstr "Error al cargar: {}"
 
-#: ../import_content.py:163
+#: ../import_content.py:194
 msgid "File '{}' not found on server."
 msgstr "Archivo '{}' no encontrado en el servidor."
 
-#: ../templates/import_content.pt:27
+#: ../templates/import_content.pt:30
 msgid "File on server to import:"
 msgstr "Archivo en el servidor para importar:"
 
-#: ../import_content.py:1059
+#: ../import_content.py:1111
 msgid "Finished fixing collection queries."
 msgstr "Se terminaron de arreglar las consultas de colección."
 
-#: ../import_content.py:1022
+#: ../import_content.py:1074
 msgid "Finished resetting creation and modification dates."
 msgstr "Finalizó el restablecimiento de las fechas de creación y modificación."
 
-#: ../import_content.py:1044
+#: ../import_content.py:1096
 #: ../templates/links.pt:97
 msgid "Fix collection queries"
 msgstr "Arreglar consultas de colección"
@@ -186,11 +194,11 @@ msgstr "HTML corregido para {} campos en elementos de contenido"
 msgid "Fixed HTML for {} portlets"
 msgstr "HTML corregido para {} portlets"
 
-#: ../templates/export_content.pt:174
+#: ../templates/export_content.pt:180
 msgid "Generate a file for each item (as filesytem tree)"
 msgstr "Generar un archivo por cada elemento (exportación jerárquica en el sistema de archivos)"
 
-#: ../templates/import_content.pt:55
+#: ../templates/import_content.pt:79
 msgid "Handle existing content"
 msgstr "Manejar el contenido existente"
 
@@ -210,13 +218,13 @@ msgstr "Aquí hay un ejemplo para el formato esperado. Este es el formato creado
 msgid "Here is an example for the expected format. This is the format created by collective.exportimport when used for export."
 msgstr "Aquí hay un ejemplo para el formato esperado. Este es el formato creado por el collective.exportimport cuando se utiliza para la exportación."
 
-#: ../templates/import_content.pt:13
+#: ../templates/import_content.pt:15
 #: ../templates/import_defaultpages.pt:13
 #: ../templates/import_discussion.pt:13
 msgid "Here you can upload a json-file."
 msgstr "Aquí puede cargar un archivo json."
 
-#: ../templates/import_content.pt:66
+#: ../templates/import_content.pt:90
 msgid "How should content be handled that exists with the same id/path?"
 msgstr "¿Cómo se debe manejar el contenido que existe con el mismo id/path?"
 
@@ -224,11 +232,11 @@ msgstr "¿Cómo se debe manejar el contenido que existe con el mismo id/path?"
 msgid "How should data from image- and file-fields be included?"
 msgstr "¿Cómo se deben incluir los datos de los campos de imagen y archivo?"
 
-#: ../import_content.py:130
+#: ../import_content.py:161
 msgid "Ignore: Create with a new id"
 msgstr "Ignorar: Crear con un nuevo id"
 
-#: ../templates/import_content.pt:110
+#: ../templates/import_content.pt:134
 #: ../templates/import_defaultpages.pt:20
 #: ../templates/import_discussion.pt:20
 msgid "Import"
@@ -266,11 +274,11 @@ msgstr "Importar redireccionamientos"
 msgid "Import Relations"
 msgstr "Importar relaciones"
 
-#: ../templates/import_content.pt:89
+#: ../templates/import_content.pt:113
 msgid "Import all items into the current folder"
 msgstr "Importar todos los elementos a la carpeta actual"
 
-#: ../templates/import_content.pt:101
+#: ../templates/import_content.pt:125
 msgid "Import all old revisions"
 msgstr "Importar todas las revisiones antiguas"
 
@@ -356,9 +364,17 @@ msgstr "Se necesita más código si tiene otro caso de uso."
 msgid "No data to export for {}"
 msgstr "No hay datos para exportar {}"
 
-#: ../templates/import_content.pt:25
-msgid "No files found."
-msgstr "No se encontraron archivos."
+#: ../templates/import_content.pt:44
+msgid "No directories to import from found."
+msgstr "No se han encontrado directorios desde los que importar."
+
+#: ../templates/import_content.pt:28
+msgid "No json-files found."
+msgstr "No se han encontrado archivos json."
+
+#: ../templates/import_content.pt:77
+msgid "Options"
+msgstr "Opciones"
 
 #: ../templates/export_content.pt:69
 msgid "Path"
@@ -368,7 +384,7 @@ msgstr "Ruta"
 msgid "Redirects imported"
 msgstr "Redirecciones importadas"
 
-#: ../import_content.py:128
+#: ../import_content.py:159
 msgid "Replace: Delete item and create new"
 msgstr "Reemplazar: Eliminar elemento y crear nuevo"
 
@@ -376,9 +392,13 @@ msgstr "Reemplazar: Eliminar elemento y crear nuevo"
 msgid "Reset created and modified dates"
 msgstr "Restablecer fechas de creación y modificación"
 
-#: ../import_content.py:1013
+#: ../import_content.py:1065
 msgid "Reset creation and modification date"
 msgstr "Restablecer fecha de creación y modificación"
+
+#: ../templates/export_content.pt:174
+msgid "Save each item as a separate file on the server"
+msgstr "Guardar, en el servidor, cada elemento en un archivo json independiente"
 
 #: ../templates/export_content.pt:168
 #: ../templates/export_other.pt:25
@@ -397,7 +417,7 @@ msgstr "Seleccione al menos un tipo para exportar"
 msgid "Select which content to export as a json-file."
 msgstr "Seleccione qué contenido exportar como un archivo json."
 
-#: ../import_content.py:127
+#: ../import_content.py:158
 msgid "Skip: Don't import at all"
 msgstr "Omitir: no importar en absoluto"
 
@@ -405,7 +425,7 @@ msgstr "Omitir: no importar en absoluto"
 msgid "This exports the content-history (versioning) of each exported item. Warning: This can significantly slow down the export!"
 msgstr "Esto exporta el historial de contenido (versiones) de cada elemento exportado. Advertencia: ¡Esto puede ralentizar significativamente la exportación!"
 
-#: ../templates/import_content.pt:103
+#: ../templates/import_content.pt:127
 msgid "This will import the content-history (versioning) for each item that has revisions. Warning: This can significantly slow down the import!"
 msgstr "Esto importará el historial de contenido (versiones) para cada elemento que tenga revisiones. Advertencia: ¡Esto puede ralentizar significativamente la importación!"
 
@@ -413,7 +433,7 @@ msgstr "Esto importará el historial de contenido (versiones) para cada elemento
 msgid "Unlimited: this item and all children, 0: this object only, 1: only direct children of this object, 2-x: children of this object up to the specified level"
 msgstr "Ilimitado: este elemento y todos los elementos secundarios, 0: solo este objeto, 1: solo elementos secundarios directos de este objeto, 2-x: elementos secundarios de este objeto hasta el nivel especificado"
 
-#: ../import_content.py:129
+#: ../import_content.py:160
 msgid "Update: Reuse and only overwrite imported data"
 msgstr "Actualizar: reutilizar y solo sobrescribir datos importados"
 
@@ -424,6 +444,10 @@ msgstr "Use esto si desea importar los datos en una versión más nueva de Plone
 #: ../templates/export_content.pt:152
 msgid "Write out Errors to file."
 msgstr "Escribir los errores en el fichero."
+
+#: ../templates/import_content.pt:21
+msgid "You can also select a json-file or a directory holding json-files on the server in the following locations:"
+msgstr "Puede seleccionar un archivo json o un directorio que contenga los archivos json independientes entre las siguientes ubicaciones:"
 
 #: ../import_other.py:289
 msgid "You need either Plone 6 or collective.relationhelpers to import relations"
@@ -441,11 +465,11 @@ msgstr "como rutas de blob"
 msgid "as download urls"
 msgstr "como urls de descarga"
 
-#: ../templates/export_content.pt:184
+#: ../templates/export_content.pt:190
 msgid "export"
 msgstr "exportar"
 
-#: ../import_content.py:146
+#: ../import_content.py:177
 msgid "json file was uploaded, so the selected server file was ignored."
 msgstr "archivo json se cargó, por lo que se ignoró el archivo del servidor seleccionado."
 
@@ -454,14 +478,24 @@ msgstr "archivo json se cargó, por lo que se ignoró el archivo del servidor se
 msgid "label_toggle"
 msgstr "Alternar todo"
 
-#: ../import_content.py:1049
+#: ../import_content.py:1101
 msgid "plone.app.querystring.upgrades.fix_select_all_existing_collections is not available"
 msgstr "plone.app.querystring.upgrades.fix_select_all_existing_collections no está disponible"
 
-#. Default: "Or you can choose a file that is already uploaded on the server in one of these paths:"
-#: ../templates/import_content.pt:21
+#. Default: "Import from a json-file"
+#: ../templates/import_content.pt:27
 msgid "server_paths_list"
 msgstr "O puede elegir un archivo que ya está cargado en el servidor en una de estas rutas:"
+
+#. Default: "Or you can choose from a tree export in the server in one of these paths:"
+#: ../templates/import_content.pt:59
+msgid "server_paths_list_hierarchical"
+msgstr "O puede elegir desde que exportación jerárquica del servidor entre una de estas rutas:"
+
+#. Default: "Import from a directory that holds individual json-files per item:"
+#: ../templates/import_content.pt:43
+msgid "server_paths_list_per_json_file"
+msgstr "Importar desde un directorio que contiene archivos json únicos por elemento."
 
 #: ../export_content.py:126
 msgid "unlimited"
