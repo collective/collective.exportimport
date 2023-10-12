@@ -10,14 +10,15 @@
 
       <h1 class="documentFirstHeading" i18n:translate="">Import Content</h1>
 
-      <p class="documentDescription" i18n:translate="">Here you can upload a json-file.</p>
-
         <form action="." tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
+          <fieldset class="mb-4">
+            <legend class="h5 border-bottom pb-1" i18n:translate="">Here you can upload a json-file.</legend>
             <div class="form-group">
-                <input class="form-control" type="file" name="jsonfile"/><br/>
+              <input class="form-control" type="file" name="jsonfile"/><br/>
             </div>
-
-            <p>You can also select a json-file or a directory holding json-files on the server in the following locations:</p>
+          </fieldset>
+          <fieldset class="mb-4">
+            <legend class="h5 border-bottom pb-1" i18n:translate="">You can also select a json-file or a directory holding json-files on the server in the following locations:</legend>
             <ul>
               <li tal:repeat="path view/import_paths"><code tal:content="path" /></li>
             </ul>
@@ -35,27 +36,12 @@
                 </select>
               </div>
             </tal:block>
+          </fieldset>
 
-            <tal:block define="server_files view/import_tree_parts">
-              <p i18n:translate="server_paths_list">Or you can choose from a tree export in the server in one of these paths:</p>
-              <ul>
-                <li tal:repeat="path view/import_tree_parts"><code tal:content="path" /></li>
-              </ul>
-              <p tal:condition="not:server_files" i18n:translate="">No files found.</p>
-              <div class="field mb-3" tal:condition="server_files">
-                <label class="form-label" for="server_file" i18n:translate="">File on server to import:</label>
-                <br />
-                <select class="form-select" id="server_tree_file" name="server_tree_file">
-                  <option selected="" value="" title="" i18n:translate="">Choose one</option>
-                  <option tal:repeat="filename server_files" tal:content="filename" tal:attributes="value filename">
-                  </option>
-                </select>
-              </div>
-            </tal:block>
-
+          <fieldset class="mb-4">
             <tal:block define="server_directories view/server_directories">
-              <p i18n:translate="server_paths_list">Import from a directory that holds individual json-files per item:</p>
-              <p tal:condition="not:server_directories" i18n:translate="">No directories to import from found.</p>
+              <legend class="h5 border-bottom pb-1" i18n:translate="server_paths_list_per_json_file">Import from a directory that holds individual json-files per item:</legend>
+              <p class="alert alert-danger" tal:condition="not:server_directories" i18n:translate="">No directories to import from found.</p>
               <div class="field mb-3" tal:condition="server_directories">
                 <label for="server_directory" i18n:translate="">Directory on server to import:</label>
                 <br />
@@ -66,7 +52,29 @@
                 </select>
               </div>
             </tal:block>
+          </fieldset>
 
+          <fieldset class="mb-4">
+            <tal:block define="server_files view/import_tree_parts">
+              <legend class="h5 border-bottom pb-1" i18n:translate="server_paths_list_hierarchical">Or you can choose from a tree export in the server in one of these paths:</legend>
+              <ul>
+                <li tal:repeat="path view/import_tree_parts"><code tal:content="path" /></li>
+              </ul>
+              <p class="alert alert-danger" tal:condition="not:server_files" i18n:translate="">No directories to import from found.</p>
+              <div class="field mb-3" tal:condition="server_files">
+                <label class="form-label" for="server_file" i18n:translate="">File on server to import:</label>
+                <br />
+                <select class="form-select" id="server_tree_file" name="server_tree_file">
+                  <option selected="" value="" title="" i18n:translate="">Choose one</option>
+                  <option tal:repeat="filename server_files" tal:content="filename" tal:attributes="value filename">
+                  </option>
+                </select>
+              </div>
+            </tal:block>
+          </fieldset>
+
+          <fieldset class="mb-4">
+            <legend class="h5 border-bottom pb-1" i18n:translate="">Options</legend>
             <div class="field mb-3">
               <label class="form-label" for="include_blobs" i18n:translate="">Handle existing content</label>
               <div class="widget">
@@ -120,13 +128,13 @@
                 This will import the content-history (versioning) for each item that has revisions. Warning: This can significantly slow down the import!
               </div>
             </div>
-
-            <div class="formControls" class="form-group">
-                <input type="hidden" name="form.submitted" value="1"/>
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="submit" value="Import" i18n:attributes="value" i18n:translate="">Import
-                </button>
-            </div>
+          </fieldset>
+          <div class="formControls" class="form-group">
+              <input type="hidden" name="form.submitted" value="1"/>
+              <button class="btn btn-primary submit-widget button-field context"
+                      type="submit" name="submit" value="Import" i18n:attributes="value" i18n:translate="">Import
+              </button>
+          </div>
 
         </form>
 
