@@ -45,6 +45,11 @@ try:
 except ImportError:
     HAS_COLLECTION_FIX = False
 
+if six.PY2:
+    from pathlib2 import Path
+else:
+    from pathlib import Path
+
 logger = logging.getLogger(__name__)
 BLOB_HOME = os.getenv("COLLECTIVE_EXPORTIMPORT_BLOB_HOME", "")
 
@@ -73,6 +78,31 @@ def get_absolute_blob_path(obj, blob_path):
     abs_path = os.path.join(fshelper.base_dir, blob_path)
     if os.path.isfile(abs_path):
         return abs_path
+
+
+def filesystem_walker(path=None):
+    root = Path(path)
+    assert(root.is_dir())
+
+    # first import json-files directly in the path
+    json_files = [i for i in root.glob("*.json") if i.stem.isdecimal()]
+    for json_file in sorted(json_files, key=lambda i: int(i.stem)):
+        logger.debug("Importing %s", json_file)
+        item = json.loads(json_file.read_text())
+        item["json_file"] = str(json_file)
+        if item:
+            yield item
+
+    # then import json-files of any containing folders
+    folders = [i for i in root.iterdir() if i.is_dir() and i.name.isdecimal()]
+    for folder in sorted(folders, key=lambda i: int(i.name)):
+        json_files = [i for i in folder.glob("*.json") if i.stem.isdecimal()]
+        for json_file in sorted(json_files, key=lambda i: int(i.stem)):
+            logger.debug("Importing %s", json_file)
+            item = json.loads(json_file.read_text())
+            item["json_file"] = str(json_file)
+            if item:
+                yield item
 
 
 class ImportContent(BrowserView):
@@ -115,7 +145,8 @@ class ImportContent(BrowserView):
         limit=None,
         server_file=None,
         server_tree_file=None,
-        iterator=None
+        iterator=None,
+        server_directory=False,
     ):
         request = self.request
         self.limit = limit
@@ -195,6 +226,11 @@ class ImportContent(BrowserView):
             msg = self.do_import(iterator)
             api.portal.show_message(msg, self.request)
 
+        if server_directory:
+            self.start()
+            msg = self.do_import(filesystem_walker(server_directory))
+            api.portal.show_message(msg, self.request)
+
         if server_tree_file and not server_file and not jsonfile:
             msg = self.do_import(
                 FileSystemContentImporter(server_tree_file).get_hierarchical_files()
@@ -248,6 +284,22 @@ class ImportContent(BrowserView):
                 f
                 for f in os.listdir(directory)
                 if f.endswith(".json") and f not in listing
+            ]
+        listing.sort()
+        return listing
+
+    @property
+    def server_directories(self):
+        # Adapted from ObjectManager.list_imports, which lists zexps.
+        listing = []
+        for directory in self.import_paths:
+            if not os.path.isdir(directory):
+                continue
+            # import pdb; pdb.set_trace()
+            listing += [
+                os.path.join(directory, f)
+                for f in os.listdir(directory)
+                if os.path.isdir(os.path.join(directory, f)) and f not in listing
             ]
         listing.sort()
         return listing

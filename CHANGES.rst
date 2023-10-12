@@ -2,18 +2,30 @@ Changelog
 =========
 
 
-1.10 (unreleased)
+1.11 (unreleased)
+-----------------
+
+- Nothing changed yet.
+
+
+1.10 (2023-10-11)
 -----------------
 
 - Don't re-use `mapping` variable when migrating portlet data.
   [witsch]
+
 - Fix editing revision author - refs #216
   [avoinea]
 
 - Better support for portal import which avoids parsing JSON twice.
   [gotcha]
+
 - Migrate portlets on site root.
   [ThibautBorn]
+
+- Support export & import to have one separate json-file per content item.
+  [pbauer]
+
 
 1.9 (2023-05-18)
 ----------------

@@ -17,12 +17,14 @@
                 <input class="form-control" type="file" name="jsonfile"/><br/>
             </div>
 
+            <p>You can also select a json-file or a directory holding json-files on the server in the following locations:</p>
+            <ul>
+              <li tal:repeat="path view/import_paths"><code tal:content="path" /></li>
+            </ul>
+
             <tal:block define="server_files view/server_files">
-              <p i18n:translate="server_paths_list">Or you can choose a file that is already uploaded on the server in one of these paths:</p>
-              <ul>
-                <li tal:repeat="path view/import_paths"><code tal:content="path" /></li>
-              </ul>
-              <p tal:condition="not:server_files" i18n:translate="">No files found.</p>
+              <p i18n:translate="server_paths_list">Import from a json-file</p>
+              <p tal:condition="not:server_files" i18n:translate="">No json-files found.</p>
               <div class="field mb-3" tal:condition="server_files">
                 <label class="form-label" for="server_file" i18n:translate="">File on server to import:</label>
                 <br />
@@ -46,6 +48,20 @@
                 <select class="form-select" id="server_tree_file" name="server_tree_file">
                   <option selected="" value="" title="" i18n:translate="">Choose one</option>
                   <option tal:repeat="filename server_files" tal:content="filename" tal:attributes="value filename">
+                  </option>
+                </select>
+              </div>
+            </tal:block>
+
+            <tal:block define="server_directories view/server_directories">
+              <p i18n:translate="server_paths_list">Import from a directory that holds individual json-files per item:</p>
+              <p tal:condition="not:server_directories" i18n:translate="">No directories to import from found.</p>
+              <div class="field mb-3" tal:condition="server_directories">
+                <label for="server_directory" i18n:translate="">Directory on server to import:</label>
+                <br />
+                <select id="server_directory" name="server_directory">
+                  <option selected="" value="" title="" i18n:translate="">Choose one</option>
+                  <option tal:repeat="directoryname server_directories" tal:content="directoryname" tal:attributes="value directoryname">
                   </option>
                 </select>
               </div>

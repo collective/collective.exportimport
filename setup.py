@@ -32,6 +32,7 @@ if sys.version_info[0] < 3:
     # which has a Py3-only release since September 2021.
     install_requires.append("jsonschema < 4")
     install_requires.append("pyrsistent < 0.16.0")
+    install_requires.append("pathlib2")
 else:
     install_requires.append("plone.restapi")
     install_requires.append("beautifulsoup4")
@@ -39,7 +40,7 @@ else:
 
 setup(
     name="collective.exportimport",
-    version="1.10.dev0",
+    version="1.11.dev0",
     description="An add-on for Plone to Export and import content, members, relations, translations and localroles.",
     long_description=long_description,
     # Get more from https://pypi.org/classifiers/
