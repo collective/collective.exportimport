@@ -223,9 +223,32 @@ class ExportContent(BrowserView):
                 noLongerProvides(self.request, IPathBlobsMarker)
             self.finish()
             self.request.response.redirect(self.request["ACTUAL_URL"])
+        elif download_to_server == 3:
+            # Will generate a directory tree with one json file per item
+            portal_id = api.portal.get().getId()
+            directory = config.CENTRAL_DIRECTORY
+            if not directory:
+                cfg = getConfiguration()
+                directory = cfg.clienthome
+            rootpath = os.path.join(directory, "exported_tree/%s/content" % portal_id)
+            if not os.path.exists(rootpath):
+                os.makedirs(rootpath)
+                logger.info("Created tree export %s", rootpath)
 
+            self.start()
+            for number, datum in enumerate(content_generator, start=1):
+                FileSystemContentExporter(rootpath, datum).save()
+            self.finish()
+
+            msg = _(
+                u"Exported {} items ({}) as {} to {} with {} errors").format(
+                number, ", ".join(self.portal_type), filename, rootpath, len(self.errors)
+            )
+            logger.info(msg)
+            api.portal.show_message(msg, self.request)
+            self.request.response.redirect(self.request["ACTUAL_URL"])
         # Export all items into one json-file in the filesystem
-        elif download_to_server == 1:
+        elif download_to_server:
             directory = config.CENTRAL_DIRECTORY
             if directory:
                 if not os.path.exists(directory):
@@ -261,30 +284,6 @@ class ExportContent(BrowserView):
             elif self.include_blobs == 2:
                 noLongerProvides(self.request, IPathBlobsMarker)
             self.finish()
-            self.request.response.redirect(self.request["ACTUAL_URL"])
-        elif download_to_server == 2:
-            # Will generate a directory tree with one json file per item
-            portal_id = api.portal.get().getId()
-            directory = config.CENTRAL_DIRECTORY
-            if not directory:
-                cfg = getConfiguration()
-                directory = cfg.clienthome
-            rootpath = os.path.join(directory, "exported_tree/%s/content" % portal_id)
-            if not os.path.exists(rootpath):
-                os.makedirs(rootpath)
-                logger.info("Created tree export %s", rootpath)
-
-            self.start()
-            for number, datum in enumerate(content_generator, start=1):
-                FileSystemContentExporter(rootpath, datum).save()
-            self.finish()
-
-            msg = _(
-                u"Exported {} items ({}) as {} to {} with {} errors").format(
-                number, ", ".join(self.portal_type), filename, rootpath, len(self.errors)
-            )
-            logger.info(msg)
-            api.portal.show_message(msg, self.request)
             self.request.response.redirect(self.request["ACTUAL_URL"])
         else:
             with tempfile.TemporaryFile(mode="w+") as f:
