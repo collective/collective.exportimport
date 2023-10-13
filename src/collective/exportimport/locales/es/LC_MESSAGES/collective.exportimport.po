@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: collective.exportimport\n"
-"POT-Creation-Date: 2023-10-12 17:06+0000\n"
+"POT-Creation-Date: 2023-10-13 15:19+0000\n"
 "PO-Revision-Date: 2023-02-16 22:41-0400\n"
 "Last-Translator: Leonardo J. Caballero G. <leonardocaballero@gmail.com>\n"
 "Language-Team: ES <LL@li.org>\n"
@@ -22,11 +22,11 @@ msgstr ""
 msgid "# Elements"
 msgstr "Nº elementos"
 
-#: ../import_content.py:1066
+#: ../import_content.py:1069
 msgid "<p>Creation- and modification-dates are changed during import.This resets them to the original dates of the imported content.</p>"
 msgstr "<p>Las fechas de creación y modificación se cambian durante la importación. Esto las restablece a las fechas originales del contenido importado.</p>"
 
-#: ../import_content.py:1097
+#: ../import_content.py:1100
 msgid "<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>"
 msgstr "<p>Esto corrige los criterios de recopilación no válidos que se importaron de Plone 4 o 5.</p>"
 
@@ -140,7 +140,7 @@ msgstr "Exportar traducciones"
 msgid "Exported to {}"
 msgstr "Exportado a {}"
 
-#: ../export_content.py:243
+#: ../export_content.py:233
 msgid "Exported {} items ({}) as {} to {} with {} errors"
 msgstr "Exportados {} elementos ({}) como {} a {} con {} errores"
 
@@ -148,7 +148,7 @@ msgstr "Exportados {} elementos ({}) como {} a {} con {} errores"
 msgid "Exported {} items ({}) to {} with {} errors"
 msgstr "Exportados {} elementos ({}) en {} con {} errores"
 
-#: ../export_content.py:303
+#: ../export_content.py:297
 msgid "Exported {} {} with {} errors"
 msgstr "Exportado {} {} con {} errores"
 
@@ -168,15 +168,15 @@ msgstr "Archivo '{}' no encontrado en el servidor."
 msgid "File on server to import:"
 msgstr "Archivo en el servidor para importar:"
 
-#: ../import_content.py:1111
+#: ../import_content.py:1114
 msgid "Finished fixing collection queries."
 msgstr "Se terminaron de arreglar las consultas de colección."
 
-#: ../import_content.py:1074
+#: ../import_content.py:1077
 msgid "Finished resetting creation and modification dates."
 msgstr "Finalizó el restablecimiento de las fechas de creación y modificación."
 
-#: ../import_content.py:1096
+#: ../import_content.py:1099
 #: ../templates/links.pt:97
 msgid "Fix collection queries"
 msgstr "Arreglar consultas de colección"
@@ -392,7 +392,7 @@ msgstr "Reemplazar: Eliminar elemento y crear nuevo"
 msgid "Reset created and modified dates"
 msgstr "Restablecer fechas de creación y modificación"
 
-#: ../import_content.py:1065
+#: ../import_content.py:1068
 msgid "Reset creation and modification date"
 msgstr "Restablecer fecha de creación y modificación"
 
@@ -465,6 +465,11 @@ msgstr "como rutas de blob"
 msgid "as download urls"
 msgstr "como urls de descarga"
 
+#. Default: "Deleted ${items} items."
+#: ../filesystem_importer.py:135
+msgid "deleted_items_msg"
+msgstr "Eliminados ${items} elementos."
+
 #: ../templates/export_content.pt:190
 msgid "export"
 msgstr "exportar"
@@ -478,7 +483,7 @@ msgstr "archivo json se cargó, por lo que se ignoró el archivo del servidor se
 msgid "label_toggle"
 msgstr "Alternar todo"
 
-#: ../import_content.py:1101
+#: ../import_content.py:1104
 msgid "plone.app.querystring.upgrades.fix_select_all_existing_collections is not available"
 msgstr "plone.app.querystring.upgrades.fix_select_all_existing_collections no está disponible"
 

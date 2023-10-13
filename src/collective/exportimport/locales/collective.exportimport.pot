@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2023-10-12 17:06+0000\n"
+"POT-Creation-Date: 2023-10-13 15:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI +ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,11 +21,11 @@ msgstr ""
 msgid "# Elements"
 msgstr ""
 
-#: ../import_content.py:1066
+#: ../import_content.py:1069
 msgid "<p>Creation- and modification-dates are changed during import.This resets them to the original dates of the imported content.</p>"
 msgstr ""
 
-#: ../import_content.py:1097
+#: ../import_content.py:1100
 msgid "<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>"
 msgstr ""
 
@@ -139,7 +139,7 @@ msgstr ""
 msgid "Exported to {}"
 msgstr ""
 
-#: ../export_content.py:243
+#: ../export_content.py:233
 msgid "Exported {} items ({}) as {} to {} with {} errors"
 msgstr ""
 
@@ -147,7 +147,7 @@ msgstr ""
 msgid "Exported {} items ({}) to {} with {} errors"
 msgstr ""
 
-#: ../export_content.py:303
+#: ../export_content.py:297
 msgid "Exported {} {} with {} errors"
 msgstr ""
 
@@ -167,15 +167,15 @@ msgstr ""
 msgid "File on server to import:"
 msgstr ""
 
-#: ../import_content.py:1111
+#: ../import_content.py:1114
 msgid "Finished fixing collection queries."
 msgstr ""
 
-#: ../import_content.py:1074
+#: ../import_content.py:1077
 msgid "Finished resetting creation and modification dates."
 msgstr ""
 
-#: ../import_content.py:1096
+#: ../import_content.py:1099
 #: ../templates/links.pt:97
 msgid "Fix collection queries"
 msgstr ""
@@ -391,7 +391,7 @@ msgstr ""
 msgid "Reset created and modified dates"
 msgstr ""
 
-#: ../import_content.py:1065
+#: ../import_content.py:1068
 msgid "Reset creation and modification date"
 msgstr ""
 
@@ -464,6 +464,11 @@ msgstr ""
 msgid "as download urls"
 msgstr ""
 
+#. Default: "Deleted ${items} items."
+#: ../filesystem_importer.py:135
+msgid "deleted_items_msg"
+msgstr ""
+
 #: ../templates/export_content.pt:190
 msgid "export"
 msgstr ""
@@ -477,7 +482,7 @@ msgstr ""
 msgid "label_toggle"
 msgstr ""
 
-#: ../import_content.py:1101
+#: ../import_content.py:1104
 msgid "plone.app.querystring.upgrades.fix_select_all_existing_collections is not available"
 msgstr ""
 
