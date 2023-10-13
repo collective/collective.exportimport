@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: collective.exportimport\n"
-"POT-Creation-Date: 2023-10-13 15:19+0000\n"
+"POT-Creation-Date: 2023-10-13 22:12+0000\n"
 "PO-Revision-Date: 2023-02-16 22:41-0400\n"
 "Last-Translator: Leonardo J. Caballero G. <leonardocaballero@gmail.com>\n"
 "Language-Team: ES <LL@li.org>\n"
@@ -140,7 +140,7 @@ msgstr "Exportar traducciones"
 msgid "Exported to {}"
 msgstr "Exportado a {}"
 
-#: ../export_content.py:233
+#: ../export_content.py:271
 msgid "Exported {} items ({}) as {} to {} with {} errors"
 msgstr "Exportados {} elementos ({}) como {} a {} con {} errores"
 
@@ -148,7 +148,7 @@ msgstr "Exportados {} elementos ({}) como {} a {} con {} errores"
 msgid "Exported {} items ({}) to {} with {} errors"
 msgstr "Exportados {} elementos ({}) en {} con {} errores"
 
-#: ../export_content.py:297
+#: ../export_content.py:299
 msgid "Exported {} {} with {} errors"
 msgstr "Exportado {} {} con {} errores"
 
@@ -473,6 +473,11 @@ msgstr "Eliminados ${items} elementos."
 #: ../templates/export_content.pt:190
 msgid "export"
 msgstr "exportar"
+
+#. Default: "Exported ${number} items (${types}) as tree to ${target} with ${errors} errors"
+#: ../export_content.py:233
+msgid "hierarchycal_export_success"
+msgstr "Se han exportado ${number} elementos (${types}) como árbol en ${target} con ${errors} errores"
 
 #: ../import_content.py:177
 msgid "json file was uploaded, so the selected server file was ignored."

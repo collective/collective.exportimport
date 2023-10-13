@@ -230,14 +230,16 @@ class ExportContent(BrowserView):
                 exporter.save(number, datum)
             self.finish()
 
-            msg = _(
-                u"Exported {} items ({}) as {} to {} with {} errors").format(
-                number,
-                ", ".join(self.portal_type),
-                filename,
-                exporter.root,
-                len(self.errors)
-            )
+            msg = self.context.translate(_(
+                "hierarchycal_export_success",
+                u"Exported ${number} items (${types}) as tree to ${target} with ${errors} errors",
+                mapping={
+                    u"number": number,
+                    u"types":  ", ".join(self.portal_type),
+                    u"target": exporter.root,
+                    u"errors": len(self.errors)
+                }
+            ))
             logger.info(msg)
             api.portal.show_message(msg, self.request)
             self.request.response.redirect(self.request["ACTUAL_URL"])
