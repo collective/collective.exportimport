@@ -132,7 +132,7 @@
                     id="include_revisions"
                     tal:attributes="checked python: 'checked' if view.include_revisions else None"
                     />
-              <label class="form-check-label">
+              <label class="form-check-label" for="include_revisions">
                 <span i18n:translate="">Include revisions.</span>
               </label>
               <div class="formHelp form-text" i18n:translate="">
