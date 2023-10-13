@@ -232,11 +232,14 @@ class ImportContent(BrowserView):
             api.portal.show_message(msg, self.request)
 
         if server_tree_file and not server_file and not jsonfile:
+            importer = FileSystemContentImporter(self.context, server_tree_file)
             msg = self.do_import(
-                FileSystemContentImporter(server_tree_file).get_hierarchical_files()
+                importer.get_hierarchical_files()
             )
             api.portal.show_message(msg, self.request)
 
+            msg = importer.process_deleted()
+            api.portal.show_message(msg, self.request)
         self.finish()
 
         if return_json:
