@@ -208,7 +208,8 @@ class ExportContent(BrowserView):
             if number:
                 if self.errors and self.write_errors:
                     errors = {"unexported_paths": self.errors}
-                    json.dump(errors, f, indent=4)
+                    with open(os.path.join(directory, "errors.json"), "w") as f:
+                        json.dump(errors, f, indent=4)
             msg = _(u"Exported {} items ({}) to {} with {} errors").format(
                 number, ", ".join(self.portal_type), directory, len(self.errors)
             )

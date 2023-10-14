@@ -5,7 +5,9 @@ Changelog
 1.11 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- When exporting into separate JSON files write also the error in a separate errors.json file.
+  This fixes an error at the end of the export and no errors being written.
+  [thet]
 
 
 1.10 (2023-10-11)
