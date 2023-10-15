@@ -180,7 +180,7 @@ class TestHierarchicalExport(unittest.TestCase):
                 portal.getId(),
                 "content",
                 "folder1",
-                "3_doc1.json")
+                "2_doc1.json")
             self.assertTrue(os.path.exists(path))
 
         finally:
@@ -263,7 +263,7 @@ class TestHierarchicalExport(unittest.TestCase):
                 portal.getId(),
                 "content",
                 "folder1",
-                "3_doc1.json")
+                "2_doc1.json")
             self.assertFalse(os.path.exists(path))
 
         finally:
