@@ -38,7 +38,7 @@ class TestFileSystemContentImporter(unittest.TestCase):
     def setUp(self):
         # Set up a temporary directory for testing
         self.temp_dir = 'temp_test_directory'
-        os.makedirs(self.temp_dir, exist_ok=True)
+        os.makedirs(self.temp_dir)
 
     def tearDown(self):
         # Clean up the temporary directory
@@ -72,8 +72,7 @@ class TestFileSystemContentImporter(unittest.TestCase):
         os.makedirs(os.path.join(
                 self.temp_dir,
                 'removed_items'
-            ),
-            exist_ok=True
+            )
         )
         with open(json_file_path, "w") as f:
             json.dump(item, f, sort_keys=True, indent=4)
@@ -167,8 +166,7 @@ class TestFileSystemContentImporter(unittest.TestCase):
         os.makedirs(os.path.join(
                 self.temp_dir,
                 'removed_items'
-            ),
-            exist_ok=True
+            )
         )
 
         with open(json_file_path, "w") as f:

@@ -181,8 +181,7 @@ class TestHierarchicalImport(unittest.TestCase):
             "Folder",
             "Document",
             "Link",
-            "Image",
-            "Plone Site"]
+            "Image"]
         browser.getControl(
             "Generate a file for each item (as filesytem tree)").selected = True
         original_central_directory = config.CENTRAL_DIRECTORY
@@ -190,7 +189,7 @@ class TestHierarchicalImport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = tempfile.mkdtemp()
             browser.getForm(action="@@export_content").submit()
 
-            msg = "Exported 9 items (Folder, Image, Link, Document, Plone Site) as tree to {}/exported_tree/{}/content".format(
+            msg = "Exported 8 items (Folder, Image, Link, Document) as tree to {}/exported_tree/{}/content".format(
                 config.CENTRAL_DIRECTORY,
                 portal.getId()
             )
@@ -240,8 +239,7 @@ class TestHierarchicalImport(unittest.TestCase):
             "Folder",
             "Document",
             "Link",
-            "Image",
-            "Plone Site"]
+            "Image"]
         browser.getControl(
             "Generate a file for each item (as filesytem tree)").selected = True
         original_central_directory = config.CENTRAL_DIRECTORY
@@ -249,7 +247,7 @@ class TestHierarchicalImport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = tempfile.mkdtemp()
             browser.getForm(action="@@export_content").submit()
 
-            msg = "Exported 9 items (Folder, Image, Link, Document, Plone Site) as tree to {}/exported_tree/{}/content".format(
+            msg = "Exported 8 items (Folder, Image, Link, Document) as tree to {}/exported_tree/{}/content".format(
                 config.CENTRAL_DIRECTORY,
                 portal.getId()
             )
@@ -285,7 +283,7 @@ class TestHierarchicalImport(unittest.TestCase):
                     "exported_tree",
                     portal.getId(),
                     "content",
-                    "3_folder1.json"
+                    "2_folder1.json"
                 )
             with open(file_path, "r+") as f:
                 data = json.load(f)
@@ -306,7 +304,7 @@ class TestHierarchicalImport(unittest.TestCase):
             ]
             browser.getControl(name="handle_existing_content").value = ["2"]  # update!
             browser.getForm(action="@@import_content").submit()
-            self.assertIn("Imported 9 items", browser.contents)
+            self.assertIn("Imported 8 items", browser.contents)
             self.assertIn("folder1", portal.contentIds())
             new_folder = portal["folder1"]
             self.assertEqual(new_folder.Title(), "Folder 1. Updated.")
@@ -410,7 +408,7 @@ class TestHierarchicalImport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = original_central_directory
 
     def test_fresh_import_moved_non_folderish_item(self):
-        """Hierarchycal import allows to move content across
+        """Hierarchical import allows to move content across
         the directory structure.
         Moved item should be created in the actual path where the
         json file is placed.
@@ -434,8 +432,7 @@ class TestHierarchicalImport(unittest.TestCase):
             "Folder",
             "Document",
             "Link",
-            "Image",
-            "Plone Site"]
+            "Image"]
         browser.getControl(
             "Generate a file for each item (as filesytem tree)").selected = True
         original_central_directory = config.CENTRAL_DIRECTORY
@@ -443,7 +440,7 @@ class TestHierarchicalImport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = tempfile.mkdtemp()
             browser.getForm(action="@@export_content").submit()
 
-            msg = "Exported 9 items (Folder, Image, Link, Document, Plone Site) as tree to {}/exported_tree/{}/content".format(
+            msg = "Exported 8 items (Folder, Image, Link, Document) as tree to {}/exported_tree/{}/content".format(
                 config.CENTRAL_DIRECTORY,
                 portal.getId()
             )
@@ -461,7 +458,7 @@ class TestHierarchicalImport(unittest.TestCase):
                     "exported_tree",
                     portal.getId(),
                     "content",
-                    "9_image.json"
+                    "8_image.json"
                 )
             target_path = os.path.join(
                     config.CENTRAL_DIRECTORY,
@@ -469,7 +466,7 @@ class TestHierarchicalImport(unittest.TestCase):
                     portal.getId(),
                     "content",
                     "folder2",
-                    "9_image.json"
+                    "8_image.json"
                 )
             shutil.move(file_path, target_path)
 
@@ -486,7 +483,7 @@ class TestHierarchicalImport(unittest.TestCase):
             ]
             browser.getControl(name="handle_existing_content").value = ["2"]  # update!
             browser.getForm(action="@@import_content").submit()
-            self.assertIn("Imported 9 items", browser.contents)
+            self.assertIn("Imported 8 items", browser.contents)
 
             # Content should be back to the new location
             self.assertNotIn("image", portal.contentIds())
@@ -496,7 +493,7 @@ class TestHierarchicalImport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = original_central_directory
 
     def test_fresh_import_moved_folderish_item(self):
-        """Hierarchycal import allows to move content across
+        """Hierarchical import allows to move content across
         the directory structure.
         Moved item should be created in the actual path where the
         json file is placed.
@@ -527,8 +524,7 @@ class TestHierarchicalImport(unittest.TestCase):
             "Folder",
             "Document",
             "Link",
-            "Image",
-            "Plone Site"]
+            "Image"]
         browser.getControl(
             "Generate a file for each item (as filesytem tree)").selected = True
         original_central_directory = config.CENTRAL_DIRECTORY
@@ -536,7 +532,7 @@ class TestHierarchicalImport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = tempfile.mkdtemp()
             browser.getForm(action="@@export_content").submit()
 
-            msg = "Exported 9 items (Folder, Image, Link, Document, Plone Site) as tree to {}/exported_tree/{}/content".format(
+            msg = "Exported 8 items (Folder, Image, Link, Document) as tree to {}/exported_tree/{}/content".format(
                 config.CENTRAL_DIRECTORY,
                 portal.getId()
             )
@@ -554,7 +550,7 @@ class TestHierarchicalImport(unittest.TestCase):
                     "exported_tree",
                     portal.getId(),
                     "content",
-                    "3_folder1.json"
+                    "2_folder1.json"
                 )
             target_path = os.path.join(
                     config.CENTRAL_DIRECTORY,
@@ -562,7 +558,7 @@ class TestHierarchicalImport(unittest.TestCase):
                     portal.getId(),
                     "content",
                     "folder2",
-                    "3_folder1.json"
+                    "2_folder1.json"
                 )
             shutil.move(file_path, target_path)
 
@@ -579,7 +575,7 @@ class TestHierarchicalImport(unittest.TestCase):
             ]
             browser.getControl(name="handle_existing_content").value = ["2"]  # update!
             browser.getForm(action="@@import_content").submit()
-            self.assertIn("Imported 9 items", browser.contents)
+            self.assertIn("Imported 8 items", browser.contents)
 
             # Content should be back to the new location
             self.assertIn("folder1", portal["folder2"].contentIds())
@@ -626,7 +622,7 @@ class TestHierarchicalImport(unittest.TestCase):
             ]
             browser.getControl(name="handle_existing_content").value = ["2"]  # update!
             browser.getForm(action="@@import_content").submit()
-            self.assertIn("Imported 9 items", browser.contents)
+            self.assertIn("Imported 8 items", browser.contents)
 
             # Content should be back to the new location
             self.assertIn("folder1", portal["folder2"].contentIds())
@@ -639,7 +635,7 @@ class TestHierarchicalImport(unittest.TestCase):
 
 
     def test_update_import_moved_non_folderish_item(self):
-        """Hierarchycal import allows to move content across
+        """Hierarchical import allows to move content across
         the directory structure.
         Moved item should be created in the actual path where the
         json file is placed.
@@ -665,8 +661,7 @@ class TestHierarchicalImport(unittest.TestCase):
             "Folder",
             "Document",
             "Link",
-            "Image",
-            "Plone Site"]
+            "Image"]
         browser.getControl(
             "Generate a file for each item (as filesytem tree)").selected = True
         original_central_directory = config.CENTRAL_DIRECTORY
@@ -674,7 +669,7 @@ class TestHierarchicalImport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = tempfile.mkdtemp()
             browser.getForm(action="@@export_content").submit()
 
-            msg = "Exported 9 items (Folder, Image, Link, Document, Plone Site) as tree to {}/exported_tree/{}/content".format(
+            msg = "Exported 8 items (Folder, Image, Link, Document) as tree to {}/exported_tree/{}/content".format(
                 config.CENTRAL_DIRECTORY,
                 portal.getId()
             )
@@ -686,7 +681,7 @@ class TestHierarchicalImport(unittest.TestCase):
                     "exported_tree",
                     portal.getId(),
                     "content",
-                    "9_image.json"
+                    "8_image.json"
                 )
             target_path = os.path.join(
                     config.CENTRAL_DIRECTORY,
@@ -694,7 +689,7 @@ class TestHierarchicalImport(unittest.TestCase):
                     portal.getId(),
                     "content",
                     "folder2",
-                    "9_image.json"
+                    "8_image.json"
                 )
             shutil.move(file_path, target_path)
 
@@ -711,7 +706,7 @@ class TestHierarchicalImport(unittest.TestCase):
             ]
             browser.getControl(name="handle_existing_content").value = ["2"]  # update!
             browser.getForm(action="@@import_content").submit()
-            self.assertIn("Imported 9 items", browser.contents)
+            self.assertIn("Imported 8 items", browser.contents)
 
             # Content should be back to the new location
             self.assertNotIn("image", portal.contentIds())
@@ -721,7 +716,7 @@ class TestHierarchicalImport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = original_central_directory
 
     def test_update_import_moved_folderish_item(self):
-        """Hierarchycal import allows to move content across
+        """Hierarchical import allows to move content across
         the directory structure.
         Moved item should be created in the actual path where the
         json file is placed.
@@ -752,8 +747,7 @@ class TestHierarchicalImport(unittest.TestCase):
             "Folder",
             "Document",
             "Link",
-            "Image",
-            "Plone Site"]
+            "Image"]
         browser.getControl(
             "Generate a file for each item (as filesytem tree)").selected = True
         original_central_directory = config.CENTRAL_DIRECTORY
@@ -761,7 +755,7 @@ class TestHierarchicalImport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = tempfile.mkdtemp()
             browser.getForm(action="@@export_content").submit()
 
-            msg = "Exported 9 items (Folder, Image, Link, Document, Plone Site) as tree to {}/exported_tree/{}/content".format(
+            msg = "Exported 8 items (Folder, Image, Link, Document) as tree to {}/exported_tree/{}/content".format(
                 config.CENTRAL_DIRECTORY,
                 portal.getId()
             )
@@ -773,7 +767,7 @@ class TestHierarchicalImport(unittest.TestCase):
                     "exported_tree",
                     portal.getId(),
                     "content",
-                    "3_folder1.json"
+                    "2_folder1.json"
                 )
             target_path = os.path.join(
                     config.CENTRAL_DIRECTORY,
@@ -781,7 +775,7 @@ class TestHierarchicalImport(unittest.TestCase):
                     portal.getId(),
                     "content",
                     "folder2",
-                    "3_folder1.json"
+                    "2_folder1.json"
                 )
             shutil.move(file_path, target_path)
 
@@ -798,7 +792,7 @@ class TestHierarchicalImport(unittest.TestCase):
             ]
             browser.getControl(name="handle_existing_content").value = ["2"]  # update!
             browser.getForm(action="@@import_content").submit()
-            self.assertIn("Imported 9 items", browser.contents)
+            self.assertIn("Imported 8 items", browser.contents)
 
             # Content should be back to the new location
             self.assertIn("folder1", portal["folder2"].contentIds())
@@ -839,7 +833,7 @@ class TestHierarchicalImport(unittest.TestCase):
             ]
             browser.getControl(name="handle_existing_content").value = ["2"]  # update!
             browser.getForm(action="@@import_content").submit()
-            self.assertIn("Imported 9 items", browser.contents)
+            self.assertIn("Imported 8 items", browser.contents)
 
             # Content should be back to the new location
             self.assertIn("folder1", portal["folder2"].contentIds())
@@ -851,7 +845,7 @@ class TestHierarchicalImport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = original_central_directory
 
     def test_delete_items(self):
-        """Hierarchycal also allows to remove elements from site
+        """Hierarchical also allows to remove elements from site
         without losing the json file. Just move it to the 
         removed_items directory and the item will be deleted in portal.
         """
@@ -868,8 +862,7 @@ class TestHierarchicalImport(unittest.TestCase):
             "Folder",
             "Document",
             "Link",
-            "Image",
-            "Plone Site"]
+            "Image"]
         browser.getControl(
             "Generate a file for each item (as filesytem tree)").selected = True
         original_central_directory = config.CENTRAL_DIRECTORY
@@ -877,7 +870,7 @@ class TestHierarchicalImport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = tempfile.mkdtemp()
             browser.getForm(action="@@export_content").submit()
 
-            msg = "Exported 9 items (Folder, Image, Link, Document, Plone Site) as tree to {}/exported_tree/{}/content".format(
+            msg = "Exported 8 items (Folder, Image, Link, Document) as tree to {}/exported_tree/{}/content".format(
                 config.CENTRAL_DIRECTORY,
                 portal.getId()
             )
@@ -889,14 +882,14 @@ class TestHierarchicalImport(unittest.TestCase):
                     "exported_tree",
                     portal.getId(),
                     "content",
-                    "2_blog.json"
+                    "1_blog.json"
                 )
             target_path = os.path.join(
                     config.CENTRAL_DIRECTORY,
                     "exported_tree",
                     portal.getId(),
                     "removed_items",
-                    "2_blog.json"
+                    "1_blog.json"
                 )
             shutil.move(file_path, target_path)
 
@@ -913,7 +906,7 @@ class TestHierarchicalImport(unittest.TestCase):
             ]
             browser.getControl(name="handle_existing_content").value = ["2"]  # update!
             browser.getForm(action="@@import_content").submit()
-            self.assertIn("Imported 8 items", browser.contents)
+            self.assertIn("Imported 7 items", browser.contents)
             self.assertIn("Deleted 1 items", browser.contents)
 
             # As subfolder wasn't moved, a folder1 has been also created
@@ -926,14 +919,14 @@ class TestHierarchicalImport(unittest.TestCase):
                     "exported_tree",
                     portal.getId(),
                     "removed_items",
-                    "2_blog.json"
+                    "1_blog.json"
                 )
             target_path = os.path.join(
                     config.CENTRAL_DIRECTORY,
                     "exported_tree",
                     portal.getId(),
                     "content",
-                    "2_blog.json",
+                    "1_blog.json",
                 )
             shutil.move(file_path, target_path)
 
@@ -950,7 +943,7 @@ class TestHierarchicalImport(unittest.TestCase):
             ]
             browser.getControl(name="handle_existing_content").value = ["2"]  # update!
             browser.getForm(action="@@import_content").submit()
-            self.assertIn("Imported 9 items", browser.contents)
+            self.assertIn("Imported 8 items", browser.contents)
 
             # Content should be back to the new location
             self.assertIn("blog", portal.contentIds())
