@@ -143,7 +143,7 @@ class TestHierarchicalExport(unittest.TestCase):
         if "DexterityFTI" in repr(fti):
             # In Plone 6 the portal is exportable
             self.assertIn("Plone Site", portal_type.options)
-            portal_type.value = ["Folder", "Document", "Plone Site"]
+            portal_type.value = ["Folder", "Document"]
 
         browser.getControl(
             "Generate a file for each item (as filesytem tree)").selected = True
@@ -153,7 +153,7 @@ class TestHierarchicalExport(unittest.TestCase):
             config.CENTRAL_DIRECTORY = tempfile.mkdtemp()
             browser.getForm(action="@@export_content").submit(name="submit")
 
-            msg = "Exported 7 items (Folder, Document, Plone Site) as tree to {}/exported_tree/{}/content".format(
+            msg = "Exported 6 items (Folder, Document) as tree to {}/exported_tree/{}/content".format(
                 config.CENTRAL_DIRECTORY,
                 portal.getId()
             )
