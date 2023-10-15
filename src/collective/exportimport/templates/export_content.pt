@@ -19,59 +19,64 @@
                 <span i18n:translate="">Content Types to export</span>
               </label>
               <div class="widget" id="portal_type">
-                <input type="checkbox" class="checkboxType" name="checkall" id="checkall"
-                       title="Toggle all" i18n:attributes="title label_toggle" />
-                <label for="checkall"><i i18n:translate="">Select all/none</i></label><br />
-                <script type="text/javascript">
-                   // Check or Uncheck All checkboxes
-                   $("#checkall").change(function(){
-                     var checked = $(this).is(':checked');
-                     if(checked){
-                       $("form#export_content #portal_type input[type='checkbox']").each(function(){
-                         $(this).prop("checked",true);
-                       });
-                     }else{
-                       $("form#export_content #portal_type input[type='checkbox']").each(function(){
-                         $(this).prop("checked",false);
-                       });
-                     }
-                   });
+                <div class="form-check form-switch">
+                  <input type="checkbox" class="checkboxType form-check-input" name="checkall" id="checkall"
+                    title="Toggle all" i18n:attributes="title label_toggle" />
+                  <label for="checkall form-check-label"><i i18n:translate="">Select all/none</i></label><br />
+                  <script type="text/javascript">
+                      // Check or Uncheck All checkboxes
+                      $("#checkall").change(function(){
+                        var checked = $(this).is(':checked');
+                        if(checked){
+                          $("form#export_content #portal_type input[type='checkbox']").each(function(){
+                            $(this).prop("checked",true);
+                          });
+                        }else{
+                          $("form#export_content #portal_type input[type='checkbox']").each(function(){
+                            $(this).prop("checked",false);
+                          });
+                        }
+                      });
 
-                  // Changing state of CheckAll checkbox
-                  $("form#export_content").on("click", "form#export_content #portal_type input[name='portal_type']", function(){
-                    if($("form#export_content #portal_type input[type='checkbox']").length == $("form#export_content #portal_type input[type='checkbox']:checked").length) {
-                      $("#checkall").prop("checked", true);
-                    } else {
-                      $("#checkall").prop("checked", false);
-                    }
+                    // Changing state of CheckAll checkbox
+                    $("form#export_content").on("click", "form#export_content #portal_type input[name='portal_type']", function(){
+                      if($("form#export_content #portal_type input[type='checkbox']").length == $("form#export_content #portal_type input[type='checkbox']:checked").length) {
+                        $("#checkall").prop("checked", true);
+                      } else {
+                        $("#checkall").prop("checked", false);
+                      }
 
-                  });
-                </script>
+                    });
+                  </script>
+                </div>
+
                 <tal:types tal:repeat="ptype python: view.portal_types()">
-                  <input type="checkbox"
-                         name="portal_type"
-                         class="checkboxType"
-                         tal:attributes="value ptype/value; id ptype/value;">
-                  <label tal:attributes="for ptype/value"
-                         tal:content="string:${ptype/title} - ${ptype/value} (${ptype/number})"></label>
-                         <br />
+                  <div class="form-check form-switch">
+                    <input type="checkbox"
+                      name="portal_type"
+                      class="checkboxType form-check-input"
+                      tal:attributes="value ptype/value; id ptype/value;">
+                    <label class="form-check-label"
+                      tal:attributes="for ptype/value"
+                      tal:content="string:${ptype/title} - ${ptype/value} (${ptype/number})"></label>
+                      <br />
+                  </div>
                 </tal:types>
               </div>
             </div>
 
             <div class="field mb-3">
-              <label for="path" i18n:translate="">Path</label>
+              <label for="path" class="form-label" i18n:translate="">Path</label>
               <div class="widget">
-                <input type="text" name="path" id="path" value=""
+                <input type="text" name="path" id="path" value="" class="form-control"
                        tal:attributes="value python:view.path">
               </div>
             </div>
 
             <div class="field mb-3">
-              <label for="depth" i18n:translate="">Depth</label>
-              <span class="formHelp" i18n:translate="">Unlimited: this item and all children, 0: this object only, 1: only direct children of this object, 2-x: children of this object up to the specified level</span>
+              <label for="depth" class="form-label" i18n:translate="">Depth</label>
               <div class="widget">
-                <select name="depth" class="">
+                <select name="depth" class="form-select">
                   <option value="1"
                           tal:repeat="current python:view.depth_options"
                           tal:attributes="value python: current[0];
@@ -80,16 +85,15 @@
                         1
                   </option>
                 </select>
+                <div class="formHelp form-text" i18n:translate="">
+                  Unlimited: this item and all children, 0: this object only, 1: only direct children of this object, 2-x: children of this object up to the specified level</div>
               </div>
             </div>
 
             <div class="field mb-3">
-              <label for="include_blobs" i18n:translate="">Include blobs</label>
-              <span class="formHelp" i18n:translate="">
-                  How should data from image- and file-fields be included?
-              </span>
+              <label for="include_blobs" class="form-label" i18n:translate="">Include blobs</label>
               <div class="widget">
-                <select name="include_blobs" class="">
+                <select name="include_blobs" class="form-select">
                   <option value="0"
                           tal:repeat="current python:view.include_blobs_options"
                           tal:attributes="value python: current[0];
@@ -98,27 +102,29 @@
                         0
                   </option>
                 </select>
+                <span class="formHelp form-text" i18n:translate="">
+                  How should data from image- and file-fields be included?
+              </span>
               </div>
             </div>
 
-            <div class="field mb-3">
-              <label>
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    name="migration:boolean"
-                    id="migration"
-                    tal:attributes="checked python: 'checked' if view.migration else None"
-                    />
+            <div class="field mb-3 form-check form-switch">
+              <input
+                  type="checkbox"
+                  class="form-check-input"
+                  name="migration:boolean"
+                  id="migration"
+                  tal:attributes="checked python: 'checked' if view.migration else None"
+                  />
+              <label class="form-check-label">
                 <span i18n:translate="">Modify exported data for migrations.</span>
-                <span class="formHelp" i18n:translate="">
-                  Use this if you want to import the data in a newer version of Plone or migrate from Archetypes to Dexterity. Read the documentation to learn which changes are made by this option.
-                </span>
               </label>
+              <div class="formHelp form-text" i18n:translate="">
+                Use this if you want to import the data in a newer version of Plone or migrate from Archetypes to Dexterity. Read the documentation to learn which changes are made by this option.
+              </div>
             </div>
 
-            <div class="field mb-3">
-              <label>
+            <div class="field mb-3 form-check form-switch">
                 <input
                     type="checkbox"
                     class="form-check-input"
@@ -126,15 +132,15 @@
                     id="include_revisions"
                     tal:attributes="checked python: 'checked' if view.include_revisions else None"
                     />
+              <label class="form-check-label" for="include_revisions">
                 <span i18n:translate="">Include revisions.</span>
-                <span class="formHelp" i18n:translate="">
-                  This exports the content-history (versioning) of each exported item. Warning: This can significantly slow down the export!
-                </span>
               </label>
+              <div class="formHelp form-text" i18n:translate="">
+                This exports the content-history (versioning) of each exported item. Warning: This can significantly slow down the export!
+              </div>
             </div>
 
-            <div class="field mb-3">
-              <label>
+            <div class="field mb-3 form-check form-switch">
                 <input
                     type="checkbox"
                     class="form-check-input"
@@ -142,30 +148,37 @@
                     id="write_errors"
                     tal:attributes="checked python: 'checked' if view.write_errors else None"
                     />
+              <label class="form-check-label">
                 <span i18n:translate="">Write out Errors to file.</span>
-                <span class="formHelp" i18n:translate="">
-                  Checking this box puts a list of object paths at the end of the export file that failed to export.
-                </span>
               </label>
+              <div class="formHelp form-text" i18n:translate="">
+                Checking this box puts a list of object paths at the end of the export file that failed to export.
+              </div>
             </div>
 
             <div class="field mb-3">
-              <div class="form-check">
+              <div class="form-check mb-2">
                 <input class="form-check-input" type="radio" name="download_to_server:int" value="0" id="download_local" checked="checked">
                 <label for="download_local" class="form-check-label" i18n:translate="">
                   Download to local machine
                 </label>
               </div>
-              <div class="form-check">
+              <div class="form-check mb-2">
                 <input class="form-check-input" type="radio" name="download_to_server:int" value="1" id="download_server">
                 <label for="download_server" class="form-check-label" i18n:translate="">
                   Save to file on server
                 </label>
               </div>
-              <div class="form-check">
+              <div class="form-check mb-2">
                 <input class="form-check-input" type="radio" name="download_to_server:int" value="2" id="separate_files">
                 <label for="separate_files" class="form-check-label" i18n:translate="">
                   Save each item as a separate file on the server
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="download_to_server:int" value="3" id="hierarchical_files">
+                <label for="hierarchical_files" class="form-check-label" i18n:translate="">
+                  Generate a file for each item (as filesytem tree)
                 </label>
               </div>
             </div>

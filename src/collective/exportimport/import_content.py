@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from Acquisition import aq_base
+from App.config import getConfiguration
 from collective.exportimport import _
 from collective.exportimport import config
+from collective.exportimport.filesystem_importer import FileSystemContentImporter
 from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
 from DateTime import DateTime
@@ -142,6 +144,7 @@ class ImportContent(BrowserView):
         return_json=False,
         limit=None,
         server_file=None,
+        server_tree_file=None,
         iterator=None,
         server_directory=False,
     ):
@@ -167,7 +170,7 @@ class ImportContent(BrowserView):
         status = "success"
         msg = ""
 
-        if server_file and jsonfile:
+        if server_file and jsonfile and server_tree_file:
             # This is an error.  But when you upload 10 GB AND select a server file,
             # it is a pity when you would have to upload again.
             api.portal.show_message(
@@ -177,7 +180,7 @@ class ImportContent(BrowserView):
             )
             server_file = None
             status = "error"
-        if server_file and not jsonfile:
+        if server_file and not jsonfile and not server_tree_file:
             if server_file in self.server_files:
                 for path in self.import_paths:
                     full_path = os.path.join(path, server_file)
@@ -228,6 +231,15 @@ class ImportContent(BrowserView):
             msg = self.do_import(filesystem_walker(server_directory))
             api.portal.show_message(msg, self.request)
 
+        if server_tree_file and not server_file and not jsonfile:
+            importer = FileSystemContentImporter(self.context, server_tree_file)
+            msg = self.do_import(
+                importer.get_hierarchical_files()
+            )
+            api.portal.show_message(msg, self.request)
+
+            msg = importer.process_deleted()
+            api.portal.show_message(msg, self.request)
         self.finish()
 
         if return_json:
@@ -294,6 +306,18 @@ class ImportContent(BrowserView):
             ]
         listing.sort()
         return listing
+
+    @property
+    def import_tree_parts(self):
+        """Returns subdirectories in export tree"""
+        directory = config.CENTRAL_DIRECTORY
+        if not directory:
+            cfg = getConfiguration()
+            directory = cfg.clienthome
+        base_path = os.path.join(directory, config.TREE_DIRECTORY)
+        if os.path.isdir(base_path):
+            return [os.path.join(base_path, d, "content") for d in os.listdir(base_path)]
+        return []
 
     def do_import(self, data):
         start = datetime.now()
