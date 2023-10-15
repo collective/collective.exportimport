@@ -113,7 +113,7 @@ class FileSystemContentImporter(FileSystemImporter):
         if check_if_moved:
             # delete all object
             api.content.delete(obj=check_if_moved, check_linkintegrity=False)
-            self.logger.info("Removed old object %s", check_if_moved.UID)
+            self.logger.info("Removed old object %s", check_if_moved.UID())
 
     def process_deleted(self):
         """Will process all elements in removed_items dir"""
