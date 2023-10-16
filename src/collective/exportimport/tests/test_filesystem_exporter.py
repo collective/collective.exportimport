@@ -1,11 +1,12 @@
+from collective.exportimport import config
+from collective.exportimport.filesystem_exporter import FileSystemContentExporter
+from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
+
 import unittest
 import tempfile
 import os
 import json
 import shutil
-from collective.exportimport import config
-from collective.exportimport.filesystem_exporter import FileSystemContentExporter
-from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
 
 
 class TestFileSystemContentExporter(unittest.TestCase):

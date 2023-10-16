@@ -1,29 +1,20 @@
 # -*- coding: utf-8 -*-
 from App.config import getConfiguration
-from collective.exportimport import config
-from collective.exportimport.testing import (
-    COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,  # noqa: E501,
-)
 from plone import api
-from plone.app.testing import login
-from plone.app.testing import SITE_OWNER_NAME
-from plone.app.testing import SITE_OWNER_PASSWORD
-from plone.app.testing import TEST_USER_ID
+from plone.app.testing import login, SITE_OWNER_NAME, SITE_OWNER_PASSWORD
 from plone.namedfile.file import NamedImage
 from Products.CMFPlone.tests import dummy
+from collective.exportimport import config
+from collective.exportimport.testing import (  # noqa: E501,
+    COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,
+)
 
 import json
 import os
 import shutil
-import six
 import tempfile
-import transaction
 import unittest
-
-if six.PY2:
-    from pathlib2 import Path
-else:
-    from pathlib import Path
+import transaction
 
 
 try:
