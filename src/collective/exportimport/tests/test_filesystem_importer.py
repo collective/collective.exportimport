@@ -1,34 +1,10 @@
-import unittest
-import os
-import json
-import shutil
-from collective.exportimport.filesystem_importer import (
-    FileSystemContentImporter
-)
+from collective.exportimport.filesystem_importer import FileSystemContentImporter
 from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
 
-try:
-    from plone.testing import zope
-
-    OLD_ZOPE_TESTBROWSER = False
-except ImportError:
-    # BBB for plone.testing 4
-    from plone.testing import z2 as zope
-    from ZPublisher.HTTPResponse import HTTPResponse
-
-    OLD_ZOPE_TESTBROWSER = True
-
-
-def write(self, data):
-    """Override for HTTPResponse.write.
-
-    In Zope 2 (Plone 4.3-5.1) in tests, when we export content to download it,
-    the resulting browser.contents is empty, instead of containing json.
-    This is an ugly hack to capture the data that should be available.
-    I tried a few other ways, but failed.
-    """
-    self._orig_write(data)
-    DATA.append(data)
+import json
+import os
+import shutil
+import unittest
 
 
 class TestFileSystemContentImporter(unittest.TestCase):

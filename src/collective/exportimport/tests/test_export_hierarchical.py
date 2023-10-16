@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
-from collective.exportimport import config
-from collective.exportimport.testing import (
-    COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,  # noqa: E501,
-)
 from plone import api
-from plone.app.testing import login
-from plone.app.testing import SITE_OWNER_NAME
-from plone.app.testing import SITE_OWNER_PASSWORD
+from plone.app.testing import login, SITE_OWNER_NAME, SITE_OWNER_PASSWORD
+from collective.exportimport import config
+from collective.exportimport.testing import (  # noqa: E501,
+    COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,
+)
 
 import os
 import shutil
 import tempfile
-import transaction
 import unittest
+import transaction
+
 
 try:
     from plone.testing import zope
