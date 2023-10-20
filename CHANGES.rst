@@ -9,6 +9,8 @@ Changelog
   This fixes an error at the end of the export and no errors being written.
   [thet]
 
+- Allow to import contents inside current context.
+  [cekk]
 
 1.10 (2023-10-11)
 -----------------

@@ -9,7 +9,12 @@
     <tal:main-macro metal:define-macro="main">
 
       <h1 class="documentFirstHeading" i18n:translate="">Import Content</h1>
-
+      <dl class="portalMessage warning" role="status">
+        <dt>Warning</dt>
+        <dd tal:define="path python:'/'.join(context.getPhysicalPath())">
+          You are importing contents in this context: <strong>${path}<strong>
+        </dd>
+      </dl>
       <p class="documentDescription" i18n:translate="">Here you can upload a json-file.</p>
 
         <form action="." tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
@@ -85,7 +90,11 @@
                     tal:attributes="checked python:'checked' if view.import_to_current_folder else None"
                     />
                 <span i18n:translate="">Import all items into the current folder</span>
+                <span class="formHelp" i18n:translate="">
+                  This will ignore original tree structure and import all items flat.
+                </span>
               </label>
+              
             </div>
 
             <div class="field">
