@@ -20,6 +20,15 @@
       />
 
   <browser:page
+      zcml:condition="installed Products.ATContentTypes.content.topic"
+      name="export_content"
+      for="Products.ATContentTypes.interfaces.IATTopic"
+      class=".export_topic.ExportTopic"
+      template="templates/export_content.pt"
+      permission="cmf.ManagePortal"
+      />
+
+  <browser:page
       name="export_relations"
       for="zope.interface.Interface"
       class=".export_other.ExportRelations"
