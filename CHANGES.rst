@@ -9,6 +9,9 @@ Changelog
   This fixes an error at the end of the export and no errors being written.
   [thet]
 
+- Add support for ATTopic export_content
+  [avoinea]
+
 
 1.10 (2023-10-11)
 -----------------
