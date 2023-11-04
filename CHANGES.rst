@@ -9,6 +9,9 @@ Changelog
   This fixes an error at the end of the export and no errors being written.
   [thet]
 
+- Add support for ATTopic export_content
+  [avoinea]
+
 - Adds hierarchical content export/import. A folder structure will be created and a json file per item.
   This will allow to keep track of changes for each item. Also allow to move o delete content.
   [rber474]
@@ -18,7 +21,6 @@ Changelog
 
 - Modifies import_content and export_content templates to include boostrap classes and change checkboxes to switches.
   [rber474]
-
 
 1.10 (2023-10-11)
 -----------------
