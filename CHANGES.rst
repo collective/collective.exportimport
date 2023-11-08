@@ -12,6 +12,8 @@ Changelog
 - Add support for ATTopic export_content
   [avoinea]
 
+- Add principals to groups that already exist during import (#228)
+  [pbauer]
 
 1.10 (2023-10-11)
 -----------------
