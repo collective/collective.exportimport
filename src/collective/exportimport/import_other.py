@@ -222,10 +222,10 @@ class ImportMembers(BrowserView):
                     description=item["description"],
                     roles=item["roles"],
                 )
-                # add all principals
-                for principal in item.get("principals", []):
-                    pg.addPrincipalToGroup(principal, item["groupid"])
                 groupsNumber += 1
+            # add all principals, even if they are not stored in plone (e.g. LDAP)
+            for principal in item.get("principals", []):
+                pg.addPrincipalToGroup(principal, item["groupid"])
         return groupsNumber
 
     def import_members(self, data):
