@@ -75,29 +75,6 @@ def get_blob_path(blob):
 
 # Custom Serializers for Dexterity
 
-@adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
-class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
-    def __call__(self):
-        try:
-            image = self.field.get(self.context)
-        except AttributeError:
-            image = None
-        if not image:
-            return None
-
-        if "built-in function id" in image.filename:
-            filename = self.context.id
-        else:
-            filename = image.filename
-
-        result = {
-            "filename": filename,
-            "content-type": image.contentType,
-            "data": base64.b64encode(image.data),
-            "encoding": "base64",
-        }
-        return json_compatible(result)
-
 
 @adapter(INamedFileField, IDexterityContent, IBase64BlobsMarker)
 class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
@@ -138,6 +115,11 @@ class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
             "encoding": "base64",
         }
         return json_compatible(result)
+
+
+@adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
+class ImageFieldSerializerWithBlobs(FileFieldSerializerWithBlobs):
+    pass
 
 
 @adapter(IRichText, IDexterityContent, IRawRichTextMarker)
