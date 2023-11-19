@@ -75,29 +75,6 @@ def get_blob_path(blob):
 
 # Custom Serializers for Dexterity
 
-@adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
-class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
-    def __call__(self):
-        try:
-            image = self.field.get(self.context)
-        except AttributeError:
-            image = None
-        if not image:
-            return None
-
-        if "built-in function id" in image.filename:
-            filename = self.context.id
-        else:
-            filename = image.filename
-
-        result = {
-            "filename": filename,
-            "content-type": image.contentType,
-            "data": base64.b64encode(image.data),
-            "encoding": "base64",
-        }
-        return json_compatible(result)
-
 
 @adapter(INamedFileField, IDexterityContent, IBase64BlobsMarker)
 class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
@@ -109,10 +86,27 @@ class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
         if namedfile is None:
             return None
 
-        if "built-in function id" in namedfile.filename:
-            filename = self.context.id
-        else:
-            filename = namedfile.filename
+        try:
+            if "built-in function id" in namedfile.filename:
+                filename = self.context.id
+            else:
+                filename = namedfile.filename
+        except AttributeError:
+            # Try to recover broken namedfile
+            # Related to: WARNING OFS.Uninstalled Could not import class 'NamedBlobFile' from module 'zope.app.file.file'
+            from ZODB.broken import Broken
+
+            if isinstance(namedfile, Broken):
+                broken_namedfile = namedfile.__Broken_state__
+                file = broken_namedfile["_blob"].open()
+                result = {
+                    "filename": broken_namedfile["filename"],
+                    "content-type": broken_namedfile["contentType"],
+                    "data": base64.b64encode(file.read()),
+                    "encoding": "base64",
+                }
+                file.close()
+                return result
 
         result = {
             "filename": filename,
@@ -121,6 +115,11 @@ class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
             "encoding": "base64",
         }
         return json_compatible(result)
+
+
+@adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
+class ImageFieldSerializerWithBlobs(FileFieldSerializerWithBlobs):
+    pass
 
 
 @adapter(IRichText, IDexterityContent, IRawRichTextMarker)

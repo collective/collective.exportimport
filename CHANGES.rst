@@ -5,6 +5,9 @@ Changelog
 1.11 (unreleased)
 -----------------
 
+- Try to restore broken blobs when exporting content.
+  [thet]
+
 - When exporting into separate JSON files write also the error in a separate errors.json file.
   This fixes an error at the end of the export and no errors being written.
   [thet]
