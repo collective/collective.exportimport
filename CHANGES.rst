@@ -5,6 +5,9 @@ Changelog
 1.11 (unreleased)
 -----------------
 
+- Allow to use fix_html_in_content_fields without applying the default html_fixer.
+  [pbauer]
+
 - Try to restore broken blobs when exporting content.
   [thet]
 
