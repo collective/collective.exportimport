@@ -5,6 +5,9 @@ Changelog
 1.11 (unreleased)
 -----------------
 
+- Fix ``KeyError: time`` when importing content with a workflow that does not have the ``time`` variable.
+  [maurits]
+
 - Allow to use fix_html_in_content_fields without applying the default html_fixer.
   [pbauer]
 
