@@ -5,12 +5,24 @@ Changelog
 1.11 (unreleased)
 -----------------
 
+- Fix ``KeyError: time`` when importing content with a workflow that does not have the ``time`` variable.
+  [maurits]
+
+- Allow to use fix_html_in_content_fields without applying the default html_fixer.
+  [pbauer]
+
+- Try to restore broken blobs when exporting content.
+  [thet]
+
 - When exporting into separate JSON files write also the error in a separate errors.json file.
   This fixes an error at the end of the export and no errors being written.
   [thet]
 
 - Add support for ATTopic export_content
   [avoinea]
+
+- Add principals to groups that already exist during import (#228)
+  [pbauer]
 
 - Adds hierarchical content export/import. A folder structure will be created and a json file per item.
   This will allow to keep track of changes for each item. Also allow to move o delete content.
@@ -21,7 +33,7 @@ Changelog
 
 - Modifies import_content and export_content templates to include boostrap classes and change checkboxes to switches.
   [rber474]
-
+ 
 1.10 (2023-10-11)
 -----------------
 
