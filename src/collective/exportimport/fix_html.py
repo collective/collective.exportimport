@@ -300,7 +300,7 @@ def fix_html_in_content_fields(
             fixers = [fixers]
         fixers = [i for i in fixers if callable(i)]
         if apply_default_fixer:
-            fixers.prepend(html_fixer)
+            fixers.insert(0, html_fixer)
 
     try:
         # Add img_variant_fixer if we are running this in Plone 6.x
