@@ -2146,14 +2146,6 @@ This ``global_obj_hook`` below stores that data in a annotation:
             annotations[DEFERRED_KEY] = data
 
 
-Written by
-==========
-
-.. image:: ./docs/starzel.png
-    :target: https://www.starzel.de
-    :alt: Starzel.de
-
-
 Translations
 ============
 
@@ -2241,3 +2233,11 @@ License
 -------
 
 The project is licensed under the GPLv2.
+
+
+Written by
+==========
+
+.. image:: ./docs/starzel.png
+    :target: https://www.starzel.de
+    :alt: Starzel.de
