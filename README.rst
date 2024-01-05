@@ -56,6 +56,28 @@ Import supports:
 
 * Plone 5.2+, Dexterity, Python 2 and 3, plone.app.multilingual
 
+
+Installation
+============
+
+Install collective.exportimport as you would install any other Python package.
+
+You don't need to activate the add-on in the Site Setup Add-ons control panel to be able to use the forms ``@@export_content`` and ``@@import_content`` in your site.
+
+If you need help, see:
+- for Plone 4: https://4.docs.plone.org/adapt-and-extend/install_add_ons.html
+- for Plone 5: https://5.docs.plone.org/manage/installing/installing_addons.html
+- for Plone 6: https://6.docs.plone.org/install/manage-add-ons-packages.html
+
+
+Python 2 compatibility
+----------------------
+
+This package is compatible with Python 3 and Python 2.
+Depending on the Python version different versions of it's dependencies will be installed.
+If you run into problems, file an issue at: https://github.com/collective/collective.exportimport/issues
+
+
 Usage
 =====
 
@@ -2152,68 +2174,6 @@ Translations
 This product has been translated into
 
 - Spanish
-
-
-Installation
-============
-
-Install collective.exportimport by adding it to your buildout::
-
-    [buildout]
-
-    ...
-
-    eggs =
-        collective.exportimport
-
-
-and then running ``bin/buildout``
-
-You don't need to activate the add-on in the Site Setup Add-ons control panel to be able to use the forms ``@@export_content`` and ``@@import_content`` in your site.
-
-You do need to add it to your buildout configuration and run buildout to make these features available at all. See https://docs.plone.org/manage/installing/installing_addons.html for details.
-
-Installing in Plone 4
----------------------
-
-``collective.exportimport`` depends on ``plone.restapi``. For Plone 4, you need to pin ``plone.restapi`` to 7.x . When installing ``plone.restapi`` version 7.x.x in Plone 4 you may need to add the following version pins to your buildout::
-
-    [versions]
-    PyJWT = 1.7.1
-
-    six = 1.11.0
-    attrs = 21.2.0
-    plone.rest = 1.6.2
-    plone.schema = 1.3.0
-    # Last pyrsistent version that is python 2 compatible:
-    pyrsistent = 0.15.7
-
-    # Required by:
-    # jsonschema==3.2.0
-    functools32 = 3.2.3.post2
-
-    # Required by:
-    # plone.schema==1.3.0
-    jsonschema = 3.2.0
-
-    # Required by:
-    # importlib-metadata==1.3.0
-    pathlib2 = 2.3.5
-
-    # Required by:
-    # pathlib2==2.3.5
-    scandir = 1.10.0
-
-    # plone.app.contenttypes > 1.0
-    plone.app.contenttypes = 1.1.9
-
-    importlib-metadata = 2.1.3
-    zipp = 1.2.0
-    configparser = 4.0.2
-    contextlib2 = 0.6.0.post1
-
-
-These versions are taken from the ``plone.restapi`` 7.x README: https://pypi.org/project/plone.restapi/7.8.1/
 
 
 Contribute
