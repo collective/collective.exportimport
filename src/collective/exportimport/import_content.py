@@ -456,9 +456,16 @@ class ImportContent(BrowserView):
 
             if not self.update_existing:
                 # create without checking constrains and permissions
-                new = _createObjectByType(
-                    item["@type"], container, item["id"], **factory_kwargs
-                )
+                try:
+                    new = _createObjectByType(
+                        item["@type"], container, item["id"], check_constrains=False
+                    )
+                except ValueError as e:
+                    logger.warning(e)
+
+                    logger.warning("THET: Could not create item %s of type %s in %s",
+                            item["id"], item["@type"],
+                            container.absolute_url(), exc_info=True)
 
             try:
                 new = self.handle_new_object(item, index, new)
@@ -469,7 +476,15 @@ class ImportContent(BrowserView):
                     self.commit_hook(added, index)
             except Exception as e:
                 item_id = item["@id"].split("/")[-1]
-                container.manage_delObjects(item_id)
+                try:
+                    container.manage_delObjects(item_id)
+                except AttributeError as e2:
+                    logger.warning(e2)
+                    logger.warning(
+                        "THET: Cannot delete %s at %s. This is a follow-up error of the following traceback:",
+                        item_id,
+                        container.absolute_url(),
+                    )
                 logger.warning(e)
                 logger.warning(
                     "Didn't add %s %s", item["@type"], item["@id"], exc_info=True
@@ -486,7 +501,11 @@ class ImportContent(BrowserView):
         deserializer = getMultiAdapter((new, self.request), IDeserializeFromJson)
         try:
             try:
-                new = deserializer(validate_all=False, data=item)
+                # Don't mask validation errors but log them fully instead.
+                new = deserializer(
+                    validate_all=False, data=item, mask_validation_errors=False
+                )
+
             except TypeError as error:
                 if "unexpected keyword argument" in str(error):
                     self.request["BODY"] = json.dumps(item)
