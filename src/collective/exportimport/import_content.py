@@ -503,7 +503,10 @@ class ImportContent(BrowserView):
             try:
                 # Don't mask validation errors but log them fully instead.
                 new = deserializer(
-                    validate_all=False, data=item, mask_validation_errors=False
+                    validate_all=False,
+                    data=item,
+                    mask_validation_errors=False,
+                    ignore_errors=True,
                 )
 
             except TypeError as error:
