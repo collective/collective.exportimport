@@ -37,18 +37,12 @@ import six
 import transaction
 
 try:
-    from collective.relationhelpers import api as relapi
-
-    HAS_RELAPI = True
+    from Products.CMFPlone import relationhelper as relapi
 except ImportError:
-    HAS_RELAPI = False
-
-try:
-    from Products.CMFPlone import relationhelper
-
-    HAS_PLONE6 = True
-except ImportError:
-    HAS_PLONE6 = False
+    try:
+        from collective.relationhelpers import api as relapi
+    except ImportError:
+        relapi = None
 
 try:
     from plone.app.multilingual.interfaces import ITranslationManager
@@ -282,12 +276,10 @@ class ImportRelations(BrowserView):
     }
 
     def __call__(self, jsonfile=None, return_json=False):
-
-        if not HAS_RELAPI and not HAS_PLONE6:
+        if not relapi:
             api.portal.show_message(
-                _(
-                    "You need either Plone 6 or collective.relationhelpers to import relations"
-                ),
+                _("You need either Plone 6 or collective.relationhelpers to "
+                  "import relations"),
                 self.request,
             )
             return self.index()
@@ -351,14 +343,9 @@ class ImportRelations(BrowserView):
         all_fixed_relations = sorted(
             all_fixed_relations, key=itemgetter("from_uuid", "from_attribute")
         )
-        if HAS_RELAPI:
-            relapi.purge_relations()
-            relapi.cleanup_intids()
-            relapi.restore_relations(all_relations=all_fixed_relations)
-        elif HAS_PLONE6:
-            relationhelper.purge_relations()
-            relationhelper.cleanup_intids()
-            relationhelper.restore_relations(all_relations=all_fixed_relations)
+        relapi.purge_relations()
+        relapi.cleanup_intids()
+        relapi.restore_relations(all_relations=all_fixed_relations)
 
     def get_from_attribute(self, rel):
         # Optionally handle special cases...
