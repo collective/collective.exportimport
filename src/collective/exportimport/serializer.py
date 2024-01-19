@@ -7,7 +7,7 @@ from collective.exportimport.interfaces import ITalesField
 from hurry.filesize import size
 from plone.app.textfield.interfaces import IRichText
 from plone.dexterity.interfaces import IDexterityContent
-from plone.namedfile.interfaces import INamedFileField
+from plone.namedfile.interfaces import INamedFileField, INamedBlobFileField
 from plone.namedfile.interfaces import INamedImageField
 from plone.restapi.interfaces import IFieldSerializer
 from plone.restapi.interfaces import IJsonCompatible
@@ -548,6 +548,15 @@ def get_dx_blob_path(obj):
 
 
 @adapter(INamedFileField, IDexterityContent, IPathBlobsMarker)
+@implementer(IFieldSerializer)
+class FileFieldSerializerZODBData(FileFieldSerializerWithBlobs):
+    """ Although the marker is IPathBlobsMarker, this being a plain NamedFile
+    object, its data is in the ZODB, thus this still needs to be
+    base64 encoded into the JSON file
+    So we just subclass from the above FileFieldSerializerWithBlobs """
+
+
+@adapter(INamedBlobFileField, IDexterityContent, IPathBlobsMarker)
 @implementer(IFieldSerializer)
 class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
     def __call__(self):
