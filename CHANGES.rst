@@ -5,6 +5,11 @@ Changelog
 1.11 (unreleased)
 -----------------
 
+- Fix ``AtributeError: 'NamedFile' object has no attribute '_blob'`` when using setting
+  "Include blobs as blob paths" and exporting objects with
+  plone.namedfile.file.NamedFile properties (so not blobs).
+  [valipod]
+
 - Fix ``KeyError: time`` when importing content with a workflow that does not have the ``time`` variable.
   [maurits]
 

@@ -130,6 +130,7 @@
   <!-- Serializers -->
   <adapter factory=".serializer.FileFieldSerializerWithBlobs" />
   <adapter factory=".serializer.FileFieldSerializerWithBlobPaths" />
+  <adapter factory=".serializer.FileFieldSerializerZODBData" />
   <adapter factory=".serializer.ImageFieldSerializerWithBlobs" />
   <adapter factory=".serializer.ImageFieldSerializerWithBlobPaths" />
   <adapter factory=".serializer.RichttextFieldSerializerWithRawText" />
