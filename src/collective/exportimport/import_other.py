@@ -535,7 +535,7 @@ class ImportDefaultPages(BrowserView):
                     obj = api.portal.get()
                 else:
                     continue
-            if "default_page_uuid" in item:
+            if "default_page_uuid" in item and item.get("default_page_uuid", None):
                 default_page_obj = api.content.get(UID=item["default_page_uuid"])
                 if not default_page_obj:
                     logger.info("Default page missing: %s", item["default_page_uuid"])

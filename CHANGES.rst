@@ -10,6 +10,9 @@ Changelog
   plone.namedfile.file.NamedFile properties (so not blobs).
   [valipod]
 
+- Add more Python 2 compatible version specifications and update the README.
+  [thet]
+
 - Fix ``KeyError: time`` when importing content with a workflow that does not have the ``time`` variable.
   [maurits]
 
