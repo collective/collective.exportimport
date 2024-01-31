@@ -7,7 +7,7 @@ from collective.exportimport.interfaces import ITalesField
 from hurry.filesize import size
 from plone.app.textfield.interfaces import IRichText
 from plone.dexterity.interfaces import IDexterityContent
-from plone.namedfile.interfaces import INamedFileField
+from plone.namedfile.interfaces import INamedFileField, INamedBlobFileField
 from plone.namedfile.interfaces import INamedImageField
 from plone.restapi.interfaces import IFieldSerializer
 from plone.restapi.interfaces import IJsonCompatible
@@ -75,29 +75,6 @@ def get_blob_path(blob):
 
 # Custom Serializers for Dexterity
 
-@adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
-class ImageFieldSerializerWithBlobs(DefaultFieldSerializer):
-    def __call__(self):
-        try:
-            image = self.field.get(self.context)
-        except AttributeError:
-            image = None
-        if not image:
-            return None
-
-        if "built-in function id" in image.filename:
-            filename = self.context.id
-        else:
-            filename = image.filename
-
-        result = {
-            "filename": filename,
-            "content-type": image.contentType,
-            "data": base64.b64encode(image.data),
-            "encoding": "base64",
-        }
-        return json_compatible(result)
-
 
 @adapter(INamedFileField, IDexterityContent, IBase64BlobsMarker)
 class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
@@ -109,10 +86,27 @@ class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
         if namedfile is None:
             return None
 
-        if "built-in function id" in namedfile.filename:
-            filename = self.context.id
-        else:
-            filename = namedfile.filename
+        try:
+            if "built-in function id" in namedfile.filename:
+                filename = self.context.id
+            else:
+                filename = namedfile.filename
+        except AttributeError:
+            # Try to recover broken namedfile
+            # Related to: WARNING OFS.Uninstalled Could not import class 'NamedBlobFile' from module 'zope.app.file.file'
+            from ZODB.broken import Broken
+
+            if isinstance(namedfile, Broken):
+                broken_namedfile = namedfile.__Broken_state__
+                file = broken_namedfile["_blob"].open()
+                result = {
+                    "filename": broken_namedfile["filename"],
+                    "content-type": broken_namedfile["contentType"],
+                    "data": base64.b64encode(file.read()),
+                    "encoding": "base64",
+                }
+                file.close()
+                return result
 
         result = {
             "filename": filename,
@@ -121,6 +115,11 @@ class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
             "encoding": "base64",
         }
         return json_compatible(result)
+
+
+@adapter(INamedImageField, IDexterityContent, IBase64BlobsMarker)
+class ImageFieldSerializerWithBlobs(FileFieldSerializerWithBlobs):
+    pass
 
 
 @adapter(IRichText, IDexterityContent, IRawRichTextMarker)
@@ -549,6 +548,15 @@ def get_dx_blob_path(obj):
 
 
 @adapter(INamedFileField, IDexterityContent, IPathBlobsMarker)
+@implementer(IFieldSerializer)
+class FileFieldSerializerZODBData(FileFieldSerializerWithBlobs):
+    """ Although the marker is IPathBlobsMarker, this being a plain NamedFile
+    object, its data is in the ZODB, thus this still needs to be
+    base64 encoded into the JSON file
+    So we just subclass from the above FileFieldSerializerWithBlobs """
+
+
+@adapter(INamedBlobFileField, IDexterityContent, IPathBlobsMarker)
 @implementer(IFieldSerializer)
 class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
     def __call__(self):

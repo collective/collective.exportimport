@@ -5,12 +5,34 @@ Changelog
 1.11 (unreleased)
 -----------------
 
+- Fix ``AtributeError: 'NamedFile' object has no attribute '_blob'`` when using setting
+  "Include blobs as blob paths" and exporting objects with
+  plone.namedfile.file.NamedFile properties (so not blobs).
+  [valipod]
+
+- Add more Python 2 compatible version specifications and update the README.
+  [thet]
+
+- Fix ``KeyError: time`` when importing content with a workflow that does not have the ``time`` variable.
+  [maurits]
+
+- Allow to use fix_html_in_content_fields without applying the default html_fixer.
+  [pbauer]
+
+- Try to restore broken blobs when exporting content.
+  [thet]
+
 - When exporting into separate JSON files write also the error in a separate errors.json file.
   This fixes an error at the end of the export and no errors being written.
   [thet]
 
 - Allow to import contents inside current context.
   [cekk]
+- Add support for ATTopic export_content
+  [avoinea]
+
+- Add principals to groups that already exist during import (#228)
+  [pbauer]
 
 1.10 (2023-10-11)
 -----------------

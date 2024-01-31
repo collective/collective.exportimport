@@ -819,9 +819,10 @@ class ImportContent(BrowserView):
         for key, value in workflow_history.items():
             # The time needs to be deserialized
             for history_item in value:
-                history_item["time"] = DateTime(
-                    dateutil.parser.parse(history_item["time"])
-                )
+                if "time" in history_item:
+                    history_item["time"] = DateTime(
+                        dateutil.parser.parse(history_item["time"])
+                    )
             result[key] = value
         if result:
             obj.workflow_history = PersistentMapping(result.items())

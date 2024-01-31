@@ -247,7 +247,9 @@ def find_object(base, path):
         return target
 
 
-def fix_html_in_content_fields(context=None, commit=True, fixers=None):
+def fix_html_in_content_fields(
+    context=None, commit=True, fixers=None, apply_default_fixer=True
+):
     """Fix html this after importing content into Plone 5 or 6.
     When calling this from your code you can pass additional fixers to modify the html.
 
@@ -296,7 +298,9 @@ def fix_html_in_content_fields(context=None, commit=True, fixers=None):
     else:
         if not isinstance(fixers, list):
             fixers = [fixers]
-        fixers = [html_fixer] + [i for i in fixers if callable(i)]
+        fixers = [i for i in fixers if callable(i)]
+        if apply_default_fixer:
+            fixers.insert(0, html_fixer)
 
     try:
         # Add img_variant_fixer if we are running this in Plone 6.x

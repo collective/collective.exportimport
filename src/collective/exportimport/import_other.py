@@ -222,10 +222,10 @@ class ImportMembers(BrowserView):
                     description=item["description"],
                     roles=item["roles"],
                 )
-                # add all principals
-                for principal in item.get("principals", []):
-                    pg.addPrincipalToGroup(principal, item["groupid"])
                 groupsNumber += 1
+            # add all principals, even if they are not stored in plone (e.g. LDAP)
+            for principal in item.get("principals", []):
+                pg.addPrincipalToGroup(principal, item["groupid"])
         return groupsNumber
 
     def import_members(self, data):
@@ -535,7 +535,7 @@ class ImportDefaultPages(BrowserView):
                     obj = api.portal.get()
                 else:
                     continue
-            if "default_page_uuid" in item:
+            if "default_page_uuid" in item and item.get("default_page_uuid", None):
                 default_page_obj = api.content.get(UID=item["default_page_uuid"])
                 if not default_page_obj:
                     logger.info("Default page missing: %s", item["default_page_uuid"])
