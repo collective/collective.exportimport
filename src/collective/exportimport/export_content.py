@@ -3,6 +3,7 @@ from Acquisition import aq_base
 from App.config import getConfiguration
 from collective.exportimport import _
 from collective.exportimport import config
+from collective.exportimport.filesystem_exporter import FileSystemContentExporter
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IPathBlobsMarker
@@ -223,7 +224,26 @@ class ExportContent(BrowserView):
                 noLongerProvides(self.request, IPathBlobsMarker)
             self.finish()
             self.request.response.redirect(self.request["ACTUAL_URL"])
+        elif download_to_server == 3:
+            exporter = FileSystemContentExporter()
+            self.start()
+            for number, datum in enumerate(content_generator, start=1):
+                exporter.save(number, datum)
+            self.finish()
 
+            msg = self.context.translate(_(
+                "hierarchycal_export_success",
+                u"Exported ${number} items (${types}) as tree to ${target} with ${errors} errors",
+                mapping={
+                    u"number": number,
+                    u"types":  ", ".join(self.portal_type),
+                    u"target": exporter.root,
+                    u"errors": len(self.errors)
+                }
+            ))
+            logger.info(msg)
+            api.portal.show_message(msg, self.request)
+            self.request.response.redirect(self.request["ACTUAL_URL"])
         # Export all items into one json-file in the filesystem
         elif download_to_server:
             directory = config.CENTRAL_DIRECTORY
@@ -262,8 +282,6 @@ class ExportContent(BrowserView):
                 noLongerProvides(self.request, IPathBlobsMarker)
             self.finish()
             self.request.response.redirect(self.request["ACTUAL_URL"])
-
-        # Export as one json-file through the browser
         else:
             with tempfile.TemporaryFile(mode="w+") as f:
                 self.start()
@@ -274,7 +292,7 @@ class ExportContent(BrowserView):
                         f.write(",")
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
-                    if  self.errors and self.write_errors:
+                    if self.errors and self.write_errors:
                         f.write(",")
                         errors = {"unexported_paths": self.errors}
                         json.dump(errors, f, indent=4)

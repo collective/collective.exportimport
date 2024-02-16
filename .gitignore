@@ -30,3 +30,5 @@ report.html
 .tox/
 reports/
 # excludes
+.DS_Store
+*.bak
