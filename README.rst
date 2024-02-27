@@ -342,7 +342,7 @@ Export Example
 
 Register it with your own browserlayer to override the default.
 
-.. code-block::
+.. code-block:: text
 
   <browser:page
       name="export_content"
@@ -404,7 +404,7 @@ Import Example
 
 Register it:
 
-.. code-block::
+.. code-block:: text
 
   <browser:page
       name="import_content"
@@ -1020,7 +1020,7 @@ You then need a new step in the migration to move the deferred values from the a
 
 This additional view obviously needs to be registered:
 
-.. code-block::
+.. code-block:: text
 
     <browser:page
         name="import_deferred"
