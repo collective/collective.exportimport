@@ -32,6 +32,10 @@ Changelog
 - Add principals to groups that already exist during import (#228)
   [pbauer]
 
+- In export_members ignore transitive membership of groups (#240)
+  [pbauer]
+
+
 1.10 (2023-10-11)
 -----------------
 

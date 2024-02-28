@@ -305,6 +305,31 @@ class TestExport(unittest.TestCase):
             if member["username"] == TEST_USER_ID:
                 self.assertTrue(member["roles"], ["Member"])
 
+    def test_export_indirect_members(self):
+        direct = api.group.create("Direct")
+        indirect = api.group.create("Indirect")
+        api.group.add_user(group=direct, username=TEST_USER_ID)
+        # Make user a indirect member of the group indirect
+        api.group.add_user(group=direct, user=indirect)
+
+        transaction.commit()
+        browser = self.open_page("@@export_members")
+        browser.getForm(action="@@export_members").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
+        self.assertIn("groups", data.keys())
+        self.assertIn("members", data.keys())
+        members = data["members"]
+        membernames = [member["username"] for member in members]
+        self.assertIn(TEST_USER_ID, membernames)
+        for member in members:
+            if member["username"] == TEST_USER_ID:
+                self.assertEqual(member["username"], TEST_USER_ID)
+                # Only direct membership is exported
+                self.assertEqual(member["groups"], ["Direct"])
+
     def test_export_defaultpages_empty(self):
         browser = self.open_page("@@export_defaultpages")
         browser.getForm(action="@@export_defaultpages").submit(name="form.submitted")
