@@ -300,8 +300,14 @@ class ExportMembers(BaseExport):
 
     def _getUserData(self, userId):
         member = self.pms.getMemberById(userId)
-        groups = member.getGroups()
-        groups = [i for i in groups if i not in self.AUTO_GROUPS]
+        groups = []
+        group_ids = [i for i in member.getGroups() if i not in self.AUTO_GROUPS]
+        # Drop groups in which the user is a transitive member
+        for group_id in group_ids:
+            group = api.group.get(group_id)
+            plone_group = group.getGroup()
+            if userId in plone_group.getMemberIds():
+                groups.append(group_id)
         group_roles = []
         for gid in groups:
             group_roles.extend(self.group_roles.get(gid, []))
