@@ -321,10 +321,14 @@ class TestExport(unittest.TestCase):
         data = json.loads(contents)
         self.assertIn("groups", data.keys())
         self.assertIn("members", data.keys())
-        member_data = data["members"][0]
-        self.assertEqual(member_data["username"], TEST_USER_ID)
-        # Only direct membership is exported
-        self.assertEqual(member_data["groups"], ["Direct"])
+        members = data["members"]
+        membernames = [member["username"] for member in members]
+        self.assertIn(TEST_USER_ID, membernames)
+        for member in members:
+            if member["username"] == TEST_USER_ID:
+                self.assertEqual(member["username"], TEST_USER_ID)
+                # Only direct membership is exported
+                self.assertEqual(member["groups"], ["Direct"])
 
     def test_export_defaultpages_empty(self):
         browser = self.open_page("@@export_defaultpages")
