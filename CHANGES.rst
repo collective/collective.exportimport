@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.11 (unreleased)
+1.11 (2024-02-28)
 -----------------
 
 - Fix ``AtributeError: 'NamedFile' object has no attribute '_blob'`` when using setting
