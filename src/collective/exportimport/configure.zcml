@@ -137,10 +137,12 @@
   <adapter factory=".serializer.CollectionFieldSerializer" />
   <adapter factory=".serializer.ChoiceFieldSerializer" />
   <adapter factory=".serializer.long_converter" />
+  <adapter factory=".serializer.ExportingBlocksJSONFieldSerializer" />
 
   <!-- Deserializers -->
   <adapter factory=".deserializer.RichTextFieldDeserializerWithoutUnescape" />
   <adapter factory=".deserializer.PortletRichTextFieldDeserializer" />
+  <adapter factory=".deserializer.ImportingBlocksJSONFieldDeserializer" />
 
   <browser:page
       name="exportimport_links"
