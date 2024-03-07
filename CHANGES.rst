@@ -5,7 +5,8 @@ Changelog
 1.12 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fix migrating bocks to make Volto sites portable and support plone.distribution.
+  [pbauer, tlotze]
 
 
 1.11 (2024-02-28)

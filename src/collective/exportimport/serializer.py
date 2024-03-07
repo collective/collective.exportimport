@@ -9,10 +9,13 @@ from plone.app.textfield.interfaces import IRichText
 from plone.dexterity.interfaces import IDexterityContent
 from plone.namedfile.interfaces import INamedFileField, INamedBlobFileField
 from plone.namedfile.interfaces import INamedImageField
+from plone.restapi.behaviors import IBlocks
 from plone.restapi.interfaces import IFieldSerializer
 from plone.restapi.interfaces import IJsonCompatible
+from plone.restapi.serializer.blocks import BlocksJSONFieldSerializer
 from plone.restapi.serializer.converters import json_compatible
 from plone.restapi.serializer.dxfields import DefaultFieldSerializer
+from plone.schema import IJSONField
 from Products.CMFCore.utils import getToolByName
 from zope.component import adapter
 from zope.component import getUtility
@@ -605,6 +608,14 @@ class ImageFieldSerializerWithBlobPaths(DefaultFieldSerializer):
             "blob_path": blobfilepath,
         }
         return json_compatible(result)
+
+
+@adapter(IJSONField, IBlocks, IMigrationMarker)
+@implementer(IFieldSerializer)
+class ExportingBlocksJSONFieldSerializer(DefaultFieldSerializer):
+    """We skip the subscribers that serialize the blocks for the frontend.
+    We only need the raw data.
+    """
 
 
 if six.PY2:
