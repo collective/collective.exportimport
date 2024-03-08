@@ -5,7 +5,8 @@ Changelog
 1.13 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Add and run a black version, that is compatible with Python 2.
+  [pgrunewald]
 
 
 1.12 (2024-03-08)

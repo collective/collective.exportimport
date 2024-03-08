@@ -170,6 +170,7 @@ if HAS_PAM:  # noqa: C901
             logger.info(u"Item is not translatable: {}".format(e))
 
 else:
+
     class ImportTranslations(BrowserView):
         def __call__(self, jsonfile=None, return_json=False):
             return "This view only works when using plone.app.multilingual >= 2.0.0"
@@ -260,9 +261,7 @@ class ImportMembers(BrowserView):
             try:
                 pr.addMember(username, password, roles, [], item)
             except ValueError:
-                logger.info(
-                    u"ValueError {} : {}".format(username, item)
-                )
+                logger.info(u"ValueError {} : {}".format(username, item))
                 continue
             for group in groups:
                 if group not in groupsDict.keys():
@@ -286,7 +285,9 @@ class ImportRelations(BrowserView):
 
         if not HAS_RELAPI and not HAS_PLONE6:
             api.portal.show_message(
-                _("You need either Plone 6 or collective.relationhelpers to import relations"),
+                _(
+                    "You need either Plone 6 or collective.relationhelpers to import relations"
+                ),
                 self.request,
             )
             return self.index()
@@ -407,7 +408,11 @@ class ImportLocalRoles(BrowserView):
                 if item["uuid"] == PORTAL_PLACEHOLDER:
                     obj = api.portal.get()
                 else:
-                    logger.info("Could not find object to set localroles on. UUID: {}".format(item["uuid"]))
+                    logger.info(
+                        "Could not find object to set localroles on. UUID: {}".format(
+                            item["uuid"]
+                        )
+                    )
                     continue
             if item.get("localroles"):
                 localroles = item["localroles"]
@@ -465,7 +470,9 @@ class ImportOrdering(BrowserView):
                 orders = self.import_ordering(data)
                 end = datetime.now()
                 delta = end - start
-                msg = _(u"Imported {} orders in {} seconds").format(orders, delta.seconds)
+                msg = _(u"Imported {} orders in {} seconds").format(
+                    orders, delta.seconds
+                )
                 logger.info(msg)
                 api.portal.show_message(msg, self.request)
             if return_json:
@@ -703,7 +710,11 @@ class ImportPortlets(BrowserView):
                 if item["uuid"] == PORTAL_PLACEHOLDER:
                     obj = api.portal.get()
                 else:
-                    logger.info("Could not find object to set portlet on UUID: {}".format(item["uuid"]))
+                    logger.info(
+                        "Could not find object to set portlet on UUID: {}".format(
+                            item["uuid"]
+                        )
+                    )
                     continue
             registered_portlets = register_portlets(obj, item)
             results += registered_portlets

@@ -7,7 +7,7 @@ Create a virtualenv in the package::
 
 Install requirements with pip::
 
-    $ ./bin/pip install -r requirements.txt
+    $ ./bin/pip install -r requirements.txt -r requirements_black.txt
 
 Run buildout::
 
@@ -38,3 +38,8 @@ run a specific tox env:
 
     $ tox -e plone52-py38
 
+
+Format Python code
+------------------
+
+    $ ./bin/black .

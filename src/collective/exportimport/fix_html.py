@@ -235,7 +235,7 @@ def find_object(base, path):
         obj = api.portal.get()
         portal_path = obj.absolute_url_path() + "/"
         if path.startswith(portal_path):
-            path = path[len(portal_path):]
+            path = path[len(portal_path) :]
     else:
         obj = aq_parent(base)  # relative urls start at the parent...
 
@@ -324,14 +324,18 @@ def fix_html_in_content_fields(
         query["path"] = "/".join(context.getPhysicalPath())
     brains = catalog(**query)
     total = len(brains)
-    logger.info("There are %s content items in total, starting migration...", len(brains))
+    logger.info(
+        "There are %s content items in total, starting migration...", len(brains)
+    )
     fixed_fields = 0
     fixed_items = 0
     for index, brain in enumerate(brains, start=1):
         try:
             obj = brain.getObject()
         except Exception:
-            logger.warning("Could not get object for: %s", brain.getPath(), exc_info=True)
+            logger.warning(
+                "Could not get object for: %s", brain.getPath(), exc_info=True
+            )
             continue
         if obj is None:
             logger.error(u"brain.getObject() is None %s", brain.getPath())
@@ -343,11 +347,19 @@ def fix_html_in_content_fields(
                 if text and IRichTextValue.providedBy(text) and text.raw:
                     clean_text = text.raw
                     for fixer in fixers:
-                        logger.debug("Fixing html for %s with %s", obj.absolute_url(), fixer.__name__)
+                        logger.debug(
+                            "Fixing html for %s with %s",
+                            obj.absolute_url(),
+                            fixer.__name__,
+                        )
                         try:
                             clean_text = fixer(clean_text, obj)
                         except Exception:
-                            logger.info(u"Error while fixing html of %s for %s", fieldname, obj.absolute_url())
+                            logger.info(
+                                u"Error while fixing html of %s for %s",
+                                fieldname,
+                                obj.absolute_url(),
+                            )
                             raise
 
                     if clean_text and clean_text != text.raw:
@@ -359,7 +371,11 @@ def fix_html_in_content_fields(
                         )
                         setattr(obj, fieldname, textvalue)
                         changed = True
-                        logger.debug(u"Fixed html for field %s of %s", fieldname, obj.absolute_url())
+                        logger.debug(
+                            u"Fixed html for field %s of %s",
+                            fieldname,
+                            obj.absolute_url(),
+                        )
                         fixed_fields += 1
             if changed:
                 fixed_items += 1
@@ -371,11 +387,20 @@ def fix_html_in_content_fields(
             # Commit every 1000 changed items.
             logger.info(
                 u"Fix html for %s (%s) of %s items (changed %s fields in %s items)",
-                index, round(index / total * 100, 2), total, fixed_fields, fixed_items)
+                index,
+                round(index / total * 100, 2),
+                total,
+                fixed_fields,
+                fixed_items,
+            )
             if commit:
                 transaction.commit()
 
-    logger.info(u"Finished fixing html in content fields (changed %s fields in %s items)", fixed_fields, fixed_items)
+    logger.info(
+        u"Finished fixing html in content fields (changed %s fields in %s items)",
+        fixed_fields,
+        fixed_items,
+    )
     if commit:
         # commit remaining items
         transaction.commit()

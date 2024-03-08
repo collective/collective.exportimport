@@ -112,7 +112,7 @@ class ExportContent(BrowserView):
         download_to_server=False,
         migration=True,
         include_revisions=False,
-        write_errors=False
+        write_errors=False,
     ):
         self.portal_type = portal_type or []
         if isinstance(self.portal_type, str):
@@ -150,7 +150,9 @@ class ExportContent(BrowserView):
             return self.template()
 
         if not self.portal_type:
-            api.portal.show_message(_(u"Select at least one type to export"), self.request)
+            api.portal.show_message(
+                _(u"Select at least one type to export"), self.request
+            )
             return self.template()
 
         if self.include_blobs == 1:
@@ -250,7 +252,11 @@ class ExportContent(BrowserView):
                         json.dump(errors, f, indent=4)
                     f.write("]")
             msg = _(u"Exported {} items ({}) as {} to {} with {} errors").format(
-                number, ", ".join(self.portal_type), filename, filepath, len(self.errors)
+                number,
+                ", ".join(self.portal_type),
+                filename,
+                filepath,
+                len(self.errors),
             )
             logger.info(msg)
             api.portal.show_message(msg, self.request)
@@ -274,12 +280,14 @@ class ExportContent(BrowserView):
                         f.write(",")
                     json.dump(datum, f, sort_keys=True, indent=4)
                 if number:
-                    if  self.errors and self.write_errors:
+                    if self.errors and self.write_errors:
                         f.write(",")
                         errors = {"unexported_paths": self.errors}
                         json.dump(errors, f, indent=4)
                     f.write("]")
-                msg = _(u"Exported {} {} with {} errors").format(number, self.portal_type, len(self.errors))
+                msg = _(u"Exported {} {} with {} errors").format(
+                    number, self.portal_type, len(self.errors)
+                )
                 logger.info(msg)
                 api.portal.show_message(msg, self.request)
                 response = self.request.response
@@ -350,13 +358,13 @@ class ExportContent(BrowserView):
                 obj = brain.getObject()
             except Exception:
                 msg = u"Error getting brain {}".format(brain.getPath())
-                self.errors.append({'path':None, 'message': msg})
+                self.errors.append({"path": None, "message": msg})
                 logger.exception(msg, exc_info=True)
                 continue
             if obj is None:
                 msg = u"brain.getObject() is None {}".format(brain.getPath())
                 logger.error(msg)
-                self.errors.append({'path':None, 'message': msg})
+                self.errors.append({"path": None, "message": msg})
                 continue
             obj = self.global_obj_hook(obj)
             if not obj:
@@ -375,7 +383,7 @@ class ExportContent(BrowserView):
                 yield item
             except Exception:
                 msg = u"Error exporting {}".format(obj.absolute_url())
-                self.errors.append({'path':obj.absolute_url(), 'message':msg})
+                self.errors.append({"path": obj.absolute_url(), "message": msg})
                 logger.exception(msg, exc_info=True)
 
     def portal_types(self):
@@ -395,7 +403,9 @@ class ExportContent(BrowserView):
                         "number": number,
                         "value": fti.id,
                         "title": translate(
-                            safe_unicode(fti.title), domain="plone", context=self.request
+                            safe_unicode(fti.title),
+                            domain="plone",
+                            context=self.request,
                         ),
                     }
                 )
@@ -580,15 +590,27 @@ class ExportContent(BrowserView):
             item_version = self.update_data_for_migration(item_version, obj)
             item["exportimport.versions"][version_id] = item_version
             # inject metadata (missing for Archetypes content):
-            comment = history_metadata.retrieve(version_id)["metadata"]["sys_metadata"]["comment"]
-            if comment and comment != item["exportimport.versions"][version_id].get("changeNote"):
+            comment = history_metadata.retrieve(version_id)["metadata"]["sys_metadata"][
+                "comment"
+            ]
+            if comment and comment != item["exportimport.versions"][version_id].get(
+                "changeNote"
+            ):
                 item["exportimport.versions"][version_id]["changeNote"] = comment
-            principal = history_metadata.retrieve(version_id)["metadata"]["sys_metadata"]["principal"]
-            if principal and principal != item["exportimport.versions"][version_id].get("changeActor"):
+            principal = history_metadata.retrieve(version_id)["metadata"][
+                "sys_metadata"
+            ]["principal"]
+            if principal and principal != item["exportimport.versions"][version_id].get(
+                "changeActor"
+            ):
                 item["exportimport.versions"][version_id]["changeActor"] = principal
         # current changenote
-        item["changeNote"] = history_metadata.retrieve(-1)["metadata"]["sys_metadata"]["comment"]
-        item["changeActor"] = history_metadata.retrieve(-1)["metadata"]["sys_metadata"]["principal"]
+        item["changeNote"] = history_metadata.retrieve(-1)["metadata"]["sys_metadata"][
+            "comment"
+        ]
+        item["changeActor"] = history_metadata.retrieve(-1)["metadata"]["sys_metadata"][
+            "principal"
+        ]
         return item
 
 

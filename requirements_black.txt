@@ -1,0 +1,4 @@
+# black 21.12b0 is the last version supporting Python2 syntax
+black==21.12b0
+# ensure compatibility with our black version
+click==8.0.3

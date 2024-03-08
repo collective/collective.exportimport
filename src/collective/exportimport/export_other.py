@@ -644,7 +644,9 @@ class ExportPortlets(BaseExport):
     def all_portlets(self):
         self.results = []
         portal = api.portal.get()
-        portal.ZopeFindAndApply(self.context, search_sub=True, apply_func=self.get_portlets)
+        portal.ZopeFindAndApply(
+            self.context, search_sub=True, apply_func=self.get_portlets
+        )
         self.get_root_portlets()
         return self.results
 
@@ -669,7 +671,7 @@ class ExportPortlets(BaseExport):
             obj_results["uuid"] = uid
             self.results.append(obj_results)
         return
-    
+
     def get_root_portlets(self):
         site = api.portal.get()
         self._get_portlets(site, PORTAL_PLACEHOLDER)
@@ -680,6 +682,7 @@ class ExportPortlets(BaseExport):
 
     def portlets_blacklist_hook(self, blacklist):
         return blacklist
+
 
 def export_local_portlets(obj):
     """Serialize portlets for one content object

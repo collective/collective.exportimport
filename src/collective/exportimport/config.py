@@ -12,7 +12,7 @@ CENTRAL_DIRECTORY = os.path.expanduser(
     os.path.expandvars(os.getenv("COLLECTIVE_EXPORTIMPORT_CENTRAL_DIRECTORY", ""))
 )
 
-SITE_ROOT = 'plone_site_root'
+SITE_ROOT = "plone_site_root"
 
 # Discussion Item has its own export / import views, don't show it in the exportable content type list
-SKIPPED_CONTENTTYPE_IDS = ['Discussion Item']
+SKIPPED_CONTENTTYPE_IDS = ["Discussion Item"]
