@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.12 (unreleased)
+1.12 (2024-03-08)
 -----------------
 
 - Fix migrating blocks to make Volto sites portable and support plone.distribution.
