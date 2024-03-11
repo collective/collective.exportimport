@@ -80,7 +80,7 @@ def get_absolute_blob_path(obj, blob_path):
 
 def filesystem_walker(path=None):
     root = Path(path)
-    assert(root.is_dir())
+    assert root.is_dir()
 
     # first import json-files directly in the path
     json_files = [i for i in root.glob("*.json") if i.stem.isdecimal()]
@@ -325,7 +325,9 @@ class ImportContent(BrowserView):
             if not self.should_include(item_path):
                 return False
             elif self.should_drop(item_path):
-                logger.info(u"Skipping %s, even though listed in INCLUDE_PATHS", item_path)
+                logger.info(
+                    u"Skipping %s, even though listed in INCLUDE_PATHS", item_path
+                )
                 return False
         else:
             if self.should_drop(item_path):
@@ -466,10 +468,12 @@ class ImportContent(BrowserView):
                 if self.commit and not len(added) % self.commit:
                     self.commit_hook(added, index)
             except Exception as e:
-                item_id = item['@id'].split('/')[-1]
+                item_id = item["@id"].split("/")[-1]
                 container.manage_delObjects(item_id)
                 logger.warning(e)
-                logger.warning("Didn't add %s %s", item["@type"], item["@id"], exc_info=True)
+                logger.warning(
+                    "Didn't add %s %s", item["@type"], item["@id"], exc_info=True
+                )
                 continue
 
         return added
@@ -484,13 +488,15 @@ class ImportContent(BrowserView):
             try:
                 new = deserializer(validate_all=False, data=item)
             except TypeError as error:
-                if 'unexpected keyword argument' in str(error):
+                if "unexpected keyword argument" in str(error):
                     self.request["BODY"] = json.dumps(item)
                     new = deserializer(validate_all=False)
                 else:
                     raise error
         except Exception:
-            logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
+            logger.warning(
+                "Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True
+            )
             raise
 
         # Blobs can be exported as only a path in the blob storage.
@@ -506,9 +512,7 @@ class ImportContent(BrowserView):
             # Happens only when we import content that doesn't have a UID
             # for instance when importing from non Plone systems.
             logger.info(
-                "Created new UID for item %s with type %s.",
-                item["@id"],
-                item["@type"]
+                "Created new UID for item %s with type %s.", item["@id"], item["@type"]
             )
             item["UID"] = uuid
 
@@ -534,9 +538,7 @@ class ImportContent(BrowserView):
             new.creation_date = creation_date
             new.aq_base.creation_date_migrated = creation_date
         logger.info(
-            "Created item #{}: {} {}".format(
-                index, item["@type"], new.absolute_url()
-            )
+            "Created item #{}: {} {}".format(index, item["@type"], new.absolute_url())
         )
         return new
 
@@ -598,7 +600,12 @@ class ImportContent(BrowserView):
             try:
                 new = deserializer(validate_all=False, data=version)
             except Exception:
-                logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
+                logger.warning(
+                    "Cannot deserialize %s %s",
+                    item["@type"],
+                    item["@id"],
+                    exc_info=True,
+                )
                 return
 
             self.save_revision(new, version, initial)
@@ -609,7 +616,9 @@ class ImportContent(BrowserView):
         try:
             new = deserializer(validate_all=False, data=item)
         except Exception:
-            logger.warning("Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True)
+            logger.warning(
+                "Cannot deserialize %s %s", item["@type"], item["@id"], exc_info=True
+            )
             return
 
         self.import_blob_paths(new, item)
@@ -778,15 +787,12 @@ class ImportContent(BrowserView):
             return
         constrains.setConstrainTypesMode(ENABLED)
 
-        locally_allowed_types = item["exportimport.constrains"][
-            "locally_allowed_types"
-        ]
+        locally_allowed_types = item["exportimport.constrains"]["locally_allowed_types"]
         try:
             constrains.setLocallyAllowedTypes(locally_allowed_types)
         except ValueError:
             logger.warning(
-                "Cannot setLocallyAllowedTypes on %s", item["@id"],
-                exc_info=True
+                "Cannot setLocallyAllowedTypes on %s", item["@id"], exc_info=True
             )
 
         immediately_addable_types = item["exportimport.constrains"][
@@ -796,8 +802,7 @@ class ImportContent(BrowserView):
             constrains.setImmediatelyAddableTypes(immediately_addable_types)
         except ValueError:
             logger.warning(
-                "Cannot setImmediatelyAddableTypes on %s", item["@id"],
-                exc_info=True
+                "Cannot setImmediatelyAddableTypes on %s", item["@id"], exc_info=True
             )
 
     def import_review_state(self, obj, item):
@@ -997,7 +1002,9 @@ class ImportContent(BrowserView):
 
         # Handle folderish Documents provided by plone.volto
         fti = getUtility(IDexterityFTI, name="Document")
-        parent_type = "Document" if fti.klass.endswith("FolderishDocument") else "Folder"
+        parent_type = (
+            "Document" if fti.klass.endswith("FolderishDocument") else "Folder"
+        )
         # create original structure for imported content
         for element in parent_path:
             if element not in folder:
@@ -1007,7 +1014,11 @@ class ImportContent(BrowserView):
                     id=element,
                     title=element,
                 )
-                logger.info(u"Created container %s to hold %s", folder.absolute_url(), item["@id"])
+                logger.info(
+                    u"Created container %s to hold %s",
+                    folder.absolute_url(),
+                    item["@id"],
+                )
             else:
                 folder = folder[element]
 
@@ -1043,8 +1054,10 @@ def fix_portal_type(portal_type):
 class ResetModifiedAndCreatedDate(BrowserView):
     def __call__(self):
         self.title = _(u"Reset creation and modification date")
-        self.help_text = _("<p>Creation- and modification-dates are changed during import." \
-                         "This resets them to the original dates of the imported content.</p>")
+        self.help_text = _(
+            "<p>Creation- and modification-dates are changed during import."
+            "This resets them to the original dates of the imported content.</p>"
+        )
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
@@ -1074,11 +1087,15 @@ def reset_dates(obj, path):
 class FixCollectionQueries(BrowserView):
     def __call__(self):
         self.title = _(u"Fix collection queries")
-        self.help_text = _(u"""<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>""")
+        self.help_text = _(
+            u"""<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>"""
+        )
 
         if not HAS_COLLECTION_FIX:
             api.portal.show_message(
-                _(u"plone.app.querystring.upgrades.fix_select_all_existing_collections is not available"),
+                _(
+                    u"plone.app.querystring.upgrades.fix_select_all_existing_collections is not available"
+                ),
                 self.request,
             )
             return self.index()

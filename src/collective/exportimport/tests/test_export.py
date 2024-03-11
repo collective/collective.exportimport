@@ -812,5 +812,7 @@ class TestExport(unittest.TestCase):
         self.assertEqual(info["title"], file1.Title())
         self.assertEqual(info["file"]["content-type"], "application/pdf")
         self.assertEqual(info["file"]["filename"], "file.pdf")
-        self.assertEqual(info["file"]["download"], "http://nohost/plone/file1/@@download/file")
+        self.assertEqual(
+            info["file"]["download"], "http://nohost/plone/file1/@@download/file"
+        )
         self.assertEqual(info["file"]["size"], 8561)
