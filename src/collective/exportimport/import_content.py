@@ -87,8 +87,8 @@ def filesystem_walker(path=None):
     for json_file in sorted(json_files, key=lambda i: int(i.stem)):
         logger.debug("Importing %s", json_file)
         item = json.loads(json_file.read_text())
-        item["json_file"] = str(json_file)
         if item:
+            item["json_file"] = str(json_file)
             yield item
 
     # then import json-files of any containing folders
@@ -98,8 +98,8 @@ def filesystem_walker(path=None):
         for json_file in sorted(json_files, key=lambda i: int(i.stem)):
             logger.debug("Importing %s", json_file)
             item = json.loads(json_file.read_text())
-            item["json_file"] = str(json_file)
             if item:
+                item["json_file"] = str(json_file)
                 yield item
 
 
@@ -468,7 +468,10 @@ class ImportContent(BrowserView):
                     self.commit_hook(added, index)
             except Exception as e:
                 item_id = item["@id"].split("/")[-1]
-                container.manage_delObjects(item_id)
+                try:
+                    container.manage_delObjects(item_id)
+                except AttributeError:
+                    container.manage_delObjects(item["id"])
                 logger.warning(e)
                 logger.warning(
                     "Didn't add %s %s", item["@type"], item["@id"], exc_info=True
