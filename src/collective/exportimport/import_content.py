@@ -298,11 +298,7 @@ class ImportContent(BrowserView):
     def do_import(self, data):
         start = datetime.now()
         alsoProvides(self.request, IMigrationMarker)
-        try:
-            added = self.import_new_content(data)
-        except:
-            breakpoint()
-            raise
+        added = self.import_new_content(data)
         end = datetime.now()
         delta = end - start
         msg = u"Imported {} items".format(len(added))
