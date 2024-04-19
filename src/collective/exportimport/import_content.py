@@ -124,7 +124,12 @@ class ImportContent(BrowserView):
 
     # These paths will be ignored
     # Example: ['/Plone/doormat/', '/Plone/import_files/']
-    DROP_PATHS = ["/Plone/portal_vocabularies"]
+    DROP_PATHS = [
+        "/altertum/portal_vocabularies"
+        "/recensio/portal_vocabularies"
+        "/regio/portal_vocabularies"
+        "/Plone/portal_vocabularies"
+    ]
 
     # If set, only these paths will be imported
     # If a path is in both DROP and INCLUDE, DROP has precedence
