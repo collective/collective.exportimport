@@ -7,6 +7,8 @@ Changelog
 
 - Add and run a black version, that is compatible with Python 2.
   [pgrunewald]
+- Fix ``AtributeError: 'NamedImage' object has no attribute '_blob'`` similar to #236.
+  [petschki]
 
 
 1.12 (2024-03-08)
