@@ -8,6 +8,10 @@ Changelog
 - Add and run a black version, that is compatible with Python 2.
   [pgrunewald]
 
+- Fix several ``UnboundLocalError`` exceptions when doing automated import
+  with ``return_json=True``
+  [petschki]
+
 
 1.12 (2024-03-08)
 -----------------
