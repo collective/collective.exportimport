@@ -88,11 +88,8 @@ if HAS_PAM:  # noqa: C901
                 except Exception as e:
                     logger.error(e)
                     status = "error"
-                    msg = e
-                    api.portal.show_message(
-                        _(u"Failure while uploading: {}").format(e),
-                        request=self.request,
-                    )
+                    msg = _(u"Failure while uploading: {}").format(e)
+                    api.portal.show_message(msg, request=self.request)
                 else:
                     msg = self.do_import(data)
                     api.portal.show_message(msg, self.request)
@@ -194,10 +191,8 @@ class ImportMembers(BrowserView):
             except Exception as e:
                 status = "error"
                 logger.error(e)
-                api.portal.show_message(
-                    _(u"Failure while uploading: {}").format(e),
-                    request=self.request,
-                )
+                msg = _(u"Failure while uploading: {}").format(e)
+                api.portal.show_message(msg, request=self.request)
             else:
                 groups = self.import_groups(data["groups"])
                 members = self.import_members(data["members"])
@@ -385,10 +380,8 @@ class ImportLocalRoles(BrowserView):
             except Exception as e:
                 status = "error"
                 logger.error(e)
-                api.portal.show_message(
-                    _(u"Failure while uploading: {}").format(e),
-                    request=self.request,
-                )
+                msg = _(u"Failure while uploading: {}").format(e)
+                api.portal.show_message(msg, request=self.request)
             else:
                 localroles = self.import_localroles(data)
                 msg = _(u"Imported {} localroles").format(localroles)
@@ -461,10 +454,8 @@ class ImportOrdering(BrowserView):
             except Exception as e:
                 status = "error"
                 logger.error(e)
-                api.portal.show_message(
-                    _(u"Failure while uploading: {}").format(e),
-                    request=self.request,
-                )
+                msg = _(u"Failure while uploading: {}").format(e)
+                api.portal.show_message(msg, request=self.request)
             else:
                 start = datetime.now()
                 orders = self.import_ordering(data)
@@ -519,10 +510,8 @@ class ImportDefaultPages(BrowserView):
             except Exception as e:
                 status = "error"
                 logger.error(e)
-                api.portal.show_message(
-                    u"Failure while uploading: {}".format(e),
-                    request=self.request,
-                )
+                msg = u"Failure while uploading: {}".format(e)
+                api.portal.show_message(msg, request=self.request)
             else:
                 defaultpages = self.import_default_pages(data)
                 msg = _(u"Changed {} default pages").format(defaultpages)
@@ -592,10 +581,8 @@ class ImportDiscussion(BrowserView):
             except Exception as e:
                 status = "error"
                 logger.error(e)
-                api.portal.show_message(
-                    _(u"Failure while uploading: {}").format(e),
-                    request=self.request,
-                )
+                msg = _(u"Failure while uploading: {}").format(e)
+                api.portal.show_message(msg, request=self.request)
             else:
                 results = self.import_data(data)
                 msg = _(u"Imported {} comments").format(results)
@@ -688,10 +675,8 @@ class ImportPortlets(BrowserView):
             except Exception as e:
                 status = "error"
                 logger.error(e)
-                api.portal.show_message(
-                    _(u"Failure while uploading: {}").format(e),
-                    request=self.request,
-                )
+                msg = _(u"Failure while uploading: {}").format(e)
+                api.portal.show_message(msg, request=self.request)
             else:
                 portlets = self.import_portlets(data)
                 msg = _(u"Created {} portlets").format(portlets)
@@ -875,10 +860,8 @@ class ImportRedirects(BrowserView):
             except Exception as e:
                 status = "error"
                 logger.error(e)
-                api.portal.show_message(
-                    _(u"Failure while uploading: {}").format(e),
-                    request=self.request,
-                )
+                msg = _(u"Failure while uploading: {}").format(e)
+                api.portal.show_message(msg, request=self.request)
             else:
                 import_plone_redirects(data)
                 msg = _(u"Redirects imported")
