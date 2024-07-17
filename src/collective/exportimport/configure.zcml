@@ -101,30 +101,38 @@
       />
 
   <!-- Serializers -->
-  <adapter zcml:condition="installed Products.Archetypes"
+  <!--
+    We check for a subpackage of Products.Archetypes to avoid false positives
+    due to code aliases in migration code
+  -->
+  <adapter zcml:condition="installed Products.Archetypes.atapi"
       factory=".serializer.ATFileFieldSerializer" />
-  <adapter zcml:condition="installed Products.Archetypes"
+  <adapter zcml:condition="installed Products.Archetypes.atapi"
       factory=".serializer.ATImageFieldSerializer" />
-  <adapter zcml:condition="installed Products.Archetypes"
+  <adapter zcml:condition="installed Products.Archetypes.atapi"
       factory=".serializer.ATImageFieldSerializerForBlobPaths" />
 
   <adapter zcml:condition="installed Products.TALESField"
       factory=".serializer.ATTalesFieldSerializer" />
 
-  <adapter zcml:condition="installed Products.Archetypes"
+  <adapter zcml:condition="installed Products.Archetypes.atapi"
       factory=".serializer.ATTextFieldSerializer" />
-  <configure zcml:condition="installed Products.Archetypes">
+  <configure zcml:condition="installed Products.Archetypes.atapi">
     <adapter zcml:condition="installed plone.app.contenttypes"
         factory=".serializer.SerializeTopicToJson" />
   </configure>
 
-  <adapter zcml:condition="installed plone.app.blob"
+  <!--
+    We check for a subpackage of plone.app.blob to avoid false positives
+    due to code aliases in migration code
+  -->
+  <adapter zcml:condition="installed plone.app.blob.config"
       factory=".serializer.ATFileFieldSerializerWithBlobs" />
-  <adapter zcml:condition="installed plone.app.blob"
+  <adapter zcml:condition="installed plone.app.blob.config"
       factory=".serializer.ATImageFieldSerializerWithBlobs" />
-  <adapter zcml:condition="installed plone.app.blob"
+  <adapter zcml:condition="installed plone.app.blob.config"
       factory=".serializer.ATFileFieldSerializerWithBlobPaths" />
-  <adapter zcml:condition="installed plone.app.blob"
+  <adapter zcml:condition="installed plone.app.blob.config"
       factory=".serializer.ATImageFieldSerializerWithBlobPaths" />
 
   <!-- Serializers -->
