@@ -10,6 +10,10 @@ Changelog
 - Make zcml conditions more specific so that migration aliases don't trigger them
   [reinhardt]
 
+- Fix several ``UnboundLocalError`` exceptions when doing automated import
+  with ``return_json=True``
+  [petschki]
+
 
 1.12 (2024-03-08)
 -----------------
