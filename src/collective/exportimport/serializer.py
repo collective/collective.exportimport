@@ -90,10 +90,12 @@ class FileFieldSerializerWithBlobs(DefaultFieldSerializer):
             return None
 
         try:
-            if "built-in function id" in namedfile.filename:
+            if namedfile.filename and "built-in function id" in namedfile.filename:
                 filename = self.context.id
             else:
                 filename = namedfile.filename
+            if not filename:
+                filename = self.context.id
         except AttributeError:
             # Try to recover broken namedfile
             # Related to: WARNING OFS.Uninstalled Could not import class 'NamedBlobFile' from module 'zope.app.file.file'
