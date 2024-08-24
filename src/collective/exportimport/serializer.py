@@ -598,7 +598,8 @@ class FileFieldSerializerZODBData(FileFieldSerializerWithBlobs):
 class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
     def __call__(self):
         namedfile = self.field.get(self.context)
-        if namedfile is None:
+        if not namedfile:
+            # catches None but also node.utils.Unset
             return None
 
         blobfilepath = get_dx_blob_path(namedfile)
@@ -622,7 +623,8 @@ class FileFieldSerializerWithBlobPaths(DefaultFieldSerializer):
 class ImageFieldSerializerWithBlobPaths(DefaultFieldSerializer):
     def __call__(self):
         image = self.field.get(self.context)
-        if image is None:
+        if not image:
+            # catches None but also node.utils.Unset
             return None
 
         blobfilepath = get_dx_blob_path(image)
