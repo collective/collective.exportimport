@@ -28,13 +28,15 @@ from zope.interface import alsoProvides
 from ZPublisher.HTTPRequest import FileUpload
 
 import dateutil
-import ijson
+#import ijson
 import json
 import logging
 import os
 import random
 import six
 import transaction
+
+ijson = None
 
 try:
     from plone.app.querystring.upgrades import fix_select_all_existing_collections
