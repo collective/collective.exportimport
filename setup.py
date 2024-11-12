@@ -25,6 +25,7 @@ if sys.version_info[0] < 3:
     install_requires.append("attrs < 22")
     install_requires.append("backports.functools-lru-cache < 2")
     install_requires.append("beautifulsoup4 < 4.10")
+    install_requires.append("ijson < 3.3.0")
     # plone.restapi depends on plone.schema, which depends on jsonschema,
     # which has a Py3-only release since September 2021.
     install_requires.append("jsonschema < 4")

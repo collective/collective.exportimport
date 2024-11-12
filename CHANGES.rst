@@ -7,11 +7,19 @@ Changelog
 
 - Add and run a black version, that is compatible with Python 2.
   [pgrunewald]
+  
+- Fix ``AtributeError: 'NamedImage' object has no attribute '_blob'`` similar to #236.
+  [petschki]
+
+- Make zcml conditions more specific so that migration aliases don't trigger them
+  [reinhardt]
 
 - Fix several ``UnboundLocalError`` exceptions when doing automated import
   with ``return_json=True``
   [petschki]
 
+- Suppress events when importing ordering to not trigger ContainerModifiedEvent.
+  [pbauer]
 
 1.12 (2024-03-08)
 -----------------
