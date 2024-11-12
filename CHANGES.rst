@@ -7,9 +7,12 @@ Changelog
 
 - Add and run a black version, that is compatible with Python 2.
   [pgrunewald]
+
 - Make zcml conditions more specific so that migration aliases don't trigger them
   [reinhardt]
 
+- Suppress events when importing ordering to not trigger ContainerModifiedEvent.
+  [pbauer]
 
 1.12 (2024-03-08)
 -----------------
