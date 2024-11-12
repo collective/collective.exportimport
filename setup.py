@@ -31,7 +31,6 @@ if sys.version_info[0] < 3:
     install_requires.append("jsonschema < 4")
     install_requires.append("pathlib2")
     install_requires.append("plone.api >= 1.8.4, < 2")
-
     install_requires.append("ijson < 3.3.0")
     # There is a py2-imcompatibility in plone.rest 3.0.1
     install_requires.append("plone.rest < 3.0.1")
