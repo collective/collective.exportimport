@@ -854,7 +854,8 @@ Re-enable versioning and create initial versions after all imports and fixes are
         for index, brain in enumerate(brains):
             obj = brain.getObject()
             try:
-                portal_repository.save(obj=obj, comment="Imported Version")
+                if not portal_repository.getHistoryMetadata(obj=obj):
+                    portal_repository.save(obj=obj, comment="Imported Version")
             except FileTooLargeToVersionError:
                 pass
             if not index % 1000:
@@ -1928,7 +1929,8 @@ After the migration you need to restart the instance to make all changes work.
             for index, brain in enumerate(brains):
                 obj = brain.getObject()
                 try:
-                    portal_repository.save(obj=obj, comment="Imported Version")
+                    if not portal_repository.getHistoryMetadata(obj=obj):
+                        portal_repository.save(obj=obj, comment="Imported Version")
                 except FileTooLargeToVersionError:
                     pass
                 if not index % 1000:
