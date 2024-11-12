@@ -17,7 +17,6 @@ long_description = "\n\n".join(
 
 install_requires = [
     "hurry.filesize",
-    "ijson",
     "setuptools",
     "six",
 ]
@@ -26,6 +25,7 @@ if sys.version_info[0] < 3:
     install_requires.append("attrs < 22")
     install_requires.append("backports.functools-lru-cache < 2")
     install_requires.append("beautifulsoup4 < 4.10")
+    install_requires.append("ijson < 3.3.0")
     # plone.restapi depends on plone.schema, which depends on jsonschema,
     # which has a Py3-only release since September 2021.
     install_requires.append("jsonschema < 4")
@@ -39,6 +39,7 @@ if sys.version_info[0] < 3:
     install_requires.append("pyrsistent < 0.16.0")
 else:
     install_requires.append("beautifulsoup4")
+    install_requires.append("ijson")
     install_requires.append("plone.api >= 1.8.4")
     install_requires.append("plone.restapi")
 
