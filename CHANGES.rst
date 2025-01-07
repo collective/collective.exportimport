@@ -5,9 +5,13 @@ Changelog
 1.13 (unreleased)
 -----------------
 
+- Load code for exporting/importing comments conditionally.
+  ``plone.app.discussion`` is optional since Plone 6.1.
+  [maurits]
+
 - Add and run a black version, that is compatible with Python 2.
   [pgrunewald]
-  
+
 - Fix ``AtributeError: 'NamedImage' object has no attribute '_blob'`` similar to #236.
   [petschki]
 
