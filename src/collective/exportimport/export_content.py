@@ -110,14 +110,24 @@ class ExportContent(BrowserView):
         depth=-1,
         include_blobs=1,
         download_to_server=False,
-        migration=True,
+        migration=False,
         include_revisions=False,
         write_errors=False,
     ):
         self.portal_type = portal_type or []
         if isinstance(self.portal_type, str):
             self.portal_type = [self.portal_type]
-        self.migration = migration
+
+        # Should we adapt the data for migration?
+        # We had migration=True by default at first.  Problem is that when you
+        # uncheck the migration box in the form, it does not end up in the
+        # request, so migration would still be True.  See
+        # https://github.com/collective/collective.exportimport/issues/247
+        if self.request.method == "GET":
+            # By default we want this, so on initial page load we make it true.
+            self.migration = True
+        else:
+            self.migration = migration
         self.path = path or "/".join(self.context.getPhysicalPath())
 
         self.depth = int(depth)

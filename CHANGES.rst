@@ -5,6 +5,11 @@ Changelog
 1.13 (unreleased)
 -----------------
 
+- Make it possible to switch off changing data for migration.
+  Previous, you could uncheck this checkbox in ``export_content``, but this was ignored.
+  This fixes `issue 247 <https://github.com/collective/collective.exportimport/issues/247>`_.
+  [maurits]
+
 - Load code for exporting/importing comments conditionally.
   ``plone.app.discussion`` is optional since Plone 6.1.
   [maurits]
