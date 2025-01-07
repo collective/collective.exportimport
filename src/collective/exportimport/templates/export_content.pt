@@ -5,6 +5,9 @@
       i18n:domain="collective.exportimport"
       metal:use-macro="context/main_template/macros/master">
 
+<style metal:fill-slot="style_slot">
+  label input { display: inline-block };
+</style>
 <div metal:fill-slot="main">
     <tal:main-macro metal:define-macro="main">
 
