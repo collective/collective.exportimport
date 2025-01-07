@@ -6,7 +6,6 @@ from collective.exportimport import config
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
-from plone.app.discussion.interfaces import IConversation
 from plone.app.portlets.interfaces import IPortletTypeInterface
 from plone.app.redirector.interfaces import IRedirectionStorage
 from plone.app.textfield.value import RichTextValue
@@ -68,6 +67,15 @@ try:
         IS_PAM_1 = False
 except pkg_resources.DistributionNotFound:
     IS_PAM_1 = False
+
+try:
+    pkg_resources.get_distribution("plone.app.discussion")
+except pkg_resources.DistributionNotFound:
+    HAS_DISCUSSION = False
+    IConversation = None
+else:
+    HAS_DISCUSSION = True
+    from plone.app.discussion.interfaces import IConversation
 
 
 logger = logging.getLogger(__name__)
@@ -588,45 +596,47 @@ class ExportDefaultPages(BaseExport):
                 }
 
 
-class ExportDiscussion(BaseExport):
-    def __call__(self, download_to_server=False):
-        self.title = _(u"Export comments")
-        self.download_to_server = download_to_server
-        if not self.request.form.get("form.submitted", False):
-            return self.index()
+if HAS_DISCUSSION:  # noqa: C901
 
-        logger.info(u"Exporting discussions...")
-        data = self.all_discussions()
-        logger.info(u"Exported %s discussions", len(data))
-        self.download(data)
+    class ExportDiscussion(BaseExport):
+        def __call__(self, download_to_server=False):
+            self.title = _(u"Export comments")
+            self.download_to_server = download_to_server
+            if not self.request.form.get("form.submitted", False):
+                return self.index()
 
-    def all_discussions(self):
-        results = []
-        for brain in api.content.find(
-            object_provides=IContentish.__identifier__,
-            sort_on="path",
-            context=self.context,
-        ):
-            try:
-                obj = brain.getObject()
-                if obj is None:
-                    logger.error(u"brain.getObject() is None %s", brain.getPath())
+            logger.info(u"Exporting discussions...")
+            data = self.all_discussions()
+            logger.info(u"Exported %s discussions", len(data))
+            self.download(data)
+
+        def all_discussions(self):
+            results = []
+            for brain in api.content.find(
+                object_provides=IContentish.__identifier__,
+                sort_on="path",
+                context=self.context,
+            ):
+                try:
+                    obj = brain.getObject()
+                    if obj is None:
+                        logger.error(u"brain.getObject() is None %s", brain.getPath())
+                        continue
+                    conversation = IConversation(obj, None)
+                    if not conversation:
+                        continue
+                    serializer = getMultiAdapter(
+                        (conversation, self.request), ISerializeToJson
+                    )
+                    output = serializer()
+                    if output:
+                        results.append({"uuid": IUUID(obj), "conversation": output})
+                except Exception:
+                    logger.info(
+                        "Error exporting comments for %s", brain.getURL(), exc_info=True
+                    )
                     continue
-                conversation = IConversation(obj, None)
-                if not conversation:
-                    continue
-                serializer = getMultiAdapter(
-                    (conversation, self.request), ISerializeToJson
-                )
-                output = serializer()
-                if output:
-                    results.append({"uuid": IUUID(obj), "conversation": output})
-            except Exception:
-                logger.info(
-                    "Error exporting comments for %s", brain.getURL(), exc_info=True
-                )
-                continue
-        return results
+            return results
 
 
 class ExportPortlets(BaseExport):

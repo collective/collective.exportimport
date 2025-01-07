@@ -9,8 +9,6 @@ from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from collective.exportimport.export_other import PORTAL_PLACEHOLDER
 from plone import api
-from plone.app.discussion.comment import Comment
-from plone.app.discussion.interfaces import IConversation
 from plone.app.portlets.interfaces import IPortletTypeInterface
 from plone.app.redirector.interfaces import IRedirectionStorage
 from plone.portlets.interfaces import ILocalPortletAssignmentManager
@@ -33,6 +31,7 @@ from ZPublisher.HTTPRequest import FileUpload
 import dateutil
 import json
 import logging
+import pkg_resources
 import six
 import transaction
 
@@ -63,6 +62,17 @@ if six.PY2:
     unescape = HTMLParser().unescape
 else:
     from html import unescape
+
+try:
+    pkg_resources.get_distribution("plone.app.discussion")
+except pkg_resources.DistributionNotFound:
+    HAS_DISCUSSION = False
+    Comment = None
+    IConversation = None
+else:
+    HAS_DISCUSSION = True
+    from plone.app.discussion.comment import Comment
+    from plone.app.discussion.interfaces import IConversation
 
 
 logger = logging.getLogger(__name__)
@@ -563,97 +573,99 @@ class ImportDefaultPages(BrowserView):
         return results
 
 
-class ImportDiscussion(BrowserView):
-    """Import default pages"""
+if HAS_DISCUSSION:  # noqa: C901
 
-    def __call__(self, jsonfile=None, return_json=False):
-        if jsonfile:
-            self.portal = api.portal.get()
-            status = "success"
-            try:
-                if isinstance(jsonfile, str):
-                    return_json = True
-                    data = json.loads(jsonfile)
-                elif isinstance(jsonfile, FileUpload):
-                    data = json.loads(jsonfile.read())
+    class ImportDiscussion(BrowserView):
+        """Import discussions / comments"""
+
+        def __call__(self, jsonfile=None, return_json=False):
+            if jsonfile:
+                self.portal = api.portal.get()
+                status = "success"
+                try:
+                    if isinstance(jsonfile, str):
+                        return_json = True
+                        data = json.loads(jsonfile)
+                    elif isinstance(jsonfile, FileUpload):
+                        data = json.loads(jsonfile.read())
+                    else:
+                        raise ("Data is neither text nor upload.")
+                except Exception as e:
+                    status = "error"
+                    logger.error(e)
+                    msg = _(u"Failure while uploading: {}").format(e)
+                    api.portal.show_message(msg, request=self.request)
                 else:
-                    raise ("Data is neither text nor upload.")
-            except Exception as e:
-                status = "error"
-                logger.error(e)
-                msg = _(u"Failure while uploading: {}").format(e)
-                api.portal.show_message(msg, request=self.request)
-            else:
-                results = self.import_data(data)
-                msg = _(u"Imported {} comments").format(results)
-                api.portal.show_message(msg, self.request)
-            if return_json:
-                msg = {"state": status, "msg": msg}
-                return json.dumps(msg)
+                    results = self.import_data(data)
+                    msg = _(u"Imported {} comments").format(results)
+                    api.portal.show_message(msg, self.request)
+                if return_json:
+                    msg = {"state": status, "msg": msg}
+                    return json.dumps(msg)
 
-        return self.index()
+            return self.index()
 
-    def import_data(self, data):
-        results = 0
-        for conversation_data in data:
-            obj = api.content.get(UID=conversation_data["uuid"])
-            if not obj:
-                continue
-            added = 0
-            conversation = IConversation(obj)
+        def import_data(self, data):
+            results = 0
+            for conversation_data in data:
+                obj = api.content.get(UID=conversation_data["uuid"])
+                if not obj:
+                    continue
+                added = 0
+                conversation = IConversation(obj)
 
-            for item in conversation_data["conversation"]["items"]:
+                for item in conversation_data["conversation"]["items"]:
 
-                if isinstance(item["text"], dict) and item["text"].get("data"):
-                    item["text"] = item["text"]["data"]
+                    if isinstance(item["text"], dict) and item["text"].get("data"):
+                        item["text"] = item["text"]["data"]
 
-                comment = Comment()
-                comment_id = int(item["comment_id"])
-                comment.comment_id = comment_id
-                comment.creation_date = dateutil.parser.parse(item["creation_date"])
-                comment.modification_date = dateutil.parser.parse(
-                    item["modification_date"]
-                )
-                comment.author_name = item["author_name"]
-                comment.author_username = item["author_username"]
-                comment.creator = item["author_username"]
-                comment.text = unescape(
-                    item["text"]
-                    .replace(u"\r<br />", u"\r\n")
-                    .replace(u"<br />", u"\r\n")
-                )
+                    comment = Comment()
+                    comment_id = int(item["comment_id"])
+                    comment.comment_id = comment_id
+                    comment.creation_date = dateutil.parser.parse(item["creation_date"])
+                    comment.modification_date = dateutil.parser.parse(
+                        item["modification_date"]
+                    )
+                    comment.author_name = item["author_name"]
+                    comment.author_username = item["author_username"]
+                    comment.creator = item["author_username"]
+                    comment.text = unescape(
+                        item["text"]
+                        .replace(u"\r<br />", u"\r\n")
+                        .replace(u"<br />", u"\r\n")
+                    )
 
-                if item["user_notification"]:
-                    comment.user_notification = True
-                if item.get("in_reply_to"):
-                    comment.in_reply_to = int(item["in_reply_to"])
+                    if item["user_notification"]:
+                        comment.user_notification = True
+                    if item.get("in_reply_to"):
+                        comment.in_reply_to = int(item["in_reply_to"])
 
-                conversation._comments[comment_id] = comment
-                comment.__parent__ = aq_base(conversation)
-                commentator = comment.author_username
-                if commentator:
-                    if commentator not in conversation._commentators:
-                        conversation._commentators[commentator] = 0
-                    conversation._commentators[commentator] += 1
+                    conversation._comments[comment_id] = comment
+                    comment.__parent__ = aq_base(conversation)
+                    commentator = comment.author_username
+                    if commentator:
+                        if commentator not in conversation._commentators:
+                            conversation._commentators[commentator] = 0
+                        conversation._commentators[commentator] += 1
 
-                reply_to = comment.in_reply_to
-                if not reply_to:
-                    # top level comments are in reply to the faux id 0
-                    comment.in_reply_to = reply_to = 0
+                    reply_to = comment.in_reply_to
+                    if not reply_to:
+                        # top level comments are in reply to the faux id 0
+                        comment.in_reply_to = reply_to = 0
 
-                if reply_to not in conversation._children:
-                    conversation._children[reply_to] = LLSet()
-                conversation._children[reply_to].insert(comment_id)
+                    if reply_to not in conversation._children:
+                        conversation._children[reply_to] = LLSet()
+                    conversation._children[reply_to].insert(comment_id)
 
-                # Add the annotation if not already done
-                annotions = IAnnotations(obj)
-                if DISCUSSION_ANNOTATION_KEY not in annotions:
-                    annotions[DISCUSSION_ANNOTATION_KEY] = aq_base(conversation)
-                added += 1
-            logger.info("Added {} comments to {}".format(added, obj.absolute_url()))
-            results += added
+                    # Add the annotation if not already done
+                    annotions = IAnnotations(obj)
+                    if DISCUSSION_ANNOTATION_KEY not in annotions:
+                        annotions[DISCUSSION_ANNOTATION_KEY] = aq_base(conversation)
+                    added += 1
+                logger.info("Added {} comments to {}".format(added, obj.absolute_url()))
+                results += added
 
-        return results
+            return results
 
 
 class ImportPortlets(BrowserView):
