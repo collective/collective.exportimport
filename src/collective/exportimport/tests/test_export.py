@@ -100,7 +100,7 @@ class TestExport(unittest.TestCase):
             with self.assertRaises(LookupError):
                 browser.getControl(name="portal_type")
 
-    def test_export_content_document(self):
+    def test_export_content_document_with_migration(self):
         # First create some content.
         app = self.layer["app"]
         portal = self.layer["portal"]
@@ -112,6 +112,7 @@ class TestExport(unittest.TestCase):
 
         # Now export Documents.
         browser = self.open_page("@@export_content")
+        self.assertTrue(browser.getControl(name="migration:boolean").value)
         portal_type = browser.getControl(name="portal_type")
         self.assertEqual(portal_type.value, [])
         self.assertIn("Document", portal_type.options)
@@ -136,6 +137,54 @@ class TestExport(unittest.TestCase):
         self.assertEqual(info["@id"], portal.absolute_url() + "/doc1")
         self.assertEqual(info["@type"], "Document")
         self.assertEqual(info["title"], doc.Title())
+
+        # By default, we adapt the data for migration.  This means some data
+        # from the standard REST API call should not be there.
+        keys = sorted(info.keys())
+        self.assertNotIn(u"@components", keys)
+        self.assertNotIn(u"next_item", keys)
+
+    def test_export_content_document_without_migration(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        doc = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        transaction.commit()
+
+        # Now export Documents.
+        browser = self.open_page("@@export_content")
+        # Here is the difference with the previous test method:
+        # do not  adapt the data for migration.
+        browser.getControl(name="migration:boolean").value = False
+        portal_type = browser.getControl(name="portal_type")
+        portal_type.value = ["Document"]
+        try:
+            # Plone 5.2
+            browser.getForm(action="@@export_content").submit(name="submit")
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+
+        # We should have gotten json.
+        data = json.loads(contents)
+        self.assertEqual(len(data), 1)
+
+        # Some important keys should still be there.
+        info = data[0]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/doc1")
+        self.assertEqual(info["@type"], "Document")
+        self.assertEqual(info["title"], doc.Title())
+
+        # Now all the standard REST API keys should be there.
+        keys = sorted(info.keys())
+        self.assertIn(u"@components", keys)
+        self.assertIn(u"next_item", keys)
 
     def test_export_collection(self):
         # First create some content.
