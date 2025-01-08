@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.13 (unreleased)
+1.13 (2025-01-08)
 -----------------
 
 - Fix styling of ``export_content`` page in Plone 6.1.
