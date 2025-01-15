@@ -433,7 +433,8 @@ Run all exports and save all data in ``var/instance/``:
             export_content(
                 portal_type=["Folder", "Document", "News Item", "File", "Image"],  # only export these
                 include_blobs=2,  # Export files and images as blob paths
-                download_to_server=True)
+                download_to_server=True,
+                migration=True)
 
             other_exports = [
                 "export_relations",
