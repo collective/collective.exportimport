@@ -1,4 +1,5 @@
 # For Buildout related packages, it is easiest to keep them at the same version for all environments.
 # Keep these in sync with base.cfg please:
 zc.buildout==3.3
-setuptools<69.0.3
+setuptools
+setuptools==75.3.2; python_version == '3.8'
