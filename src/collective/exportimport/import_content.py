@@ -6,6 +6,7 @@ from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
 from DateTime import DateTime
 from datetime import timedelta
+import progressbar
 from Persistence import PersistentMapping
 from plone import api
 from plone.api.exc import InvalidParameterError
@@ -354,6 +355,7 @@ class ImportContent(BrowserView):
                 continue
 
             if not index % 100:
+                print(index)
                 logger.info("Imported {} items...".format(index))
                 transaction.savepoint()
 

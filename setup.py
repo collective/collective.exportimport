@@ -19,6 +19,7 @@ install_requires = [
     "hurry.filesize",
     "setuptools",
     "six",
+    "progressbar2",
 ]
 
 if sys.version_info[0] < 3:
