@@ -343,6 +343,9 @@ class ImportContent(BrowserView):
             logger.info(u"Importing {} items".format(len(data)))
         else:
             logger.info(u"Importing data")
+
+        data = [d for d in data]
+        num_items = len(data)
         for index, item in enumerate(data, start=1):
             if self.limit and len(added) >= self.limit:
                 break
@@ -355,7 +358,7 @@ class ImportContent(BrowserView):
                 continue
 
             if not index % 100:
-                print(index)
+                print(index, "/", num_items)
                 logger.info("Imported {} items...".format(index))
                 transaction.savepoint()
 
