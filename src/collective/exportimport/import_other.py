@@ -487,6 +487,8 @@ class ImportOrdering(BrowserView):
         total = len(data)
         for index, item in enumerate(data, start=1):
             obj = api.content.get(UID=item["uuid"])
+            if obj is not None and obj.portal_type in ("bestellung", "position"):
+                continue
             if not obj:
                 continue
             ordered = IOrderedContainer(obj.__parent__, None)
