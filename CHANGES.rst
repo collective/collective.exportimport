@@ -5,6 +5,8 @@ Changelog
 1.14 (unreleased)
 -----------------
 
+- Fix when re-importing translations. @petschki
+
 - Fix ``AttributeError: __contains__`` when checking for default-page on no longer folderish object.
   A custom migration may have turned a former container into an item.
   [maurits]
