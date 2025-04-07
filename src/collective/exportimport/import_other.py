@@ -550,7 +550,17 @@ class ImportDefaultPages(BrowserView):
             else:
                 # fallback for old export versions
                 default_page = item["default_page"]
-            if default_page not in obj:
+            try:
+                is_child = default_page in obj
+            except AttributeError:
+                # If the  object used to be a Folder and a custom migration turned it
+                # into something non-folderish, you get: AttributeError: __contains__
+                logger.info(
+                    u"Cannot set default page because object is not folderish: %s",
+                    obj.absolute_url(),
+                )
+                continue
+            if not is_child:
                 logger.info(
                     u"Default page not a child: %s not in %s",
                     default_page,
