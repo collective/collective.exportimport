@@ -175,6 +175,8 @@ if HAS_PAM:  # noqa: C901
             ITranslationManager(obj).register_translation(language, translation)
         except TypeError as e:
             logger.info(u"Item is not translatable: {}".format(e))
+        except KeyError as e:
+            logger.info(u"Item already translated: {}".format(e))
 
 else:
 
