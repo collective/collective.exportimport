@@ -5,7 +5,7 @@ Changelog
 1.14 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fix when re-importing translations. @petschki
 
 
 1.13 (2025-01-08)
