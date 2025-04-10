@@ -197,9 +197,13 @@ class ExportRelations(BaseExport):
                         continue
                     if rel_from_path_and_rel_to_path:
                         from_brain = portal_catalog(
-                            path=dict(query=rel.from_path, depth=0)
+                            path=dict(query=rel.from_path, depth=0),
+                            Language="all",
                         )
-                        to_brain = portal_catalog(path=dict(query=rel.to_path, depth=0))
+                        to_brain = portal_catalog(
+                            path=dict(query=rel.to_path, depth=0),
+                            Language="all",
+                        )
                         if len(from_brain) > 0 and len(to_brain) > 0:
                             item = {
                                 "from_uuid": from_brain[0].UID,
