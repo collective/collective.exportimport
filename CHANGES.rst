@@ -7,6 +7,8 @@ Changelog
 
 - Fix when re-importing translations. @petschki
 
+- Fix issue in ``export_relations`` on a multilanguage site. @petschki
+
 - Fix ``AttributeError: __contains__`` when checking for default-page on no longer folderish object.
   A custom migration may have turned a former container into an item.
   [maurits]
