@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.14 (unreleased)
+1.14 (2025-04-12)
 -----------------
 
 - Fix when re-importing translations. @petschki
