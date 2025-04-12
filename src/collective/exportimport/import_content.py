@@ -213,6 +213,8 @@ class ImportContent(BrowserView):
                 )
             else:
                 self.start()
+                data = list(data)
+                data = self.fix_decimals(data)
                 msg = self.do_import(data)
                 api.portal.show_message(msg, self.request)
 
@@ -250,6 +252,18 @@ class ImportContent(BrowserView):
         logger.info(msg)
         transaction.get().note(msg)
         transaction.commit()
+
+    def fix_decimals(self, data: list[dict]):
+
+        from decimal import Decimal
+
+        for d in data:
+            for k, v in d.items():
+                if isinstance(v, Decimal):
+                    d[k] = float(v)
+
+        return data
+
 
     @property
     def import_paths(self):
@@ -299,6 +313,7 @@ class ImportContent(BrowserView):
     def do_import(self, data):
         start = datetime.now()
         alsoProvides(self.request, IMigrationMarker)
+        data = list(data)
         added = self.import_new_content(data)
         end = datetime.now()
         delta = end - start
@@ -345,6 +360,7 @@ class ImportContent(BrowserView):
             logger.info(u"Importing data")
 
         for index, item in enumerate(data, start=1):
+
             if self.limit and len(added) >= self.limit:
                 break
 
