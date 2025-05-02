@@ -16,7 +16,6 @@ from plone.namedfile.file import NamedBlobImage
 from plone.restapi.interfaces import IDeserializeFromJson
 from Products.CMFPlone.interfaces.constrains import ENABLED
 from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
-from Products.CMFPlone.utils import _createObjectByType
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from six.moves.urllib.parse import unquote
@@ -37,6 +36,13 @@ import six
 import transaction
 
 ijson = None
+
+
+try:
+    from plone.base.utils import unrestricted_construct_instance
+except ImportError:
+    # Plone < 6
+    from Products.CMFPlone.utils import _createObjectByType as unrestricted_construct_instance
 
 try:
     from plone.app.querystring.upgrades import fix_select_all_existing_collections
@@ -459,8 +465,8 @@ class ImportContent(BrowserView):
             if not self.update_existing:
                 # create without checking constrains and permissions
                 try:
-                    new = _createObjectByType(
-                        item["@type"], container, item["id"], check_constrains=False
+                    new = unrestricted_construct_instance(
+                        item["@type"], container, item["id"]
                     )
                 except ValueError as e:
                     logger.warning(e)
@@ -612,7 +618,7 @@ class ImportContent(BrowserView):
 
             if initial and not self.update_existing:
                 # initial version
-                new = _createObjectByType(item["@type"], container, item["id"])
+                new = unrestricted_construct_instance(item["@type"], container, item["id"])
                 uuid = self.set_uuid(item, new)
                 if uuid != item["UID"]:
                     item["UID"] = uuid
@@ -1032,9 +1038,9 @@ class ImportContent(BrowserView):
         # create original structure for imported content
         for element in parent_path[:-1]:
             if element not in container:
-                container = api.content.create(
+                container = unrestricted_construct_instance(
+                    type_name=container_type,
                     container=container,
-                    type=container_type,
                     id=element,
                     title=element,
                 )
