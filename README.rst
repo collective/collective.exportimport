@@ -27,7 +27,7 @@ Export and import all kinds of data from and to Plone sites using a intermediate
 The main use-case is migrations since it enables you to for example migrate from Plone 4 with Archetypes and Python 2 to Plone 6 with Dexterity and Python 3 in one step.
 Most features use `plone.restapi` to serialize and deserialize data.
 
-See also the training on migrating with ``exportimport``: https://training.plone.org/migrations/exportimport.html
+See also the training on migrating with ``exportimport``: https://2024.training.plone.org/migrations/exportimport.html
 
 .. contents:: Contents
     :local:
