@@ -5,8 +5,8 @@ Changelog
 1.15 (unreleased)
 -----------------
 
-- Nothing changed yet.
-
+- Fix collections export.
+  [gotcha]
 
 1.14 (2025-04-12)
 -----------------
