@@ -63,7 +63,7 @@ jobs:
         - ["plone50-py27", "plone/test-with-tox:5.0-2.7"]
         - ["plone51-py27", "plone/test-with-tox:5.1-2.7"]
         - ["plone52-py27", "plone/test-with-tox:5.2-2.7"]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container:
       image: ${{ matrix.config[1] }}
     name: ${{ matrix.config[0] }}
