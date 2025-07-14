@@ -9,6 +9,7 @@ from collective.exportimport.interfaces import IPathBlobsMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
 from operator import itemgetter
 from plone import api
+from plone.app.contenttypes.interfaces import ICollection
 from plone.app.layout.viewlets.content import ContentHistoryViewlet
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import ISerializeToJson
@@ -385,6 +386,8 @@ class ExportContent(BrowserView):
                 if IPloneSiteRoot.providedBy(obj):
                     item = serializer()
                 elif getattr(aq_base(obj), "isPrincipiaFolderish", False):
+                    item = serializer(include_items=False)
+                elif ICollection.providedBy(obj):
                     item = serializer(include_items=False)
                 else:
                     item = serializer()
