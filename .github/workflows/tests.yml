@@ -13,13 +13,12 @@ jobs:
       matrix:
         config:
         # [Python version, tox env]
-        - ["3.6",   "plone52-py36"]
         - ["3.7",   "plone52-py37"]
         - ["3.8",   "plone52-py38"]
         - ["3.9",   "plone60-py39"]
         - ["3.10",  "plone60-py310"]
         - ["3.11",  "plone60-py311"]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     name: ${{ matrix.config[1] }}
     steps:
     - uses: actions/checkout@v3
@@ -64,7 +63,7 @@ jobs:
         - ["plone50-py27", "plone/test-with-tox:5.0-2.7"]
         - ["plone51-py27", "plone/test-with-tox:5.1-2.7"]
         - ["plone52-py27", "plone/test-with-tox:5.2-2.7"]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container:
       image: ${{ matrix.config[1] }}
     name: ${{ matrix.config[0] }}
