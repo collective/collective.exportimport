@@ -13,7 +13,6 @@ jobs:
       matrix:
         config:
         # [Python version, tox env]
-        - ["3.6",   "plone52-py36"]
         - ["3.7",   "plone52-py37"]
         - ["3.8",   "plone52-py38"]
         - ["3.9",   "plone60-py39"]
