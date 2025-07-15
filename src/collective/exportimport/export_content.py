@@ -9,7 +9,6 @@ from collective.exportimport.interfaces import IPathBlobsMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
 from operator import itemgetter
 from plone import api
-from plone.app.contenttypes.interfaces import ICollection
 from plone.app.layout.viewlets.content import ContentHistoryViewlet
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.restapi.interfaces import ISerializeToJson
@@ -58,6 +57,16 @@ else:
     from plone.dexterity.utils import iterSchemata
 
     HAS_DX = True
+
+try:
+    pkg_resources.get_distribution("plone.app.contenttypes")
+except pkg_resources.DistributionNotFound:
+    ICollection = None
+    HAS_PAC = False
+else:
+    from plone.app.contenttypes.interfaces import ICollection
+
+    HAS_PAC = True
 
 try:
     pkg_resources.get_distribution("z3c.relationfield")
@@ -387,7 +396,7 @@ class ExportContent(BrowserView):
                     item = serializer()
                 elif getattr(aq_base(obj), "isPrincipiaFolderish", False):
                     item = serializer(include_items=False)
-                elif ICollection.providedBy(obj):
+                elif HAS_PAC and ICollection.providedBy(obj):
                     item = serializer(include_items=False)
                 else:
                     item = serializer()
