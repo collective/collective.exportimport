@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.15 (unreleased)
+1.15 (2025-07-15)
 -----------------
 
 - Fix collections export.
