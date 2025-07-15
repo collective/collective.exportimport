@@ -1008,12 +1008,19 @@ class ImportContent(BrowserView):
         # create original structure for imported content
         for element in parent_path:
             if element not in folder:
+                constraints = ISelectableConstrainTypes(folder, None)
+                constraints_state = constraints and constraints.getConstrainTypesMode()
+                if constraints_state:
+                    constraints.setConstrainTypesMode(0)
                 folder = api.content.create(
                     container=folder,
                     type=parent_type,
                     id=element,
                     title=element,
                 )
+                if constraints and constraints_state:
+                    constraints.setConstrainTypesMode(constraints_state)
+
                 logger.info(
                     u"Created container %s to hold %s",
                     folder.absolute_url(),
