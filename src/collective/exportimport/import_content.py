@@ -809,6 +809,14 @@ class ImportContent(BrowserView):
             item = modifier(item)
         return item
 
+    @property
+    def available_types(self):
+        return api.portal.get_tool("portal_types").listContentTypes()
+
+    def filter_types(self, types):
+        available = self.available_types
+        return [_type for _type in types if _type in available]
+
     def import_constrains(self, obj, item):
         if not item.get("exportimport.constrains"):
             return
@@ -818,6 +826,7 @@ class ImportContent(BrowserView):
         constrains.setConstrainTypesMode(ENABLED)
 
         locally_allowed_types = item["exportimport.constrains"]["locally_allowed_types"]
+        locally_allowed_types = self.filter_types(locally_allowed_types)
         try:
             constrains.setLocallyAllowedTypes(locally_allowed_types)
         except ValueError:
@@ -828,6 +837,7 @@ class ImportContent(BrowserView):
         immediately_addable_types = item["exportimport.constrains"][
             "immediately_addable_types"
         ]
+        immediately_addable_types = self.filter_types(immediately_addable_types)
         try:
             constrains.setImmediatelyAddableTypes(immediately_addable_types)
         except ValueError:
