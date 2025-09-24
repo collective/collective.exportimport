@@ -928,6 +928,7 @@ It is put in a key, that the normal import will ignore and set using ``setattr()
             # import simplesetter data before the rest
             for fieldname, value in item.get("exportimport.simplesetter", {}).items():
                 setattr(obj, fieldname, value)
+            return obj, item
 
 .. note::
 
