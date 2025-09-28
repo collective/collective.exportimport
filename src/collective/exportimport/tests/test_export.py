@@ -16,6 +16,7 @@ from zope.component import createObject
 from zope.component import getUtility
 from zope.intid.interfaces import IIntIds
 from zope.lifecycleevent import modified
+from DateTime import DateTime
 
 import json
 import os
@@ -865,3 +866,183 @@ class TestExport(unittest.TestCase):
             info["file"]["download"], "http://nohost/plone/file1/@@download/file"
         )
         self.assertEqual(info["file"]["size"], 8561)
+
+    def test_export_modified_items(self):
+        """test that we can export items modified after a given datetime"""
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        folder1.modification_date = DateTime("2000-01-01", fmt="international")
+        folder1.reindexObject(idxs=['modified'])
+
+        doc1 = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        doc1.modification_date = DateTime("2000-01-02", fmt="international")
+        doc1.reindexObject(idxs=['modified'])
+
+        doc2 = api.content.create(
+            container=portal, type="Document", id="doc2", title="Document 2"
+        )
+        doc2.modification_date = DateTime("2000-01-03", fmt="international")
+        doc2.reindexObject(idxs=['modified'])
+
+        doc3 = api.content.create(
+            container=portal, type="Document", id="doc3", title="Document 3"
+        )
+        doc3.modification_date = DateTime("2000-01-04", fmt="international")
+        doc3.reindexObject(idxs=['modified'])
+
+        transaction.commit()
+
+        # Now export complete portal.
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        self.assertEqual(portal_type.value, [])
+        portal_type.value = ["Folder", "Document"]
+
+        path = browser.getControl(label="Path")
+        self.assertEqual(path.value, "/plone")
+
+        modification_date = browser.getControl(label="Modification date")
+        modification_date.value = "2000-01-03"
+
+        depth = browser.getControl(name="depth")
+        self.assertEqual(depth.value, ["-1"])
+
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
+
+        # We should have gotten json.
+        data = json.loads(contents)
+        self.assertEqual(len(data), 2)
+
+        # Check a few important keys.
+        info = data[0]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/doc2")
+        self.assertEqual(info["@type"], "Document")
+        self.assertEqual(info["title"], doc2.Title())
+
+        info = data[1]
+        self.assertEqual(info["@id"], portal.absolute_url() + "/doc3")
+        self.assertEqual(info["@type"], "Document")
+        self.assertEqual(info["title"], doc3.Title())
+
+    def test_wrong_modified_format(self):
+        """test that if we enter an invalid datetime we get all the items"""
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        folder1.modification_date = DateTime("2000-01-01", fmt="international")
+        doc1 = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        doc1.modification_date = DateTime("2000-01-02", fmt="international")
+        doc2 = api.content.create(
+            container=portal, type="Document", id="doc2", title="Document 2"
+        )
+        doc2.modification_date = DateTime("2000-01-03", fmt="international")
+
+        doc3 = api.content.create(
+            container=portal, type="Document", id="doc3", title="Document 3"
+        )
+        doc3.modification_date = DateTime("2000-01-04", fmt="international")
+
+        transaction.commit()
+
+        # Now export complete portal.
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        self.assertEqual(portal_type.value, [])
+        portal_type.value = ["Folder", "Document"]
+
+        path = browser.getControl(label="Path")
+        self.assertEqual(path.value, "/plone")
+
+        modification_date = browser.getControl(label="Modification date")
+        modification_date.value = "2000-25-01"
+
+        depth = browser.getControl(name="depth")
+        self.assertEqual(depth.value, ["-1"])
+
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
+
+        # We should have gotten json.
+        data = json.loads(contents)
+        self.assertEqual(len(data), 4)
+
+    def test_non_datetime_modified_format(self):
+        """test that if we enter a non-datetime value in modified field we get all the items"""
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        folder1 = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        folder1.modification_date = DateTime("2000-01-01", fmt="international")
+        doc1 = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        doc1.modification_date = DateTime("2000-01-02", fmt="international")
+        doc2 = api.content.create(
+            container=portal, type="Document", id="doc2", title="Document 2"
+        )
+        doc2.modification_date = DateTime("2000-01-03", fmt="international")
+
+        doc3 = api.content.create(
+            container=portal, type="Document", id="doc3", title="Document 3"
+        )
+        doc3.modification_date = DateTime("2000-01-04", fmt="international")
+
+        transaction.commit()
+
+        # Now export complete portal.
+        browser = self.open_page("@@export_content")
+        portal_type = browser.getControl(name="portal_type")
+        self.assertEqual(portal_type.value, [])
+        portal_type.value = ["Folder", "Document"]
+
+        path = browser.getControl(label="Path")
+        self.assertEqual(path.value, "/plone")
+
+        modification_date = browser.getControl(label="Modification date")
+        modification_date.value = "Plone"
+
+        depth = browser.getControl(name="depth")
+        self.assertEqual(depth.value, ["-1"])
+
+        try:
+            # Plone 5.2
+            browser.getControl("Export").click()
+            contents = browser.contents
+        except LookupError:
+            # Plone 5.1 and lower
+            browser.getForm(index=1).submit()
+            if not browser.contents:
+                contents = DATA[-1]
+
+        # We should have gotten json.
+        data = json.loads(contents)
+        self.assertEqual(len(data), 4)

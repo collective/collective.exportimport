@@ -63,6 +63,14 @@
             </div>
 
             <div class="field mb-3">
+              <label for="modified" i18n:translate="">Modification date</label>
+              <span class="formHelp" i18n:translate="">If a value is entered, it will search for items modified after the entered date. Format: YYYY-MM-DD </span>
+              <div class="widget">
+                <input type="text" name="modified" id="modified" placeholder="YYYY-MM-DD" value=""/>
+              </div>
+            </div>
+
+            <div class="field mb-3">
               <label for="path" i18n:translate="">Path</label>
               <div class="widget">
                 <input type="text" name="path" id="path" value=""
