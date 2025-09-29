@@ -5,7 +5,8 @@ Changelog
 1.16 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Allow exporting contents modified after a given date.
+  [erral]
 
 
 1.15 (2025-07-15)

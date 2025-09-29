@@ -26,6 +26,8 @@ from zope.i18n import translate
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
 from zope.schema import getFields
+from DateTime import DateTime
+from DateTime.interfaces import SyntaxError, DateError
 
 import json
 import logging
@@ -123,10 +125,18 @@ class ExportContent(BrowserView):
         migration=False,
         include_revisions=False,
         write_errors=False,
+        modified=None,
     ):
         self.portal_type = portal_type or []
         if isinstance(self.portal_type, str):
             self.portal_type = [self.portal_type]
+
+        self.modified_datetime = None
+        if modified:
+            try:
+                self.modified_datetime = DateTime(modified, fmt="international")
+            except (DateError, SyntaxError):
+                logger.info("Invalid datetime: %s", modified)
 
         # Should we adapt the data for migration?
         # We had migration=True by default at first.  Problem is that when you
@@ -341,6 +351,12 @@ class ExportContent(BrowserView):
             "sort_on": "path",
             "path": {"query": self.path, "depth": self.depth},
         }
+
+        if self.modified_datetime is not None:
+            query.update(
+                {"modified": {"query": self.modified_datetime, "range": "min"}}
+            )
+
         # custom setting per type
         for portal_type in self.portal_type:
             query.update(self.QUERY.get(portal_type, {}))
