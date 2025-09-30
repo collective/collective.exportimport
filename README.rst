@@ -21,7 +21,7 @@
 collective.exportimport
 =======================
 
-Export and import content, members, relations, translations, localroles and much more.
+Export and import content, members, relations, translations, localroles, and much more.
 
 Export and import all kinds of data from and to Plone sites using a intermediate json-format.
 The main use-case is migrations since it enables you to for example migrate from Plone 4 with Archetypes and Python 2 to Plone 6 with Dexterity and Python 3 in one step.
