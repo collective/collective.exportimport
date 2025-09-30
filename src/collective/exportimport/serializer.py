@@ -270,11 +270,17 @@ if HAS_AT:
             file_obj = self.field.get(self.context)
             if not file_obj:
                 return None
-            data = (
-                file_obj.data.data
-                if isinstance(file_obj.data, Pdata)
-                else file_obj.data
-            )
+
+            data = None
+            if isinstance(file_obj.data, Pdata):
+                data = b""
+                pdata = file_obj.data
+                while pdata is not None:
+                    data += pdata.data
+                    pdata = pdata.next
+            else:
+                data = file_obj.data
+
             if len(data) > FILE_SIZE_WARNING:
                 logger.info(
                     u"Large file for {}: {}".format(

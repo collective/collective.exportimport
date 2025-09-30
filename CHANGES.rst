@@ -5,7 +5,7 @@ Changelog
 1.16 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fixed data extraction to concatenate all `Pdata` chunks. [@jnptk]
 
 
 1.15 (2025-07-15)
