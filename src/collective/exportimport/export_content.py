@@ -291,28 +291,31 @@ class ExportContent(BrowserView):
 
         # Export as one json-file through the browser
         else:
-            with tempfile.TemporaryFile(mode="w+") as f:
+            with tempfile.TemporaryFile(mode="w+b") as f:
                 self.start()
                 for number, datum in enumerate(content_generator, start=1):
                     if number == 1:
-                        f.write("[")
+                        f.write(b"[")
                     else:
-                        f.write(",")
-                    json.dump(datum, f, sort_keys=True, indent=4)
+                        f.write(b",")
+                    json_data = json.dumps(datum, sort_keys=True, indent=4).encode('utf-8')
+                    f.write(json_data)
                 if number:
                     if self.errors and self.write_errors:
-                        f.write(",")
+                        f.write(b",")
                         errors = {"unexported_paths": self.errors}
-                        json.dump(errors, f, indent=4)
-                    f.write("]")
+                        json_data = json.dumps(errors, indent=4).encode('utf-8')
+                        f.write(json_data)
+                    f.write(b"]")
                 msg = _(u"Exported {} {} with {} errors").format(
                     number, self.portal_type, len(self.errors)
                 )
                 logger.info(msg)
                 api.portal.show_message(msg, self.request)
                 response = self.request.response
-                response.setHeader("content-type", "application/json")
-                response.setHeader("content-length", f.tell())
+                response.setHeader("content-type", "application/json; charset=utf-8")
+                content_length = f.tell()
+                response.setHeader("content-length", content_length)
                 response.setHeader(
                     "content-disposition",
                     'attachment; filename="{0}"'.format(filename),
@@ -324,7 +327,7 @@ class ExportContent(BrowserView):
                     noLongerProvides(self.request, IPathBlobsMarker)
                 f.seek(0)
                 self.finish()
-                return response.write(safe_bytes(f.read()))
+                return response.write(f.read())
 
     def update(self):
         """Hook to do something before export."""
