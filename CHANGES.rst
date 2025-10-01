@@ -5,7 +5,9 @@ Changelog
 1.16 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Temporarily disallow constraints when creating the parent folder chain.
+  (#173)
+  [ale-rt]
 
 
 1.15 (2025-07-15)
