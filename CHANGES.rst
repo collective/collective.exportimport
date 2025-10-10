@@ -5,8 +5,8 @@ Changelog
 1.16 (unreleased)
 -----------------
 
-- Fixed data extraction to concatenate all `Pdata` chunks. [@jnptk]
-
+- Fixed data extraction of Archetypes ATFilefields to concatenate all `Pdata` chunks, when the FileField data was still stored in Filestorage and not not migrated to use blobstorage (using plone.app.blobs).
+  [@jnptk]
 
 1.15 (2025-07-15)
 -----------------
