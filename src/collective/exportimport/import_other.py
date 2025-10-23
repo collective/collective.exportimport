@@ -575,8 +575,12 @@ class ImportDefaultPages(BrowserView):
                 continue
 
             if six.PY2:
+                if obj.getDefaultPage() == default_page.encode("utf-8"):
+                    continue
                 obj.setDefaultPage(default_page.encode("utf-8"))
             else:
+                if obj.getDefaultPage() == default_page:
+                    continue
                 obj.setDefaultPage(default_page)
             logger.debug(
                 u"Set %s as default page for %s", default_page, obj.absolute_url()

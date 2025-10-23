@@ -5,6 +5,8 @@ Changelog
 1.16 (unreleased)
 -----------------
 
+- Skip setting a default page if the default is already set to the same value. 
+  [mamico]
 - Fixed data extraction of Archetypes ATFilefields to concatenate all `Pdata` chunks, when the FileField data was still stored in Filestorage and not not migrated to use blobstorage (using plone.app.blobs).
   [@jnptk]
 
