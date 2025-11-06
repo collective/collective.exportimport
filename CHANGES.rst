@@ -9,6 +9,7 @@ Changelog
   [mamico]
 - Fixed data extraction of Archetypes ATFilefields to concatenate all `Pdata` chunks, when the FileField data was still stored in Filestorage and not not migrated to use blobstorage (using plone.app.blobs).
   [@jnptk]
+- Bugfix to prevent clearing existing relations from catalog when migrating into sites with existing content [ThibautBorn]
 
 1.15 (2025-07-15)
 -----------------

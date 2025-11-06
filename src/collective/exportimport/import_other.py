@@ -359,12 +359,16 @@ class ImportRelations(BrowserView):
             all_fixed_relations, key=itemgetter("from_uuid", "from_attribute")
         )
         if HAS_RELAPI:
+            relapi.store_relations()
             relapi.purge_relations()
             relapi.cleanup_intids()
+            relapi.restore_relations()
             relapi.restore_relations(all_relations=all_fixed_relations)
         elif HAS_PLONE6:
+            relationhelper.store_relations()
             relationhelper.purge_relations()
             relationhelper.cleanup_intids()
+            relationhelper.restore_relations()
             relationhelper.restore_relations(all_relations=all_fixed_relations)
 
     def get_from_attribute(self, rel):
