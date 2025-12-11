@@ -605,7 +605,7 @@ if HAS_DISCUSSION:  # noqa: C901
     class ExportDiscussion(BaseExport):
         def __call__(self, download_to_server=False):
             alsoProvides(self.request, IMigrationMarker)
-            self.title = _("Export comments")
+            self.title = _(u"Export comments")
             self.download_to_server = download_to_server
             if not self.request.form.get("form.submitted", False):
                 return self.index()

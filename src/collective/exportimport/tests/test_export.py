@@ -527,7 +527,7 @@ class TestExport(unittest.TestCase):
         )
         conversation = IConversation(doc1)
         comment = createObject("plone.Comment")
-        comment.text = "Comment text"
+        comment.text = u"Comment text"
 
         comment_html = createObject("plone.Comment")
         comment_html.text = "Comment text <strong>with HTML</strong>"
