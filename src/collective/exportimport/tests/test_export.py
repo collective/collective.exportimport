@@ -527,8 +527,26 @@ class TestExport(unittest.TestCase):
         )
         conversation = IConversation(doc1)
         comment = createObject("plone.Comment")
-        comment.text = u"Comment text"
+        comment.text = "Comment text"
+
+        comment_html = createObject("plone.Comment")
+        comment_html.text = "Comment text <strong>with HTML</strong>"
+        comment_html.mime_type = "text/html"
+
+        comment_intelligent_text = createObject("plone.Comment")
+        comment_intelligent_text.text = "Comment text with link https://plone.org"
+        comment_intelligent_text.mime_type = "text/x-web-intelligent"
+
+        comment_markdown = createObject("plone.Comment")
+        comment_markdown.text = (
+            "Comment text with link [Link to Plone](https://plone.org)"
+        )
+        comment_markdown.mime_type = "text/x-web-markdown"
+
         conversation.addComment(comment)
+        conversation.addComment(comment_html)
+        conversation.addComment(comment_intelligent_text)
+        conversation.addComment(comment_markdown)
         transaction.commit()
 
         browser = self.open_page("@@export_discussion")
@@ -538,8 +556,35 @@ class TestExport(unittest.TestCase):
             contents = DATA[-1]
         data = json.loads(contents)
         self.assertEqual(data[0]["uuid"], doc1.UID())
+
         self.assertEqual(
             data[0]["conversation"]["items"][0]["text"]["data"], "Comment text"
+        )
+        self.assertEqual(
+            data[0]["conversation"]["items"][0]["text"]["mime-type"], "text/plain"
+        )
+        self.assertEqual(
+            data[0]["conversation"]["items"][1]["text"]["data"],
+            "Comment text <strong>with HTML</strong>",
+        )
+        self.assertEqual(
+            data[0]["conversation"]["items"][1]["text"]["mime-type"], "text/html"
+        )
+        self.assertEqual(
+            data[0]["conversation"]["items"][2]["text"]["data"],
+            "Comment text with link https://plone.org",
+        )
+        self.assertEqual(
+            data[0]["conversation"]["items"][2]["text"]["mime-type"],
+            "text/x-web-intelligent",
+        )
+        self.assertEqual(
+            data[0]["conversation"]["items"][3]["text"]["data"],
+            "Comment text with link [Link to Plone](https://plone.org)",
+        )
+        self.assertEqual(
+            data[0]["conversation"]["items"][3]["text"]["mime-type"],
+            "text/x-web-markdown",
         )
 
     def test_export_ordering(self):

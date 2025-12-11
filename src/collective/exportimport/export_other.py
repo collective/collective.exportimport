@@ -3,6 +3,7 @@ from Acquisition import aq_base
 from App.config import getConfiguration
 from collective.exportimport import _
 from collective.exportimport import config
+from collective.exportimport.interfaces import IMigrationMarker
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
@@ -30,6 +31,7 @@ from zope.component import getUtilitiesFor
 from zope.component import getUtility
 from zope.component import queryMultiAdapter
 from zope.component import queryUtility
+from zope.interface import alsoProvides
 from zope.interface import providedBy
 
 import json
@@ -602,7 +604,8 @@ if HAS_DISCUSSION:  # noqa: C901
 
     class ExportDiscussion(BaseExport):
         def __call__(self, download_to_server=False):
-            self.title = _(u"Export comments")
+            alsoProvides(self.request, IMigrationMarker)
+            self.title = _("Export comments")
             self.download_to_server = download_to_server
             if not self.request.form.get("form.submitted", False):
                 return self.index()
