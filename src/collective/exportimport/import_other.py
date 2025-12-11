@@ -636,7 +636,7 @@ if HAS_DISCUSSION:  # noqa: C901
 
                 for item in conversation_data["conversation"]["items"]:
 
-                    if isinstance(item["text"], dict) and item["text"].get("data"):
+                    if isinstance(item["text"], dict) and item["text"].get("data", None) is not None:
                         item["text"] = item["text"]["data"]
 
                     comment = Comment()
