@@ -603,7 +603,7 @@ if HAS_PAD:
     class CommentSerializer(Base):
 
         def __call__(self, include_items=True):
-            data = super().__call__(include_items)
+            data = super(CommentSerializer, self).__call__(include_items)
             data["text"]["data"] = self.context.text
             data["text"]["mime-type"] = self.context.mime_type
             return data
