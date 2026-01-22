@@ -30,6 +30,7 @@ from zope.component import getUtilitiesFor
 from zope.component import getUtility
 from zope.component import queryMultiAdapter
 from zope.component import queryUtility
+from zope.deprecation import deprecation
 from zope.interface import providedBy
 
 import json
@@ -85,6 +86,8 @@ PORTAL_PLACEHOLDER = "<Portal>"
 
 class BaseExport(BrowserView):
     """Just DRY"""
+
+    show_export_portal_option = False
 
     def download(self, data):
         filename = self.request.form.get("filename")
@@ -427,24 +430,31 @@ class ExportTranslations(BaseExport):
 class ExportLocalRoles(BaseExport):
     """Export all local roles"""
 
-    def __call__(self, download_to_server=False):
+    show_export_portal_option = True
+
+    # Because an unticked HTML checkbox is not included in the HTTP request,
+    # the default (ie not present) value has to be False.
+    # This mandates exclude_portal=False instead of more readable export_portal=True.
+    def __call__(self, download_to_server=False, exclude_portal=False):
         self.title = _(u"Export local roles")
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         logger.info(u"Exporting local roles...")
-        data = self.all_localroles()
+        export_portal = not exclude_portal
+        data = self.all_localroles(export_portal)
         logger.info(u"Exported local roles for %s items", len(data))
         self.download(data)
 
-    def all_localroles(self):
+    def all_localroles(self, export_portal=True):
         self.results = []
 
         portal = api.portal.get()
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=self.get_localroles)
 
-        self.get_root_localroles()
+        if export_portal:
+            self.get_portal_localroles()
 
         return self.results
 
@@ -473,9 +483,11 @@ class ExportLocalRoles(BaseExport):
                 return
             self.results.append(item)
 
-    def get_root_localroles(self):
+    def get_portal_localroles(self):
         site = api.portal.get()
         self._get_localroles(site, PORTAL_PLACEHOLDER)
+
+    get_root_localroles = deprecation.deprecated(get_portal_localroles, 'get_root_localroles renamed to get_portal_localroles')
 
     def item_hook(self, item):
         return item
@@ -520,18 +532,24 @@ class ExportOrdering(BaseExport):
 class ExportDefaultPages(BaseExport):
     """Export all default_page settings."""
 
-    def __call__(self, download_to_server=False):
+    show_export_portal_option = True
+
+    # Because an unticked HTML checkbox is not included in the HTTP request,
+    # the default (ie not present) value has to be False.
+    # This mandates exclude_portal=False instead of more readable export_portal=True.
+    def __call__(self, download_to_server=False, exclude_portal=False):
         self.title = _(u"Export default pages")
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         logger.info(u"Exporting default pages...")
-        data = self.all_default_pages()
+        export_portal = not exclude_portal
+        data = self.all_default_pages(export_portal)
         logger.info(u"Exported %s default pages", len(data))
         self.download(data)
 
-    def all_default_pages(self):
+    def all_default_pages(self, export_portal=True):
         results = []
         catalog = api.portal.get_tool("portal_catalog")
         for brain in catalog.unrestrictedSearchResults(
@@ -546,11 +564,11 @@ class ExportDefaultPages(BaseExport):
                 logger.error(u"brain.getObject() is None %s", brain.getPath())
                 continue
             if IPloneSiteRoot.providedBy(obj):
-                # Site root is handled below (in Plone 6 it is returned by a catalog search)
+                # Portal is handled below (in Plone 6 it is returned by a catalog search)
                 continue
 
             try:
-                data = self.get_default_page_info(obj)
+                data = get_default_page_info(obj)
             except Exception:
                 logger.info(
                     u"Error exporting default_page for %s",
@@ -563,39 +581,43 @@ class ExportDefaultPages(BaseExport):
                 results.append(data)
 
         # handle portal
-        portal = api.portal.get()
-        try:
-            data = self.get_default_page_info(portal)
-            if data:
-                data["uuid"] = config.SITE_ROOT
-                results.append(data)
-        except Exception:
-            logger.info(u"Error exporting default_page for portal", exc_info=True)
-
+        if export_portal:
+            portal = api.portal.get()
+            try:
+                portal_data = get_default_page_info(portal)
+                if portal_data:
+                    portal_data["uuid"] = config.SITE_ROOT
+                    results.append(portal_data)
+            except Exception:
+                logger.info(u"Error exporting default_page for portal", exc_info=True)
         return results
 
     def get_default_page_info(self, obj):
-        uid = IUUID(obj, None)
+        return get_default_page_info(obj)
 
-        # We use a simplified method to only get index_html
-        # and the property default_page on the object.
-        # We don't care about other cases
-        # 1. obj is folderish, check for a index_html in it
-        if "index_html" in obj:
-            default_page = "index_html"
-        else:
-            # 2. Check attribute 'default_page'
-            default_page = getattr(aq_base(obj), "default_page", [])
 
-        if default_page and default_page in obj:
-            default_page_obj = obj.get(default_page)
-            if default_page_obj:
-                default_page_uid = IUUID(default_page_obj, None)
-                return {
-                    "uuid": uid,
-                    "default_page": default_page,
-                    "default_page_uuid": default_page_uid,
-                }
+def get_default_page_info(obj):
+    uid = IUUID(obj, None)
+
+    # We use a simplified method to only get index_html
+    # and the property default_page on the object.
+    # We don't care about other cases
+    # 1. obj is folderish, check for a index_html in it
+    if "index_html" in obj:
+        default_page = "index_html"
+    else:
+        # 2. Check attribute 'default_page'
+        default_page = getattr(aq_base(obj), "default_page", [])
+
+    if default_page and default_page in obj:
+        default_page_obj = obj.get(default_page)
+        if default_page_obj:
+            default_page_uid = IUUID(default_page_obj, None)
+            return {
+                "uuid": uid,
+                "default_page": default_page,
+                "default_page_uuid": default_page_uid,
+            }
 
 
 if HAS_DISCUSSION:  # noqa: C901
@@ -642,24 +664,34 @@ if HAS_DISCUSSION:  # noqa: C901
 
 
 class ExportPortlets(BaseExport):
-    def __call__(self, download_to_server=False):
+
+    show_export_portal_option = True
+
+    # Because an unticked HTML checkbox is not included in the HTTP request,
+    # the default (ie not present) value has to be False.
+    # This mandates exclude_portal=False instead of more readable export_portal=True.
+    def __call__(self, download_to_server=False, exclude_portal=False):
         self.title = _(u"Export portlets")
         self.download_to_server = download_to_server
         if not self.request.form.get("form.submitted", False):
             return self.index()
 
         logger.info(u"Exporting portlets...")
-        data = self.all_portlets()
+        export_portal = not exclude_portal
+        data = self.all_portlets(export_portal)
         logger.info(u"Exported info for %s items with portlets", len(data))
         self.download(data)
 
-    def all_portlets(self):
+    def all_portlets(self, export_portal=True):
         self.results = []
         portal = api.portal.get()
         portal.ZopeFindAndApply(
             self.context, search_sub=True, apply_func=self.get_portlets
         )
-        self.get_root_portlets()
+
+        if export_portal:
+            self.get_portal_portlets()
+
         return self.results
 
     def get_portlets(self, obj, path):
@@ -684,10 +716,12 @@ class ExportPortlets(BaseExport):
             self.results.append(obj_results)
         return
 
-    def get_root_portlets(self):
+    def get_portal_portlets(self):
         site = api.portal.get()
         self._get_portlets(site, PORTAL_PLACEHOLDER)
         return
+
+    get_root_portlets = deprecation.deprecated(get_portal_portlets, 'get_root_portlets renamed get_portal_portlets')
 
     def local_portlets_hook(self, portlets):
         return portlets

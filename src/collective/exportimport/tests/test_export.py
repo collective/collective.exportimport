@@ -486,6 +486,23 @@ class TestExport(unittest.TestCase):
             ],
         )
 
+    def test_export_exclude_portal_defaultpage(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        doc1 = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        portal._setProperty("default_page", "doc1")
+        transaction.commit()
+
+        browser = self.open_page("@@export_defaultpages")
+        form = browser.getForm(action="@@export_defaultpages")
+        form.getControl(name="exclude_portal:boolean").value = True
+        form.submit(name="form.submitted")
+        contents = browser.contents
+        self.assertTrue("No data to export" in browser.contents)
+
     def test_export_relations(self):
         app = self.layer["app"]
         portal = self.layer["portal"]
@@ -666,6 +683,37 @@ class TestExport(unittest.TestCase):
                 {"uuid": "<Portal>", "localroles": {"admin": ["Owner"]}},
             ],
         )
+
+    def test_export_portal_local_roles(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+
+        browser = self.open_page("@@export_localroles")
+        form = browser.getForm(action="@@export_localroles")
+        form.submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
+        self.assertListEqual(
+            data,
+            [
+                {"uuid": "<Portal>", "localroles": {"admin": ["Owner"]}},
+            ],
+        )
+
+    def test_export_exclude_portal_local_roles(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+
+        browser = self.open_page("@@export_localroles")
+        form = browser.getForm(action="@@export_localroles")
+        form.getControl(name="exclude_portal:boolean").value = True
+        form.submit(name="form.submitted")
+        contents = browser.contents
+        self.assertTrue("No data to export" in browser.contents)
 
     def test_export_versions(self):
         app = self.layer["app"]
