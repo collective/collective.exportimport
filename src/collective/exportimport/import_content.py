@@ -1032,7 +1032,7 @@ class ImportContent(BrowserView):
                 title=item["parent"]["title"],
             )
         except InvalidParameterError:
-            logger.info("Cannot add %s notin %r. Fallback to %s", parent_type, container, container_type, exc_info=True)
+            logger.info("Cannot add %s in %r. Fallback to %s", parent_type, container, container_type, exc_info=True)
             parent = api.content.create(
                 container=container,
                 type=container_type,
