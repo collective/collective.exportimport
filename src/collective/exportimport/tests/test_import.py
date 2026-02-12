@@ -20,7 +20,8 @@ from time import sleep
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getUtility
 from zope.lifecycleevent import modified
-
+from plone.app.discussion.interfaces import IConversation
+from zope.component import createObject
 import json
 import os
 import shutil
@@ -1483,6 +1484,50 @@ class TestImport(unittest.TestCase):
         # index data is correct
         convert = catalog._catalog.indexes["modified"]._convert
         self.assertEqual(indexdata["modified"], convert(reset_modification_date))
+
+    def test_import_discussion(self):
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+        doc1 = api.content.create(
+            container=portal, type="Document", id="doc1", title="Document 1"
+        )
+        conversation = IConversation(doc1)
+        comment = createObject("plone.Comment")
+        comment.text = "Comment text"
+        conversation.addComment(comment)
+        transaction.commit()
+
+        browser = self.open_page("@@export_discussion")
+        browser.getForm(action="@@export_discussion").submit(name="form.submitted")
+        contents = browser.contents
+        if not browser.contents:
+            contents = DATA[-1]
+        data = json.loads(contents)
+        self.assertEqual(data[0]["uuid"], doc1.UID())
+        self.assertEqual(
+            data[0]["conversation"]["items"][0]["text"]["data"], "Comment text"
+        )
+
+        # Delete the comment to prepare the import
+        del conversation[comment.id]
+        self.assertEqual(len(conversation), 0)
+
+        transaction.commit()
+
+        browser = self.open_page("@@import_discussion")
+        browser.getForm(action="@@import_discussion").submit(name="form.submitted")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(contents, "application/json", "export_discussion.json")
+        browser.getForm(action="@@import_discussion").submit()
+
+        self.assertIn("Imported 1 comments", browser.contents)
+
+        brains = api.content.find(portal_type="Discussion Item")
+        self.assertEqual(len(brains), 1)
+        conversation = IConversation(doc1)
+
+        self.assertEqual(len(conversation), 1)
 
 
 def dateify(value):

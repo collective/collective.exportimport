@@ -24,8 +24,10 @@ from zope.component import queryMultiAdapter
 from zope.component import queryUtility
 from zope.component.interfaces import IFactory
 from zope.container.interfaces import INameChooser
+from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.interface import alsoProvides
+from zope.lifecycleevent import ObjectAddedEvent
 from ZPublisher.HTTPRequest import FileUpload
 
 import dateutil
@@ -681,6 +683,10 @@ if HAS_DISCUSSION:  # noqa: C901
                     annotions = IAnnotations(obj)
                     if DISCUSSION_ANNOTATION_KEY not in annotions:
                         annotions[DISCUSSION_ANNOTATION_KEY] = aq_base(conversation)
+
+                    comment = comment.__of__(conversation)
+                    notify(ObjectAddedEvent(comment))
+
                     added += 1
                 logger.info("Added {} comments to {}".format(added, obj.absolute_url()))
                 results += added
