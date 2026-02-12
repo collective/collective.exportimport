@@ -982,11 +982,11 @@ class ImportContent(BrowserView):
         return self.create_container(item)
 
     def create_container(self, item):
-        """Create container for item.
+        """Create parent container for item.
 
         See remarks in get_parent_as_container for some corner cases.
         """
-        folder = self.context
+        container = self.context
         parent_url = unquote(item["parent"]["@id"])
         parent_url_parsed = urlparse(parent_url)
         # Get the path part, split it, remove the always empty first element.
@@ -1001,28 +1001,52 @@ class ImportContent(BrowserView):
             parent_path = parent_path[1:]
 
         # Handle folderish Documents provided by plone.volto
-        fti = getUtility(IDexterityFTI, name="Document")
-        parent_type = (
-            "Document" if fti.klass.endswith("FolderishDocument") else "Folder"
+        document_fti = getUtility(IDexterityFTI, name="Document")
+        container_type = (
+            "Document" if document_fti.klass.endswith("FolderishDocument") else "Folder"
         )
         # create original structure for imported content
-        for element in parent_path:
-            if element not in folder:
-                folder = api.content.create(
-                    container=folder,
-                    type=parent_type,
+        for element in parent_path[:-1]:
+            if element not in container:
+                container = api.content.create(
+                    container=container,
+                    type=container_type,
                     id=element,
                     title=element,
                 )
                 logger.info(
                     u"Created container %s to hold %s",
-                    folder.absolute_url(),
+                    container.absolute_url(),
                     item["@id"],
                 )
             else:
-                folder = folder[element]
+                container = container[element]
 
-        return folder
+        # Finally create parent
+        parent_type = item["parent"]["@type"]
+        try:
+            parent = api.content.create(
+                container=container,
+                type=parent_type,
+                id=parent_path[-1],
+                title=item["parent"]["title"],
+            )
+        except InvalidParameterError:
+            logger.info("Cannot add %s in %r. Fallback to %s", parent_type, container, container_type, exc_info=True)
+            parent = api.content.create(
+                container=container,
+                type=container_type,
+                id=parent_path[-1],
+                title=item["parent"]["title"],
+            )
+        logger.info(
+            u"Created %s %s to hold %s",
+            parent.portal_type,
+            parent.absolute_url(),
+            item["@id"],
+        )
+
+        return parent
 
     def set_uuid(self, item, obj):
         uuid = item.get("UID")

@@ -10,6 +10,7 @@ from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
 from plone.app.testing import SITE_OWNER_PASSWORD
 from plone.app.textfield.value import RichTextValue
+from plone.dexterity.fti import DexterityFTI
 from plone.namedfile.file import NamedBlobImage
 from plone.namedfile.file import NamedImage
 from Products.CMFPlone.interfaces.constrains import ENABLED
@@ -411,7 +412,64 @@ class TestImport(unittest.TestCase):
         self.assertIn("folder1", portal.contentIds())
         new_folder = portal["folder1"]
         # The auto generated folder will have its id as title
-        self.assertEqual(new_folder.Title(), "folder1")
+        self.assertEqual(new_folder.Title(), "Folder 1")
+        # The document should be back.
+        self.assertIn("doc1", new_folder.contentIds())
+        new_doc = new_folder["doc1"]
+        self.assertEqual(new_doc.Title(), "Document 1")
+        self.assertEqual(new_doc.portal_type, "Document")
+
+    def test_import_content_with_missing_container_of_different_type(self):
+        # First create some content.
+        app = self.layer["app"]
+        portal = self.layer["portal"]
+        login(app, SITE_OWNER_NAME)
+
+        # Create custom container type
+        fti = DexterityFTI("Container")
+        portal.portal_types._setObject("Container", fti)
+        fti.klass = "plone.dexterity.content.Container"
+        fti.filter_content_types = False
+        fti.behaviors = ("plone.app.dexterity.behaviors.metadata.IBasic",)
+
+        folder = api.content.create(
+            container=portal, type="Folder", id="folder1", title="Folder 1"
+        )
+        api.content.create(
+            container=folder, type="Document", id="doc1", title="Document 1"
+        )
+        transaction.commit()
+
+        # Now export the document.
+        browser = self.open_page("@@export_content")
+        browser.getControl(name="portal_type").value = ["Document"]
+        browser.getForm(action="@@export_content").submit(name="submit")
+        raw_data = browser.contents
+        if not browser.contents:
+            raw_data = DATA[-1]
+
+        # Edit the raw data to pretend the parent was not a Folder but a custom container type
+        raw_data = raw_data.replace(b'"@type": "Folder"', b'"@type": "Container"')
+
+        # Remove both the folder and document.
+        api.content.delete(folder)
+        transaction.commit()
+        self.assertNotIn("folder1", portal.contentIds())
+
+        # Now import the document.
+        # The missing folder structure should be created.
+        browser = self.open_page("@@import_content")
+        upload = browser.getControl(name="jsonfile")
+        upload.add_file(raw_data, "application/json", "Document.json")
+        browser.getForm(action="@@import_content").submit()
+        self.assertIn("Imported 1 items", browser.contents)
+
+        # The folder should be back.
+        self.assertIn("folder1", portal.contentIds())
+        new_folder = portal["folder1"]
+        # The auto generated container will have the parents type and title
+        self.assertEqual(new_folder.portal_type, "Container")
+        self.assertEqual(new_folder.Title(), "Folder 1")
         # The document should be back.
         self.assertIn("doc1", new_folder.contentIds())
         new_doc = new_folder["doc1"]
@@ -463,7 +521,7 @@ class TestImport(unittest.TestCase):
         self.assertIn("folder1", portal.contentIds())
         new_folder = portal["folder1"]
         # The auto generated folder will have its id as title
-        self.assertEqual(new_folder.Title(), "folder1")
+        self.assertEqual(new_folder.Title(), "Folder 1")
         # The document should be back.
         self.assertIn("doc1", new_folder.contentIds())
         new_doc = new_folder["doc1"]
