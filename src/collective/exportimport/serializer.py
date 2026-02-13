@@ -61,6 +61,13 @@ except pkg_resources.DistributionNotFound:
 else:
     HAS_PAC = True
 
+try:
+    pkg_resources.get_distribution("plone.app.discussion")
+except pkg_resources.DistributionNotFound:
+    HAS_PAD = False
+else:
+    HAS_PAD = True
+
 
 FILE_SIZE_WARNING = 10000000
 IMAGE_SIZE_WARNING = 5000000
@@ -584,6 +591,22 @@ if HAS_AT and HAS_PAC:
                 "v": value,
             }
             return query
+
+
+if HAS_PAD:
+    from plone.app.discussion.interfaces import IComment
+    from plone.restapi.interfaces import ISerializeToJson
+    from plone.restapi.serializer.discussion import CommentSerializer as Base
+
+    @implementer(ISerializeToJson)
+    @adapter(IComment, IMigrationMarker)
+    class CommentSerializer(Base):
+
+        def __call__(self, include_items=True):
+            data = super(CommentSerializer, self).__call__(include_items)
+            data["text"]["data"] = self.context.text
+            data["text"]["mime-type"] = self.context.mime_type
+            return data
 
 
 def get_dx_blob_path(obj):
