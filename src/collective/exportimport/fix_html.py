@@ -518,11 +518,15 @@ def img_variant_fixer(text, obj=None, fallback_variant=None):
         if "data-val" not in tag.attrs:
             # maybe external image
             continue
-        scale = tag["data-scale"]
-        variant = scale_variant_mapping.get(scale, fallback_variant)
+        scale = tag.get("data-scale")
+        variant = (
+            scale_variant_mapping.get(scale, fallback_variant)
+            if scale
+            else fallback_variant
+        )
         tag["data-picturevariant"] = variant
 
-        classes = tag["class"]
+        classes = tag.get("class", [])
         new_class = "picture-variant-{}".format(variant)
         if new_class not in classes:
             classes.append(new_class)

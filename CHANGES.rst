@@ -7,6 +7,8 @@ Changelog
 
 - Notify the comment creation to have them indexed in the catalog
   [erral]
+- fix html: Don't fail if a tag does not have some attributes.
+  [thet]
 - Skip setting a default page if the default is already set to the same value.
   [mamico]
 - Fixed data extraction of Archetypes ATFilefields to concatenate all `Pdata` chunks, when the FileField data was still stored in Filestorage and not not migrated to use blobstorage (using plone.app.blobs).
