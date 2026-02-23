@@ -51,12 +51,12 @@
             </tal:block>
 
             <div class="field mb-3">
-              <label for="include_blobs" i18n:translate="">Handle existing content</label>
+              <label for="handle_existing_content" i18n:translate="">Handle existing content</label>
               <span class="formHelp" i18n:translate="">
                   How should content be handled that exists with the same id/path?
               </span>
               <div class="widget">
-                <select name="handle_existing_content" class="">
+                <select id="handle_existing_content" name="handle_existing_content" class="">
                   <option value="0"
                           tal:repeat="current python:view.handle_existing_content_options"
                           tal:attributes="value python: current[0];
