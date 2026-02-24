@@ -5,6 +5,8 @@ Changelog
 1.16 (unreleased)
 -----------------
 
+- Fix HTML markup inconsistency in import_content.pt.
+  [thet]
 - Notify the comment creation to have them indexed in the catalog
   [erral]
 - fix html: Don't fail if a tag does not have some attributes.
