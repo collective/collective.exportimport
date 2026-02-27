@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.16 (unreleased)
+1.16 (2026-02-27)
 -----------------
 
 - Fix HTML markup inconsistency in import_content.pt.
