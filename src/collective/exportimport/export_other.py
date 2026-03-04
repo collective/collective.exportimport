@@ -337,7 +337,10 @@ class ExportMembers(BaseExport):
         if member is not None:
             # TODO: Add support for any additional member-properties.
             for prop in self.MEMBER_PROPERTIES:
-                props[prop] = json_compatible(member.getProperty(prop))
+                try:
+                    props[prop] = json_compatible(member.getProperty(prop))
+                except ValueError:
+                    pass
         return props
 
 
