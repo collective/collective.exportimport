@@ -637,9 +637,10 @@ if HAS_DISCUSSION:  # noqa: C901
                 conversation = IConversation(obj)
 
                 for item in conversation_data["conversation"]["items"]:
-
                     if isinstance(item["text"], dict) and item["text"].get("data"):
                         item["text"] = item["text"]["data"]
+                    if isinstance(item["text"], dict) and item["text"].get("mime-type"):
+                        item["mime-type"] = item["text"]["mime-type"]
 
                     comment = Comment()
                     comment_id = int(item["comment_id"])
@@ -656,6 +657,7 @@ if HAS_DISCUSSION:  # noqa: C901
                         .replace(u"\r<br />", u"\r\n")
                         .replace(u"<br />", u"\r\n")
                     )
+                    comment.mime_type = item.get("mime-type", "text/html")
 
                     if item["user_notification"]:
                         comment.user_notification = True
