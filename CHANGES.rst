@@ -5,8 +5,8 @@ Changelog
 1.17 (unreleased)
 -----------------
 
-- Nothing changed yet.
-
+- Pre-check images so the PIL warning from plone.namedfile can be tied to a specific item.
+  [valipod]
 
 1.16 (2026-02-27)
 -----------------

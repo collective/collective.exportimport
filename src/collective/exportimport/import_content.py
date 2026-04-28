@@ -747,6 +747,21 @@ class ImportContent(BrowserView):
             # Write the field.
             with open(abs_blob_path, "rb") as myfile:
                 blobdata = myfile.read()
+            # Pre-check images so the PIL warning from plone.namedfile can be
+            # tied to a specific item.
+            if klass is NamedBlobImage:
+                try:
+                    import PIL.Image
+                    from io import BytesIO
+                    PIL.Image.open(BytesIO(blobdata)).verify()
+                except Exception as exc:
+                    logger.warning(
+                        "Broken or unsupported image at %s (UID=%s, blob=%s): %s",
+                        item.get("@id"),
+                        item.get("UID"),
+                        blob_path,
+                        exc,
+                    )
             field_value = klass(
                 data=blobdata,
                 contentType=content_type,
