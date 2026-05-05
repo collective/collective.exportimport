@@ -447,7 +447,7 @@ class ImportContent(BrowserView):
 
             if self.import_old_revisions and item.get("exportimport.versions"):
                 # TODO: refactor into import_item to prevent duplicattion
-                new = self.import_versions(container, item)
+                new = self.import_versions(container, item, index)
                 if new:
                     added.append(new.absolute_url())
                 if self.commit and not len(added) % self.commit:
@@ -544,8 +544,6 @@ class ImportContent(BrowserView):
 
     def import_versions(self, container, item):
         """Import one item with all its revisions..
-        We only apply hooks for the current object not for each version.
-        TODO: refactor into import_item to prevent duplicattion
         """
         portal_workflow = api.portal.get_tool("portal_workflow")
 
@@ -655,9 +653,8 @@ class ImportContent(BrowserView):
 
         self.save_revision(new, item)
         logger.info(
-            "Created item: {} {} with {} old versions".format(
-                item["@type"], new.absolute_url(), len(item["exportimport.versions"])
-            )
+            "Created item #{}: {} {} with {} old versions".format(
+                index, item["@type"], new.absolute_url(), len(item["exportimport.versions"]))
         )
 
         if policy:
