@@ -586,6 +586,10 @@ class ImportContent(BrowserView):
             if not version:
                 continue
 
+            if version["id"] != item["id"]:
+                # Always keep the final id, renaming does not count as a change.
+                version.pop("id")
+
             if initial and not self.update_existing:
                 # initial version
                 new = _createObjectByType(item["@type"], container, item["id"])
