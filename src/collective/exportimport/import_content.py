@@ -542,9 +542,9 @@ class ImportContent(BrowserView):
         )
         return new
 
-    def import_versions(self, container, item):
         """Import one item with all its revisions..
         """
+    def import_versions(self, container, item, index):
         portal_workflow = api.portal.get_tool("portal_workflow")
 
         # Disable automatic versioning!
@@ -573,8 +573,8 @@ class ImportContent(BrowserView):
             policy = "at_edit_autoversion"
             repo_tool.removePolicyFromContentType(item["@type"], policy)
 
-        for index, version in enumerate(item["exportimport.versions"].values()):
-            initial = index == 0
+        for version_index, version in enumerate(item["exportimport.versions"].values()):
+            initial = version_index == 0
             version = self.global_dict_hook(version)
             if not version:
                 continue
