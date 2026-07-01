@@ -5,7 +5,11 @@ Changelog
 1.17 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fix importing revisions where the id of an object changed by always keeping the final id.
+  [pbauer]
+
+- Handle errors during revision export.
+  [pbauer]
 
 
 1.16 (2026-02-27)
@@ -13,15 +17,21 @@ Changelog
 
 - Fix HTML markup inconsistency in import_content.pt.
   [thet]
+
 - Notify the comment creation to have them indexed in the catalog
   [erral]
+
 - fix html: Don't fail if a tag does not have some attributes.
   [thet]
+
 - Skip setting a default page if the default is already set to the same value.
   [mamico]
+
 - Fixed data extraction of Archetypes ATFilefields to concatenate all `Pdata` chunks, when the FileField data was still stored in Filestorage and not not migrated to use blobstorage (using plone.app.blobs).
   [@jnptk]
-- Bugfix to prevent clearing existing relations from catalog when migrating into sites with existing content [ThibautBorn]
+
+- Bugfix to prevent clearing existing relations from catalog when migrating into sites with existing content
+  [ThibautBorn]
 
 1.15 (2025-07-15)
 -----------------
