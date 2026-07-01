@@ -600,7 +600,11 @@ class ExportContent(BrowserView):
         content_history_viewlet = ContentHistoryViewlet(obj, self.request, None, None)
         content_history_viewlet.navigation_root_url = ""
         content_history_viewlet.site_url = ""
-        full_history = content_history_viewlet.fullHistory() or []
+        try:
+            full_history = content_history_viewlet.fullHistory() or []
+        except:
+            logger.info("Could not get history for %s", item["@id"], exc_info=True)
+            full_history = []
         history = [i for i in full_history if i["type"] == "versioning"]
         if not history or len(history) == 1:
             return item
