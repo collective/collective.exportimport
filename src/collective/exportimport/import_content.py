@@ -447,7 +447,7 @@ class ImportContent(BrowserView):
 
             if self.import_old_revisions and item.get("exportimport.versions"):
                 # TODO: refactor into import_item to prevent duplicattion
-                new = self.import_versions(container, item)
+                new = self.import_versions(container, item, index)
                 if new:
                     added.append(new.absolute_url())
                 if self.commit and not len(added) % self.commit:
@@ -542,11 +542,9 @@ class ImportContent(BrowserView):
         )
         return new
 
-    def import_versions(self, container, item):
         """Import one item with all its revisions..
-        We only apply hooks for the current object not for each version.
-        TODO: refactor into import_item to prevent duplicattion
         """
+    def import_versions(self, container, item, index):
         portal_workflow = api.portal.get_tool("portal_workflow")
 
         # Disable automatic versioning!
@@ -575,8 +573,8 @@ class ImportContent(BrowserView):
             policy = "at_edit_autoversion"
             repo_tool.removePolicyFromContentType(item["@type"], policy)
 
-        for index, version in enumerate(item["exportimport.versions"].values()):
-            initial = index == 0
+        for version_index, version in enumerate(item["exportimport.versions"].values()):
+            initial = version_index == 0
             version = self.global_dict_hook(version)
             if not version:
                 continue
@@ -585,6 +583,10 @@ class ImportContent(BrowserView):
             version = self.custom_dict_hook(version)
             if not version:
                 continue
+
+            if version["id"] != item["id"]:
+                # Always keep the final id, renaming does not count as a change.
+                version.pop("id")
 
             if initial and not self.update_existing:
                 # initial version
@@ -651,9 +653,8 @@ class ImportContent(BrowserView):
 
         self.save_revision(new, item)
         logger.info(
-            "Created item: {} {} with {} old versions".format(
-                item["@type"], new.absolute_url(), len(item["exportimport.versions"])
-            )
+            "Created item #{}: {} {} with {} old versions".format(
+                index, item["@type"], new.absolute_url(), len(item["exportimport.versions"]))
         )
 
         if policy:
