@@ -147,6 +147,7 @@
   <adapter factory=".serializer.ChoiceFieldSerializer" />
   <adapter factory=".serializer.long_converter" />
   <adapter factory=".serializer.ExportingBlocksJSONFieldSerializer" />
+  <adapter zcml:condition="installed plone.app.discussion" factory=".serializer.CommentSerializer" />
 
   <!-- Deserializers -->
   <adapter factory=".deserializer.RichTextFieldDeserializerWithoutUnescape" />
