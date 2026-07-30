@@ -5,6 +5,9 @@ Changelog
 1.17 (unreleased)
 -----------------
 
+- Cache the results when retrieving picture variants in ``fix_html.img_variant_fixer``.
+  [thet]
+
 - Fix importing revisions where the id of an object changed by always keeping the final id.
   [pbauer]
 

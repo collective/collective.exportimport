@@ -504,12 +504,24 @@ def _get_picture_variant_mapping():
     return mapping
 
 
+picture_variant_mapping = None
+
+
+def get_picture_variant_mapping():
+    global picture_variant_mapping
+
+    if picture_variant_mapping is None:
+        picture_variant_mapping = _get_picture_variant_mapping()
+
+    return picture_variant_mapping
+
+
 def img_variant_fixer(text, obj=None, fallback_variant=None):
     """Set image-variants"""
     if not text:
         return text
 
-    scale_variant_mapping = _get_picture_variant_mapping()
+    scale_variant_mapping = get_picture_variant_mapping()
     if fallback_variant is None:
         fallback_variant = FALLBACK_VARIANT
 
