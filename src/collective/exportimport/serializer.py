@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from collective.exportimport import get_version
+from collective.exportimport import PackageNotFoundError
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IPathBlobsMarker
@@ -28,35 +30,34 @@ from zope.schema.interfaces import IVocabularyTokenized
 
 import base64
 import logging
-import pkg_resources
 import six
 
 try:
-    pkg_resources.get_distribution("Products.Archetypes")
-except pkg_resources.DistributionNotFound:
+    get_version("Products.Archetypes")
+except PackageNotFoundError:
     HAS_AT = False
 else:
     HAS_AT = True
 
 
 try:
-    pkg_resources.get_distribution("Products.TALESField")
-except pkg_resources.DistributionNotFound:
+    get_version("Products.TALESField")
+except PackageNotFoundError:
     HAS_TALES = False
 else:
     HAS_TALES = True
 
 
 try:
-    pkg_resources.get_distribution("plone.app.blob")
-except pkg_resources.DistributionNotFound:
+    get_version("plone.app.blob")
+except PackageNotFoundError:
     HAS_BLOB = False
 else:
     HAS_BLOB = True
 
 try:
-    pkg_resources.get_distribution("plone.app.contenttypes")
-except pkg_resources.DistributionNotFound:
+    get_version("plone.app.contenttypes")
+except PackageNotFoundError:
     HAS_PAC = False
 else:
     HAS_PAC = True

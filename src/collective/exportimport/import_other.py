@@ -3,6 +3,8 @@ from Acquisition import aq_base
 from BTrees.LLBTree import LLSet
 from collective.exportimport import _
 from collective.exportimport import config
+from collective.exportimport import get_version
+from collective.exportimport import PackageNotFoundError
 from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
 from OFS.interfaces import IOrderedContainer
@@ -33,7 +35,6 @@ from ZPublisher.HTTPRequest import FileUpload
 import dateutil
 import json
 import logging
-import pkg_resources
 import six
 import transaction
 
@@ -66,8 +67,8 @@ else:
     from html import unescape
 
 try:
-    pkg_resources.get_distribution("plone.app.discussion")
-except pkg_resources.DistributionNotFound:
+    get_version("plone.app.discussion")
+except PackageNotFoundError:
     HAS_DISCUSSION = False
     Comment = None
     IConversation = None

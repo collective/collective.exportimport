@@ -3,6 +3,8 @@ from Acquisition import aq_base
 from App.config import getConfiguration
 from collective.exportimport import _
 from collective.exportimport import config
+from collective.exportimport import get_version
+from collective.exportimport import PackageNotFoundError
 from OFS.interfaces import IOrderedContainer
 from operator import itemgetter
 from plone import api
@@ -35,42 +37,41 @@ from zope.interface import providedBy
 import json
 import logging
 import os
-import pkg_resources
 import six
 
 try:
-    pkg_resources.get_distribution("Products.Archetypes")
-except pkg_resources.DistributionNotFound:
+    get_version("Products.Archetypes")
+except PackageNotFoundError:
     HAS_AT = False
 else:
     HAS_AT = True
 
 try:
-    pkg_resources.get_distribution("zc.relation")
-except pkg_resources.DistributionNotFound:
+    get_version("zc.relation")
+except PackageNotFoundError:
     HAS_DX = False
 else:
     HAS_DX = True
 
 try:
-    pkg_resources.get_distribution("z3c.relationfield")
-except pkg_resources.DistributionNotFound:
+    get_version("z3c.relationfield")
+except PackageNotFoundError:
     RelationValue = None
 else:
     from z3c.relationfield import RelationValue
 
 try:
-    pam_version = pkg_resources.get_distribution("plone.app.multilingual")
-    if pam_version.version < "2.0.0":
+    pam_version = get_version("plone.app.multilingual")
+    if pam_version < "2.0.0":
         IS_PAM_1 = True
     else:
         IS_PAM_1 = False
-except pkg_resources.DistributionNotFound:
+except PackageNotFoundError:
     IS_PAM_1 = False
 
 try:
-    pkg_resources.get_distribution("plone.app.discussion")
-except pkg_resources.DistributionNotFound:
+    get_version("plone.app.discussion")
+except PackageNotFoundError:
     HAS_DISCUSSION = False
     IConversation = None
 else:
@@ -362,8 +363,8 @@ class ExportTranslations(BaseExport):
         # Archetypes with LinguaPlone
         if HAS_AT:
             try:
-                pkg_resources.get_distribution("Products.LinguaPlone")
-            except pkg_resources.DistributionNotFound:
+                get_version("Products.LinguaPlone")
+            except PackageNotFoundError:
                 HAS_LINGUAPLONE = False
             else:
                 HAS_LINGUAPLONE = True

@@ -3,6 +3,8 @@ from Acquisition import aq_base
 from App.config import getConfiguration
 from collective.exportimport import _
 from collective.exportimport import config
+from collective.exportimport import get_version
+from collective.exportimport import PackageNotFoundError
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IPathBlobsMarker
@@ -30,13 +32,12 @@ from zope.schema import getFields
 import json
 import logging
 import os
-import pkg_resources
 import six
 import tempfile
 
 try:
-    pkg_resources.get_distribution("Products.Archetypes")
-except pkg_resources.DistributionNotFound:
+    get_version("Products.Archetypes")
+except PackageNotFoundError:
     ReferenceField = None
     IBaseObject = None
     HAS_AT = False
@@ -47,8 +48,8 @@ else:
     HAS_AT = True
 
 try:
-    pkg_resources.get_distribution("plone.dexterity")
-except pkg_resources.DistributionNotFound:
+    get_version("plone.dexterity")
+except PackageNotFoundError:
     IDexterityContent = None
     iterSchemata = None
     HAS_DX = False
@@ -59,8 +60,8 @@ else:
     HAS_DX = True
 
 try:
-    pkg_resources.get_distribution("plone.app.contenttypes")
-except pkg_resources.DistributionNotFound:
+    get_version("plone.app.contenttypes")
+except PackageNotFoundError:
     ICollection = None
     HAS_PAC = False
 else:
@@ -69,8 +70,8 @@ else:
     HAS_PAC = True
 
 try:
-    pkg_resources.get_distribution("z3c.relationfield")
-except pkg_resources.DistributionNotFound:
+    get_version("z3c.relationfield")
+except PackageNotFoundError:
     IRelationChoice = None
     IRelationList = None
     HAS_RELATIONS = False

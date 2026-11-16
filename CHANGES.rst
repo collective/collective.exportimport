@@ -5,6 +5,11 @@ Changelog
 1.17 (unreleased)
 -----------------
 
+- Use ``importlib.metadata`` instead of ``pkg_resources``, which setuptools 81+
+  deprecates and setuptools 84 (Plone 6.2.3) no longer ships. Python 2.7 still
+  falls back to ``pkg_resources``.
+  [bsuttor]
+
 - Fix importing revisions where the id of an object changed by always keeping the final id.
   [pbauer]
 
