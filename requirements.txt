@@ -1,7 +1,0 @@
-zc.buildout==3.3; python_version <= '3.8'
-setuptools<69.0.3; python_version <= '3.8'
-zc.buildout==4.1.7; python_version >= '3.9'
-setuptools==75.8.2; python_version >= '3.9'
-packaging==24.2; python_version >= '3.9'
-pip==25.0.1; python_version >= '3.9'
-wheel==0.45.1; python_version >= '3.9'

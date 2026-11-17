@@ -1,5 +1,0 @@
-=======================
-collective.exportimport
-=======================
-
-User documentation
