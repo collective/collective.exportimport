@@ -1,11 +1,12 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
     xmlns:i18n="http://namespaces.zope.org/i18n"
-    xmlns:browser="http://namespaces.zope.org/browser"
-    xmlns:zcml="http://namespaces.zope.org/zcml"
     xmlns:plone="http://namespaces.plone.org/plone"
-    i18n_domain="collective.exportimport">
+    xmlns:zcml="http://namespaces.zope.org/zcml"
+    i18n_domain="collective.exportimport"
+    >
 
   <i18n:registerTranslations directory="locales" />
   <include package="Products.CMFCore" />
@@ -20,12 +21,12 @@
       />
 
   <browser:page
-      zcml:condition="installed Products.ATContentTypes.content.topic"
       name="export_content"
       for="Products.ATContentTypes.interfaces.IATTopic"
       class=".export_topic.ExportTopic"
       template="templates/export_content.pt"
       permission="cmf.ManagePortal"
+      zcml:condition="installed Products.ATContentTypes.content.topic"
       />
 
   <browser:page
@@ -77,12 +78,12 @@
       />
 
   <browser:page
-      zcml:condition="installed plone.app.discussion"
       name="export_discussion"
       for="zope.interface.Interface"
       class=".export_other.ExportDiscussion"
       template="templates/export_other.pt"
       permission="cmf.ManagePortal"
+      zcml:condition="installed plone.app.discussion"
       />
 
   <browser:page
@@ -106,35 +107,55 @@
     We check for a subpackage of Products.Archetypes to avoid false positives
     due to code aliases in migration code
   -->
-  <adapter zcml:condition="installed Products.Archetypes.atapi"
-      factory=".serializer.ATFileFieldSerializer" />
-  <adapter zcml:condition="installed Products.Archetypes.atapi"
-      factory=".serializer.ATImageFieldSerializer" />
-  <adapter zcml:condition="installed Products.Archetypes.atapi"
-      factory=".serializer.ATImageFieldSerializerForBlobPaths" />
+  <adapter
+      factory=".serializer.ATFileFieldSerializer"
+      zcml:condition="installed Products.Archetypes.atapi"
+      />
+  <adapter
+      factory=".serializer.ATImageFieldSerializer"
+      zcml:condition="installed Products.Archetypes.atapi"
+      />
+  <adapter
+      factory=".serializer.ATImageFieldSerializerForBlobPaths"
+      zcml:condition="installed Products.Archetypes.atapi"
+      />
 
-  <adapter zcml:condition="installed Products.TALESField"
-      factory=".serializer.ATTalesFieldSerializer" />
+  <adapter
+      factory=".serializer.ATTalesFieldSerializer"
+      zcml:condition="installed Products.TALESField"
+      />
 
-  <adapter zcml:condition="installed Products.Archetypes.atapi"
-      factory=".serializer.ATTextFieldSerializer" />
+  <adapter
+      factory=".serializer.ATTextFieldSerializer"
+      zcml:condition="installed Products.Archetypes.atapi"
+      />
   <configure zcml:condition="installed Products.Archetypes.atapi">
-    <adapter zcml:condition="installed plone.app.contenttypes"
-        factory=".serializer.SerializeTopicToJson" />
+    <adapter
+        factory=".serializer.SerializeTopicToJson"
+        zcml:condition="installed plone.app.contenttypes"
+        />
   </configure>
 
   <!--
     We check for a subpackage of plone.app.blob to avoid false positives
     due to code aliases in migration code
   -->
-  <adapter zcml:condition="installed plone.app.blob.config"
-      factory=".serializer.ATFileFieldSerializerWithBlobs" />
-  <adapter zcml:condition="installed plone.app.blob.config"
-      factory=".serializer.ATImageFieldSerializerWithBlobs" />
-  <adapter zcml:condition="installed plone.app.blob.config"
-      factory=".serializer.ATFileFieldSerializerWithBlobPaths" />
-  <adapter zcml:condition="installed plone.app.blob.config"
-      factory=".serializer.ATImageFieldSerializerWithBlobPaths" />
+  <adapter
+      factory=".serializer.ATFileFieldSerializerWithBlobs"
+      zcml:condition="installed plone.app.blob.config"
+      />
+  <adapter
+      factory=".serializer.ATImageFieldSerializerWithBlobs"
+      zcml:condition="installed plone.app.blob.config"
+      />
+  <adapter
+      factory=".serializer.ATFileFieldSerializerWithBlobPaths"
+      zcml:condition="installed plone.app.blob.config"
+      />
+  <adapter
+      factory=".serializer.ATImageFieldSerializerWithBlobPaths"
+      zcml:condition="installed plone.app.blob.config"
+      />
 
   <!-- Serializers -->
   <adapter factory=".serializer.FileFieldSerializerWithBlobs" />
@@ -186,12 +207,12 @@
       />
 
   <browser:page
-      zcml:condition="installed plone.app.multilingual"
       name="import_translations"
       for="zope.interface.Interface"
       class=".import_other.ImportTranslations"
       template="templates/import_translations.pt"
       permission="cmf.ManagePortal"
+      zcml:condition="installed plone.app.multilingual"
       />
 
   <browser:page
@@ -235,12 +256,12 @@
       />
 
   <browser:page
-      zcml:condition="installed plone.app.discussion"
       name="import_discussion"
       for="zope.interface.Interface"
       class=".import_other.ImportDiscussion"
       template="templates/import_discussion.pt"
       permission="cmf.ManagePortal"
+      zcml:condition="installed plone.app.discussion"
       />
 
   <browser:page

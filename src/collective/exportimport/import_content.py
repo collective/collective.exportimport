@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 from Acquisition import aq_base
 from collective.exportimport import _
 from collective.exportimport import config
 from collective.exportimport.interfaces import IMigrationMarker
 from datetime import datetime
-from DateTime import DateTime
 from datetime import timedelta
+from DateTime import DateTime
 from Persistence import PersistentMapping
 from plone import api
 from plone.api.exc import InvalidParameterError
@@ -19,8 +18,8 @@ from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.utils import _createObjectByType
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from six.moves.urllib.parse import unquote
-from six.moves.urllib.parse import urlparse
+from urllib.parse import unquote
+from urllib.parse import urlparse
 from zExceptions import NotFound
 from zope.component import getMultiAdapter
 from zope.component import getUtility
@@ -33,7 +32,6 @@ import json
 import logging
 import os
 import random
-import six
 import transaction
 
 try:
@@ -43,10 +41,7 @@ try:
 except ImportError:
     HAS_COLLECTION_FIX = False
 
-if six.PY2:
-    from pathlib2 import Path
-else:
-    from pathlib import Path
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 BLOB_HOME = os.getenv("COLLECTIVE_EXPORTIMPORT_BLOB_HOME", "")
@@ -115,7 +110,7 @@ class ImportContent(BrowserView):
     BUGS = {}
 
     # These fields will be ignored
-    # Exmaple: ['relatedItems']
+    # Example: ['relatedItems']
     DROP_FIELDS = []
 
     # Items with these uid will be ignored
@@ -171,7 +166,7 @@ class ImportContent(BrowserView):
             # This is an error.  But when you upload 10 GB AND select a server file,
             # it is a pity when you would have to upload again.
             api.portal.show_message(
-                _(u"json file was uploaded, so the selected server file was ignored."),
+                _("json file was uploaded, so the selected server file was ignored."),
                 request=self.request,
                 type="warn",
             )
@@ -207,7 +202,7 @@ class ImportContent(BrowserView):
                 status = "error"
                 msg = str(e)
                 api.portal.show_message(
-                    _(u"Exception during upload: {}").format(e),
+                    _("Exception during upload: {}").format(e),
                     request=self.request,
                 )
             else:
@@ -243,7 +238,7 @@ class ImportContent(BrowserView):
 
     def commit_hook(self, added, index):
         """Hook to do something after importing every x items."""
-        msg = u"Committing after creating {} of {} handled items...".format(
+        msg = "Committing after creating {} of {} handled items...".format(
             len(added), index
         )
         logger.info(msg)
@@ -301,10 +296,10 @@ class ImportContent(BrowserView):
         added = self.import_new_content(data)
         end = datetime.now()
         delta = end - start
-        msg = u"Imported {} items".format(len(added))
+        msg = f"Imported {len(added)} items"
         transaction.get().note(msg)
         transaction.commit()
-        msg = u"{} in {} seconds".format(msg, delta.seconds)
+        msg = f"{msg} in {delta.seconds} seconds"
         logger.info(msg)
         return msg
 
@@ -326,7 +321,7 @@ class ImportContent(BrowserView):
                 return False
             elif self.should_drop(item_path):
                 logger.info(
-                    u"Skipping %s, even though listed in INCLUDE_PATHS", item_path
+                    "Skipping %s, even though listed in INCLUDE_PATHS", item_path
                 )
                 return False
         else:
@@ -339,9 +334,9 @@ class ImportContent(BrowserView):
         added = []
 
         if getattr(data, "len", None):
-            logger.info(u"Importing {} items".format(len(data)))
+            logger.info(f"Importing {len(data)} items")
         else:
-            logger.info(u"Importing data")
+            logger.info("Importing data")
         for index, item in enumerate(data, start=1):
             if self.limit and len(added) >= self.limit:
                 break
@@ -354,13 +349,13 @@ class ImportContent(BrowserView):
                 continue
 
             if not index % 100:
-                logger.info("Imported {} items...".format(index))
+                logger.info(f"Imported {index} items...")
                 transaction.savepoint()
 
             new_id = unquote(item["@id"]).split("/")[-1]
             if new_id != item["id"]:
                 logger.info(
-                    u"Conflicting ids in url ({}) and id ({}). Using {}".format(
+                    "Conflicting ids in url ({}) and id ({}). Using {}".format(
                         new_id, item["id"], new_id
                     )
                 )
@@ -388,7 +383,7 @@ class ImportContent(BrowserView):
 
             if not container:
                 logger.warning(
-                    u"No container (parent was {}) found for {} {}".format(
+                    "No container (parent was {}) found for {} {}".format(
                         item["parent"]["@type"], item["@type"], item["@id"]
                     )
                 )
@@ -396,7 +391,7 @@ class ImportContent(BrowserView):
 
             if not getattr(aq_base(container), "isPrincipiaFolderish", False):
                 logger.warning(
-                    u"Container {} for {} is not folderish".format(
+                    "Container {} for {} is not folderish".format(
                         container.absolute_url(), item["@id"]
                     )
                 )
@@ -410,7 +405,7 @@ class ImportContent(BrowserView):
                 if self.handle_existing_content == 0:
                     # Skip
                     logger.info(
-                        u"{} ({}) already exists. Skipping it.".format(
+                        "{} ({}) already exists. Skipping it.".format(
                             item["id"], item["@id"]
                         )
                     )
@@ -419,7 +414,7 @@ class ImportContent(BrowserView):
                 elif self.handle_existing_content == 1:
                     # Replace content before creating it new
                     logger.info(
-                        u"{} ({}) already exists. Replacing it.".format(
+                        "{} ({}) already exists. Replacing it.".format(
                             item["id"], item["@id"]
                         )
                     )
@@ -428,7 +423,7 @@ class ImportContent(BrowserView):
                 elif self.handle_existing_content == 2:
                     # Update existing item
                     logger.info(
-                        u"{} ({}) already exists. Updating it.".format(
+                        "{} ({}) already exists. Updating it.".format(
                             item["id"], item["@id"]
                         )
                     )
@@ -440,7 +435,7 @@ class ImportContent(BrowserView):
                     duplicate = item["id"]
                     item["id"] = "{}-{}".format(item["id"], random.randint(1000, 9999))
                     logger.info(
-                        u"{} ({}) already exists. Created as {}".format(
+                        "{} ({}) already exists. Created as {}".format(
                             duplicate, item["@id"], item["id"]
                         )
                     )
@@ -544,6 +539,7 @@ class ImportContent(BrowserView):
 
         """Import one item with all its revisions..
         """
+
     def import_versions(self, container, item, index):
         portal_workflow = api.portal.get_tool("portal_workflow")
 
@@ -654,7 +650,11 @@ class ImportContent(BrowserView):
         self.save_revision(new, item)
         logger.info(
             "Created item #{}: {} {} with {} old versions".format(
-                index, item["@type"], new.absolute_url(), len(item["exportimport.versions"]))
+                index,
+                item["@type"],
+                new.absolute_url(),
+                len(item["exportimport.versions"]),
+            )
         )
 
         if policy:
@@ -672,16 +672,11 @@ class ImportContent(BrowserView):
         modified = dateutil.parser.parse(item["modified"])
         # add one millisecond to prevent created being before first revision
         modified = modified + timedelta(milliseconds=1)
-        if six.PY2:
-            import time
-
-            timestamp = time.mktime(modified.timetuple())
-        else:
-            timestamp = datetime.timestamp(modified)
+        timestamp = datetime.timestamp(modified)
         from plone.app.versioningbehavior import _ as PAV
 
         if initial:
-            comment = PAV(u"initial_version_changeNote", default=u"Initial version")
+            comment = PAV("initial_version_changeNote", default="Initial version")
         else:
             comment = item.get("changeNote")
         sys_metadata = {
@@ -731,7 +726,7 @@ class ImportContent(BrowserView):
             abs_blob_path = get_absolute_blob_path(new, blob_path)
             if not abs_blob_path:
                 __traceback_info__ = item
-                raise ValueError("Blob path {} does not exist!".format(blob_path))
+                raise ValueError(f"Blob path {blob_path} does not exist!")
 
             # Determine the class to use: file or image.
             filename = value["filename"]
@@ -775,7 +770,7 @@ class ImportContent(BrowserView):
         """Hook to inject dict-modifiers by type before deserializing.
         E.g.: dict_hook_document(self, item)
         """
-        modifier = getattr(self, "dict_hook_{}".format(self.safe_portal_type), None)
+        modifier = getattr(self, f"dict_hook_{self.safe_portal_type}", None)
         if modifier and callable(modifier):
             item = modifier(item)
         return item
@@ -850,7 +845,7 @@ class ImportContent(BrowserView):
         """Hook to inject modifiers of the imported item by type.
         E.g.: obj_hook_newsitem(self, obj, item)
         """
-        modifier = getattr(self, "obj_hook_{}".format(self.safe_portal_type), None)
+        modifier = getattr(self, f"obj_hook_{self.safe_portal_type}", None)
         if modifier and callable(modifier):
             modifier(obj, item)
 
@@ -891,15 +886,13 @@ class ImportContent(BrowserView):
             container = api.content.get(path=container_path)
             if not container:
                 raise RuntimeError(
-                    u"Target folder {} for type {} is missing".format(
+                    "Target folder {} for type {} is missing".format(
                         container_path, item["@type"]
                     )
                 )
 
         # Run custom container hooks if they exist
-        method = getattr(
-            self, "handle_{}_container".format(self.safe_portal_type), None
-        )
+        method = getattr(self, f"handle_{self.safe_portal_type}_container", None)
         if method and callable(method):
             return method(item)
 
@@ -1016,7 +1009,7 @@ class ImportContent(BrowserView):
                     title=element,
                 )
                 logger.info(
-                    u"Created container %s to hold %s",
+                    "Created container %s to hold %s",
                     container.absolute_url(),
                     item["@id"],
                 )
@@ -1033,7 +1026,13 @@ class ImportContent(BrowserView):
                 title=item["parent"]["title"],
             )
         except InvalidParameterError:
-            logger.info("Cannot add %s in %r. Fallback to %s", parent_type, container, container_type, exc_info=True)
+            logger.info(
+                "Cannot add %s in %r. Fallback to %s",
+                parent_type,
+                container,
+                container_type,
+                exc_info=True,
+            )
             parent = api.content.create(
                 container=container,
                 type=container_type,
@@ -1041,7 +1040,7 @@ class ImportContent(BrowserView):
                 title=item["parent"]["title"],
             )
         logger.info(
-            u"Created %s %s to hold %s",
+            "Created %s %s to hold %s",
             parent.portal_type,
             parent.absolute_url(),
             item["@id"],
@@ -1078,7 +1077,7 @@ def fix_portal_type(portal_type):
 
 class ResetModifiedAndCreatedDate(BrowserView):
     def __call__(self):
-        self.title = _(u"Reset creation and modification date")
+        self.title = _("Reset creation and modification date")
         self.help_text = _(
             "<p>Creation- and modification-dates are changed during import."
             "This resets them to the original dates of the imported content.</p>"
@@ -1089,7 +1088,7 @@ class ResetModifiedAndCreatedDate(BrowserView):
         portal = api.portal.get()
 
         portal.ZopeFindAndApply(portal, search_sub=True, apply_func=reset_dates)
-        msg = _(u"Finished resetting creation and modification dates.")
+        msg = _("Finished resetting creation and modification dates.")
         logger.info(msg)
         api.portal.show_message(msg, self.request)
         return self.index()
@@ -1111,15 +1110,15 @@ def reset_dates(obj, path):
 
 class FixCollectionQueries(BrowserView):
     def __call__(self):
-        self.title = _(u"Fix collection queries")
+        self.title = _("Fix collection queries")
         self.help_text = _(
-            u"""<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>"""
+            """<p>This fixes invalid collection-criteria that were imported from Plone 4 or 5.</p>"""
         )
 
         if not HAS_COLLECTION_FIX:
             api.portal.show_message(
                 _(
-                    u"plone.app.querystring.upgrades.fix_select_all_existing_collections is not available"
+                    "plone.app.querystring.upgrades.fix_select_all_existing_collections is not available"
                 ),
                 self.request,
             )

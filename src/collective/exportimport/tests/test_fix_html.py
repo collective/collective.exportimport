@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from collective.exportimport.fix_html import html_fixer
 from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_INTEGRATION_TESTING
 from importlib import import_module
@@ -41,26 +40,26 @@ class TestFixHTML(unittest.TestCase):
             container=portal,
             type="Folder",
             id="about",
-            title=u"About",
+            title="About",
         )
         self.team = api.content.create(
             container=self.about,
             type="Document",
             id="team",
-            title=u"Team",
+            title="Team",
         )
         self.contact = api.content.create(
             container=self.about,
             type="Document",
             id="contact",
-            title=u"Contact",
+            title="Contact",
         )
         self.image = api.content.create(
             container=portal,
             type="Image",
-            title=u"Image",
+            title="Image",
             id="image",
-            image=NamedImage(dummy.Image(), "image/gif", u"test.gif"),
+            image=NamedImage(dummy.Image(), "image/gif", "test.gif"),
         )
 
     def test_html_fixer(self):
@@ -68,7 +67,7 @@ class TestFixHTML(unittest.TestCase):
         self.create_demo_content()
 
         # link to uuid
-        old_text = '<p><a class="some-class" href="resolveuid/{0}">Links to uuid</a></p>'.format(
+        old_text = '<p><a class="some-class" href="resolveuid/{}">Links to uuid</a></p>'.format(
             self.contact.UID()
         )
         fixed_html = '<p><a class="some-class" data-linktype="internal" data-val="{0}" href="resolveuid/{0}">Links to uuid</a></p>'.format(
@@ -157,7 +156,7 @@ class TestFixHTML(unittest.TestCase):
         self.maxDiff = None
         self.create_demo_content()
         old_text = """
-<p><a class="some-class" href="resolveuid/{0}">Links to uuid</a></p>
+<p><a class="some-class" href="resolveuid/{}">Links to uuid</a></p>
 <p><a href="delete_confirmation">Link to view/form</a></p>
 <p><a href="team">Link to content</a></p>
 <a href="edit?somequery=foo" target="_self" title="">Link to view with query string</a><br/>
@@ -165,9 +164,7 @@ class TestFixHTML(unittest.TestCase):
 <img src="image" />
 <img src="image/@@images/image/large" />
 <p><a href="image/image_preview"><img src="image/image_preview"/></a></p>
-""".format(
-            self.contact.UID()
-        )
+""".format(self.contact.UID())
         doc = api.content.create(
             container=self.about,
             type="Document",
@@ -196,9 +193,7 @@ class TestFixHTML(unittest.TestCase):
 <img class="image-richtext image-inline" data-linktype="image" data-scale="" data-val="{2}" src="resolveuid/{2}/@@images/image"/>
 <img class="image-richtext image-inline" data-linktype="image" data-scale="large" data-val="{2}" src="resolveuid/{2}/@@images/image/large"/>
 <p><a href="image/image_preview"><img class="image-richtext image-inline" data-linktype="image" data-scale="preview" data-val="{2}" src="resolveuid/{2}/@@images/image/preview"/></a></p>
-""".format(
-            self.contact.UID(), self.team.UID(), self.image.UID()
-        )
+""".format(self.contact.UID(), self.team.UID(), self.image.UID())
         if HAS_PLONE_6:
             # Plone 6 also sets img-variants
             fixed_html = """
@@ -210,9 +205,7 @@ class TestFixHTML(unittest.TestCase):
 <img class="image-richtext image-inline picture-variant-medium" data-linktype="image" data-picturevariant="medium" data-scale="" data-val="{2}" src="resolveuid/{2}/@@images/image"/>
 <img class="image-richtext image-inline picture-variant-large" data-linktype="image" data-picturevariant="large" data-scale="large" data-val="{2}" src="resolveuid/{2}/@@images/image/large"/>
 <p><a href="image/image_preview"><img class="image-richtext image-inline picture-variant-small" data-linktype="image" data-picturevariant="small" data-scale="preview" data-val="{2}" src="resolveuid/{2}/@@images/image/preview"/></a></p>
-""".format(
-                self.contact.UID(), self.team.UID(), self.image.UID()
-            )
+""".format(self.contact.UID(), self.team.UID(), self.image.UID())
 
         self.assertEqual(fixed_html, doc.text.raw)
 
