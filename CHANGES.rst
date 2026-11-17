@@ -2,12 +2,28 @@ Changelog
 =========
 
 
-1.17 (unreleased)
------------------
+2.0.0 (unreleased)
+------------------
 
-- Use ``importlib.metadata`` instead of ``pkg_resources``, which setuptools 81+
-  deprecates and setuptools 84 (Plone 6.2.3) no longer ships. Python 2.7 still
-  falls back to ``pkg_resources``.
+- Breaking: migrate to PEP 420 native namespaces (setuptools 81 / Plone 6.2).
+  Support Plone 6.1 and 6.2 on Python 3.10 to 3.13 only: Plone 4.3 to 6.0 and
+  Python 2 are dropped (use 1.x to export from them).
+  [bsuttor]
+
+- Use ``importlib.metadata`` and ``importlib.resources`` instead of
+  ``pkg_resources``, which setuptools 81+ deprecates and setuptools 84
+  (Plone 6.2.3) no longer ships.
+  [bsuttor]
+
+- Move the package metadata from ``setup.py`` to ``pyproject.toml``, declare
+  the dependencies the code imports, configure the package with plone.meta
+  (tox, GitHub Actions, pre-commit) and replace the buildout development
+  environment by a uv one on Plone 6.2.3. Remove the buildout, requirements and
+  Sphinx files, and the old GitHub workflow.
+  [bsuttor]
+
+- Drop ``six`` and apply the plone.meta lint autofixes (pyupgrade, isort,
+  black, zpretty, codespell).
   [bsuttor]
 
 - Fix importing revisions where the id of an object changed by always keeping the final id.
@@ -132,7 +148,7 @@ Changelog
 1.10 (2023-10-11)
 -----------------
 
-- Don't re-use `mapping` variable when migrating portlet data.
+- Don't reuse `mapping` variable when migrating portlet data.
   [witsch]
 
 - Fix editing revision author - refs #216
@@ -374,7 +390,7 @@ Changelog
 - Add option to make a commit every x items.
   [pbauer]
 
-- Improve logging during import in vairous cases.
+- Improve logging during import in various cases.
   [pbauer]
 
 - Work around case where api.content.get(path=parent_path) raises NotFound instead of returning None.
@@ -457,7 +473,7 @@ Changelog
 - Missing ``</form>`` closing tag in ``export_content.pt``
   [petschki]
 
-- Support disabled aquisition of local roles during export/import of local roles.
+- Support disabled acquisition of local roles during export/import of local roles.
   [pbauer]
 
 - Use unrestrictedSearchResults to actually export all content.
@@ -487,7 +503,7 @@ Changelog
 - Reset Creation Date. Fix #29
   [pbauer]
 
-- Remove custom serializer for relations beacuse of ConfigurationConflictError with restapi.
+- Remove custom serializer for relations because of ConfigurationConflictError with restapi.
   Relations are dropped anyway in update_data_for_migration when using the default setting.
   [pbauer]
 
