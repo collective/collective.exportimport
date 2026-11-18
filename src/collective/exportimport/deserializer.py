@@ -6,7 +6,6 @@ from plone.portlets.interfaces import IPortletAssignment
 from plone.restapi.behaviors import IBlocks
 from plone.restapi.deserializer.dxfields import DefaultFieldDeserializer
 from plone.restapi.interfaces import IFieldDeserializer
-from plone.restapi.interfaces import IFieldDeserializer
 from plone.schema import IJSONField
 from zope.component import adapter
 from zope.interface import implementer

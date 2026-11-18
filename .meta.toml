@@ -1,0 +1,41 @@
+# Generated from:
+# https://github.com/plone/meta/tree/2.x/src/plone/meta/default
+# See the inline comments on how to expand/tweak this configuration file
+[meta]
+template = "default"
+commit-id = "2.12.0"
+
+[gitignore]
+extra_lines = """
+.venv
+htmlcov/
+.mxdev_cache/
+requirements.txt
+"""
+
+[pyproject]
+# openEnd: query range of the collection criteria (export_content.py, README)
+# archiv: German folder name in a README example
+codespell_ignores = "openend,archiv"
+# Optional imports, guarded by try/except or a version check: Archetypes and
+# Plone 4/5 packages on the sites exportimport exports from, and add-ons
+# exportimport supports when they are installed.
+# plone.classicui: classic distribution for the dev instance
+# (scripts/create_site.py)
+dependencies_ignores = "['collective.relationhelpers', 'plone.app.blob', 'plone.app.discussion', 'plone.app.multilingual', 'plone.app.querystring', 'plone.app.versioningbehavior', 'plone.classicui', 'Products.Archetypes', 'Products.ATContentTypes', 'Products.LinguaPlone', 'Products.TALESField', 'z3c.relationfield', 'zc.relation']"
+dependencies_mappings = [
+    "beautifulsoup4 = ['bs4']",
+]
+check_manifest_ignores = """
+    ".gitattributes",
+    "Makefile",
+    "instance.yaml",
+    "scripts/*",
+"""
+
+[tox]
+test_environment_variables = """
+    zope_i18n_compile_mo_files=true
+"""
+test_matrix = {"6.2" = ["3.14", "3.13", "3.12", "3.11", "3.10"], "6.1" = ["3.13", "3.12", "3.11", "3.10"]}
+constraints_files = {"6.2" = "https://dist.plone.org/release/6.2.3/constraints.txt", "6.1" = "https://dist.plone.org/release/6.1-latest/constraints.txt"}

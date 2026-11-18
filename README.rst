@@ -70,11 +70,15 @@ If you need help, see:
 - for Plone 6: https://6.docs.plone.org/install/manage-add-ons-packages.html
 
 
-Python 2 compatibility
-----------------------
+Supported versions
+------------------
 
-This package is compatible with Python 3 and Python 2.
-Depending on the Python version different versions of it's dependencies will be installed.
+Version 2.x supports Plone 6.1 on Python 3.10 to 3.13, and Plone 6.2 on Python 3.10 to 3.14.
+It is tested on each of them.
+It uses native namespace packages (PEP 420) and no longer calls ``pkg_resources``, which setuptools 84 (Plone 6.2.3) no longer ships.
+
+To export from Plone 4.3 to 6.0, or from Python 2, install version 1.x (``collective.exportimport < 2``) in the old site:
+the json format is the same, so you can still import the result with version 2.x in Plone 6.1 or 6.2.
 If you run into problems, file an issue at: https://github.com/collective/collective.exportimport/issues
 
 
@@ -105,12 +109,12 @@ Use the form with the URL ``/@@import_content``, and upload a json-file that you
 
 The imports for members, relations, localroles and relations are linked to in this form but can also be called individually: ``/@@import_members``, ``/@@import_relations``, ``/@@import_localroles``, ``/@@import_translations``, ``/@@import_ordering``, ``/@@import_discussion``.
 
-As a last step in a migration there is another view ``@@reset_dates`` that resets the modified date on imported content to the date initially contained in the imported json-file. This is necessary since varous changes during a migration will likely result in a updated modified-date. During import the original is stored as ``obj.modification_date_migrated`` on each new object and this view sets this date.
+As a last step in a migration there is another view ``@@reset_dates`` that resets the modified date on imported content to the date initially contained in the imported json-file. This is necessary since various changes during a migration will likely result in a updated modified-date. During import the original is stored as ``obj.modification_date_migrated`` on each new object and this view sets this date.
 
 Export- and import locations
 ----------------------------
 
-If you select 'Save to file on server', the Export view will save json files in the <var> directory of your Plone instanc in /var/instance.
+If you select 'Save to file on server', the Export view will save json files in the <var> directory of your Plone instance in /var/instance.
 The import view will look for  files under /var/instance/import.
 These directories will normally be different, under different Plone instances and possibly on different servers.
 
@@ -1043,7 +1047,7 @@ Export:
 
     def global_dict_hook(self, item, obj):
         # Find language of the nearest parent with a language
-        # Usefull for LinguaPlone sites where some content is languageindependent
+        # Useful for LinguaPlone sites where some content is languageindependent
         parent = obj.__parent__
         for ancestor in parent.aq_chain:
             if IPloneSiteRoot.providedBy(ancestor):
@@ -1067,7 +1071,7 @@ Export:
         # add info on translations to help find the right container
         # usually this idone by export_translations
         # but when migrating from LP to pam you sometimes want to check the
-        # tranlation info during import
+        # translation info during import
         if getattr(obj.aq_base, "getTranslations", None) is not None:
             translations = obj.getTranslations()
             if translations:
@@ -1391,7 +1395,7 @@ Export/Import registry settings
 
 The pull-request https://github.com/collective/collective.exportimport/pull/130 has views ``@@export_registry`` and ``@@import_registry``.
 These views export and import registry records that do not use the default-setting specified in the schema for that registry record.
-The export alone could also be usefull to figure out which settings were modified for a site.
+The export alone could also be useful to figure out which settings were modified for a site.
 
 That code will probably not be merged but you can use it in your own projects.
 
@@ -1602,7 +1606,7 @@ Import:
         annotations = IAnnotations(obj)
         prefix = "plone.tiles.data."
         for uid, tile in item["tiles"].items():
-            # TODO: Maybe create all tiles that do not need to be defferred?
+            # TODO: Maybe create all tiles that do not need to be deferred?
             key = prefix + uid
             tile_name = tile.pop("type", None)
             # first set raw data
@@ -2126,7 +2130,7 @@ Here is a full example for ``json_methods.py`` which should be in ``<BUILDOUT_RO
 
     # Path from which to continue the export.
     # The export walks the whole site respecting the order.
-    # It will ignore everything untill this path is reached.
+    # It will ignore everything until this path is reached.
     PREVIOUS = ""
 
     def export_content(self):
@@ -2336,6 +2340,34 @@ Contribute
 
 - Issue Tracker: https://github.com/collective/collective.exportimport/issues
 - Source Code: https://github.com/collective/collective.exportimport
+
+
+Development
+-----------
+
+You only need `uv <https://docs.astral.sh/uv/>`_ ::
+
+    make install         # .venv (Python 3.12, Plone 6.2.3) and instance configuration
+    make create-site     # create a "Plone" site
+    make start           # http://localhost:8080/Plone (admin / admin)
+    make console         # debug console on the instance
+    make i18n            # update the translation files
+    make remove-data     # remove all content (and the .venv)
+
+``make clean && PLONE_VERSION=6.1-latest make install`` builds against another Plone release, and
+``DELETE_EXISTING=1 make create-site`` recreates the site.
+
+Tests and code quality are managed by `plone.meta <https://github.com/plone/meta>`_ and
+`tox <https://tox.wiki>`_ ::
+
+    make test            # tests with Plone 6.2.3
+    make lint            # pre-commit hooks (black, isort, flake8, zpretty, codespell...)
+    make format          # reformat code
+    make test-all        # lint, every supported Python / Plone version, dependency checks
+
+Any tox environment can be run directly, e.g. ``uvx --with tox-uv tox -e py313-plone61``.
+Do not edit the files generated by plone.meta: change ``.meta.toml`` and run
+``uvx --from plone.meta config-package --branch current .`` instead.
 
 
 Support

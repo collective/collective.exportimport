@@ -1,51 +1,87 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
       xmlns:metal="http://xml.zope.org/namespaces/metal"
       xmlns:tal="http://xml.zope.org/namespaces/tal"
-      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      metal:use-macro="context/main_template/macros/master"
       i18n:domain="collective.exportimport"
-      metal:use-macro="context/main_template/macros/master">
+>
 
-<div metal:fill-slot="main">
+  <div metal:fill-slot="main">
     <tal:main-macro metal:define-macro="main">
 
-       <h1 class="documentFirstHeading" tal:content="python: view.title" i18n:translate="">
+      <h1 class="documentFirstHeading"
+          tal:content="python: view.title"
+          i18n:translate=""
+      >
            Export other
-       </h1>
+      </h1>
 
-        <form action="@@export_other" tal:attributes="action request/URL" method="post" enctype="multipart/form-data">
-            <div class="field mb-3">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="download_to_server:int" value="0" id="download_local" checked="checked">
-                <label for="download_local" class="form-check-label" i18n:translate="">
+      <form action="@@export_other"
+            enctype="multipart/form-data"
+            method="post"
+            tal:attributes="
+              action request/URL;
+            "
+      >
+        <div class="field mb-3">
+          <div class="form-check">
+            <input class="form-check-input"
+                   id="download_local"
+                   checked="checked"
+                   name="download_to_server:int"
+                   type="radio"
+                   value="0"
+            />
+            <label class="form-check-label"
+                   for="download_local"
+                   i18n:translate=""
+            >
                   Download to local machine
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="download_to_server:int" value="1" id="download_server">
-                <label for="download_server" class="form-check-label" i18n:translate="">
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input"
+                   id="download_server"
+                   name="download_to_server:int"
+                   type="radio"
+                   value="1"
+            />
+            <label class="form-check-label"
+                   for="download_server"
+                   i18n:translate=""
+            >
                   Save to file on server
-                </label>
-              </div>
-            </div>
+            </label>
+          </div>
+        </div>
 
-            <div class="formControls" class="form-group">
-                <button class="btn btn-primary submit-widget button-field context"
-                        type="submit" name="form.submitted" value="Export" tal:content="python: view.title" i18n:attributes="value" i18n:translate="">Export
-                </button>
-            </div>
-        </form>
+        <div class="form-group">
+          <button class="btn btn-primary submit-widget button-field context"
+                  name="form.submitted"
+                  type="submit"
+                  value="Export"
+                  tal:content="python: view.title"
+                  i18n:attributes="value"
+                  i18n:translate=""
+          >Export
+          </button>
+        </div>
+      </form>
 
-        <div metal:use-macro="context/@@exportimport_links/links">
+      <div metal:use-macro="context/@@exportimport_links/links">
           Links to all exports and imports
-        </div>
+      </div>
 
-        <div tal:define="help_text python: getattr(view, 'help_text', None)"
-             tal:condition="python: help_text">
-          <h3 i18n:translate="">Help</h3>
-          <div tal:replace="structure python: help_text"></div>
-        </div>
+      <div tal:define="
+             help_text python: getattr(view, 'help_text', None);
+           "
+           tal:condition="python: help_text"
+      >
+        <h3 i18n:translate="">Help</h3>
+        <div tal:replace="structure python: help_text"></div>
+      </div>
 
     </tal:main-macro>
-</div>
+  </div>
 
 </html>

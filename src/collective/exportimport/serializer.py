@@ -1,18 +1,20 @@
-# -*- coding: utf-8 -*-
+from collective.exportimport import get_version
+from collective.exportimport import PackageNotFoundError
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IPathBlobsMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
 from collective.exportimport.interfaces import ITalesField
-from hurry.filesize import size
 from plone.app.textfield.interfaces import IRichText
+from plone.base.utils import human_readable_size
 from plone.dexterity.interfaces import IDexterityContent
-from plone.namedfile.interfaces import INamedFileField, INamedBlobFileField, INamedImageField, INamedBlobImageField
+from plone.namedfile.interfaces import INamedBlobFileField
+from plone.namedfile.interfaces import INamedBlobImageField
+from plone.namedfile.interfaces import INamedFileField
 from plone.namedfile.interfaces import INamedImageField
 from plone.restapi.behaviors import IBlocks
 from plone.restapi.interfaces import IFieldSerializer
 from plone.restapi.interfaces import IJsonCompatible
-from plone.restapi.serializer.blocks import BlocksJSONFieldSerializer
 from plone.restapi.serializer.converters import json_compatible
 from plone.restapi.serializer.dxfields import DefaultFieldSerializer
 from plone.schema import IJSONField
@@ -28,35 +30,33 @@ from zope.schema.interfaces import IVocabularyTokenized
 
 import base64
 import logging
-import pkg_resources
-import six
 
 try:
-    pkg_resources.get_distribution("Products.Archetypes")
-except pkg_resources.DistributionNotFound:
+    get_version("Products.Archetypes")
+except PackageNotFoundError:
     HAS_AT = False
 else:
     HAS_AT = True
 
 
 try:
-    pkg_resources.get_distribution("Products.TALESField")
-except pkg_resources.DistributionNotFound:
+    get_version("Products.TALESField")
+except PackageNotFoundError:
     HAS_TALES = False
 else:
     HAS_TALES = True
 
 
 try:
-    pkg_resources.get_distribution("plone.app.blob")
-except pkg_resources.DistributionNotFound:
+    get_version("plone.app.blob")
+except PackageNotFoundError:
     HAS_BLOB = False
 else:
     HAS_BLOB = True
 
 try:
-    pkg_resources.get_distribution("plone.app.contenttypes")
-except pkg_resources.DistributionNotFound:
+    get_version("plone.app.contenttypes")
+except PackageNotFoundError:
     HAS_PAC = False
 else:
     HAS_PAC = True
@@ -134,9 +134,9 @@ class RichttextFieldSerializerWithRawText(DefaultFieldSerializer):
         if value:
             output = value.raw
             return {
-                u"data": json_compatible(output),
-                u"content-type": json_compatible(value.mimeType),
-                u"encoding": json_compatible(value.encoding),
+                "data": json_compatible(output),
+                "content-type": json_compatible(value.mimeType),
+                "encoding": json_compatible(value.encoding),
             }
 
 
@@ -221,8 +221,8 @@ if HAS_AT:
     from Products.Archetypes.interfaces.field import ITextField
 
     if HAS_TALES:
-        from zope.interface import classImplements
         from Products.TALESField._field import TALESString
+        from zope.interface import classImplements
 
         # Products.TalesField does not implements any interface
         # we mark the field class to let queryMultiAdapter intercept
@@ -246,8 +246,8 @@ if HAS_AT:
             data = image.data.data if isinstance(image.data, Pdata) else image.data
             if len(data) > IMAGE_SIZE_WARNING:
                 logger.info(
-                    u"Large image for {}: {}".format(
-                        self.context.absolute_url(), size(len(data))
+                    "Large image for {}: {}".format(
+                        self.context.absolute_url(), human_readable_size(len(data))
                     )
                 )
             result = {
@@ -283,8 +283,8 @@ if HAS_AT:
 
             if len(data) > FILE_SIZE_WARNING:
                 logger.info(
-                    u"Large file for {}: {}".format(
-                        self.context.absolute_url(), size(len(data))
+                    "Large file for {}: {}".format(
+                        self.context.absolute_url(), human_readable_size(len(data))
                     )
                 )
 
@@ -306,8 +306,8 @@ if HAS_AT:
             data = image.data.data if isinstance(image.data, Pdata) else image.data
             if len(data) > IMAGE_SIZE_WARNING:
                 logger.info(
-                    u"Large image for {}: {}".format(
-                        self.context.absolute_url(), size(len(data))
+                    "Large image for {}: {}".format(
+                        self.context.absolute_url(), human_readable_size(len(data))
                     )
                 )
             result = {
@@ -332,8 +332,8 @@ if HAS_AT:
             )
             if len(data) > FILE_SIZE_WARNING:
                 logger.info(
-                    u"Large File for {}: {}".format(
-                        self.context.absolute_url(), size(len(data))
+                    "Large File for {}: {}".format(
+                        self.context.absolute_url(), human_readable_size(len(data))
                     )
                 )
             result = {
@@ -429,7 +429,7 @@ if HAS_AT and HAS_PAC:
 
         def __call__(self, version=None, include_items=False):
             # 1. Get the default serialisation for AT content
-            item = super(SerializeTopicToJson, self).__call__(version=version)
+            item = super().__call__(version=version)
 
             # 2. Get querystring-registry
             query = []
@@ -488,7 +488,7 @@ if HAS_AT and HAS_PAC:
 
                 converter = CONVERTERS.get(type_)
                 if converter is None:
-                    msg = u"Unsupported criterion {0}".format(type_)
+                    msg = f"Unsupported criterion {type_}"
                     logger.error(msg)
                     raise ValueError(msg)
                 before = len(query)
@@ -496,7 +496,7 @@ if HAS_AT and HAS_PAC:
                     converter(query, criterion, registry)
                 except Exception:
                     logger.info(
-                        u"Error converting criterion %s",
+                        "Error converting criterion %s",
                         criterion.__dict__,
                         exc_info=True,
                     )
@@ -510,21 +510,21 @@ if HAS_AT and HAS_PAC:
                         query.append(fixed)
                     else:
                         logger.info(
-                            u"Check maybe broken collection %s",
+                            "Check maybe broken collection %s",
                             self.context.absolute_url(),
                         )
 
             # 4. So some manual fixes in the migrated query
             indexes_to_fix = [
-                u"portal_type",
-                u"review_state",
-                u"Creator",
-                u"Subject",
+                "portal_type",
+                "review_state",
+                "Creator",
+                "Subject",
             ]
             operator_mapping = {
                 # old -> new
-                u"plone.app.querystring.operation.selection.is": u"plone.app.querystring.operation.selection.any",
-                u"plone.app.querystring.operation.string.is": u"plone.app.querystring.operation.selection.any",
+                "plone.app.querystring.operation.selection.is": "plone.app.querystring.operation.selection.any",
+                "plone.app.querystring.operation.string.is": "plone.app.querystring.operation.selection.any",
             }
             fixed_query = []
             for crit in query:
@@ -535,7 +535,7 @@ if HAS_AT and HAS_PAC:
                     for old_operator, new_operator in operator_mapping.items():
                         if crit["o"] == old_operator:
                             crit["o"] = new_operator
-                if crit["o"] == u"plone.app.querystring.operation.string.currentUser":
+                if crit["o"] == "plone.app.querystring.operation.string.currentUser":
                     crit["v"] = ""
                 fixed_query.append(crit)
             query = fixed_query
@@ -667,18 +667,8 @@ class ExportingBlocksJSONFieldSerializer(DefaultFieldSerializer):
     """
 
 
-if six.PY2:
-
-    @adapter(long)
-    @implementer(IJsonCompatible)
-    def long_converter(value):
-        # convert long (py2 only)
-        return int(str(value))
-
-else:
-
-    @adapter(int)
-    @implementer(IJsonCompatible)
-    def long_converter(value):
-        # same as default_converter for py3
-        return value
+@adapter(int)
+@implementer(IJsonCompatible)
+def long_converter(value):
+    # same as default_converter for py3
+    return value

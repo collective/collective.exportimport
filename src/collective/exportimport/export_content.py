@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
 from Acquisition import aq_base
 from App.config import getConfiguration
 from collective.exportimport import _
 from collective.exportimport import config
+from collective.exportimport import get_version
+from collective.exportimport import PackageNotFoundError
 from collective.exportimport.interfaces import IBase64BlobsMarker
 from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IPathBlobsMarker
@@ -30,13 +31,11 @@ from zope.schema import getFields
 import json
 import logging
 import os
-import pkg_resources
-import six
 import tempfile
 
 try:
-    pkg_resources.get_distribution("Products.Archetypes")
-except pkg_resources.DistributionNotFound:
+    get_version("Products.Archetypes")
+except PackageNotFoundError:
     ReferenceField = None
     IBaseObject = None
     HAS_AT = False
@@ -47,8 +46,8 @@ else:
     HAS_AT = True
 
 try:
-    pkg_resources.get_distribution("plone.dexterity")
-except pkg_resources.DistributionNotFound:
+    get_version("plone.dexterity")
+except PackageNotFoundError:
     IDexterityContent = None
     iterSchemata = None
     HAS_DX = False
@@ -59,8 +58,8 @@ else:
     HAS_DX = True
 
 try:
-    pkg_resources.get_distribution("plone.app.contenttypes")
-except pkg_resources.DistributionNotFound:
+    get_version("plone.app.contenttypes")
+except PackageNotFoundError:
     ICollection = None
     HAS_PAC = False
 else:
@@ -69,8 +68,8 @@ else:
     HAS_PAC = True
 
 try:
-    pkg_resources.get_distribution("z3c.relationfield")
-except pkg_resources.DistributionNotFound:
+    get_version("z3c.relationfield")
+except PackageNotFoundError:
     IRelationChoice = None
     IRelationList = None
     HAS_RELATIONS = False
@@ -142,7 +141,7 @@ class ExportContent(BrowserView):
 
         self.depth = int(depth)
         self.depth_options = (
-            ("-1", _(u"unlimited")),
+            ("-1", _("unlimited")),
             ("0", "0"),
             ("1", "1"),
             ("2", "2"),
@@ -157,9 +156,9 @@ class ExportContent(BrowserView):
         )
         self.include_blobs = int(include_blobs)
         self.include_blobs_options = (
-            ("0", _(u"as download urls")),
-            ("1", _(u"as base-64 encoded strings")),
-            ("2", _(u"as blob paths")),
+            ("0", _("as download urls")),
+            ("1", _("as base-64 encoded strings")),
+            ("2", _("as blob paths")),
         )
         self.include_revisions = include_revisions
         self.write_errors = write_errors or self.request.form.get("write_errors")
@@ -171,7 +170,7 @@ class ExportContent(BrowserView):
 
         if not self.portal_type:
             api.portal.show_message(
-                _(u"Select at least one type to export"), self.request
+                _("Select at least one type to export"), self.request
             )
             return self.template()
 
@@ -197,7 +196,7 @@ class ExportContent(BrowserView):
                 filename = self.portal_type[0]
             else:
                 filename = self.path.split("/")[-1]
-            filename = "{}.json".format(filename)
+            filename = f"{filename}.json"
 
         self.errors = []
         content_generator = self.export_content()
@@ -223,7 +222,7 @@ class ExportContent(BrowserView):
 
             self.start()
             for number, datum in enumerate(content_generator, start=1):
-                filename = "{}.json".format(number)
+                filename = f"{number}.json"
                 filepath = os.path.join(directory, filename)
                 with open(filepath, "w") as f:
                     json.dump(datum, f, sort_keys=True, indent=4)
@@ -232,7 +231,7 @@ class ExportContent(BrowserView):
                     errors = {"unexported_paths": self.errors}
                     with open(os.path.join(directory, "errors.json"), "w") as f:
                         json.dump(errors, f, indent=4)
-            msg = _(u"Exported {} items ({}) to {} with {} errors").format(
+            msg = _("Exported {} items ({}) to {} with {} errors").format(
                 number, ", ".join(self.portal_type), directory, len(self.errors)
             )
             logger.info(msg)
@@ -271,7 +270,7 @@ class ExportContent(BrowserView):
                         errors = {"unexported_paths": self.errors}
                         json.dump(errors, f, indent=4)
                     f.write("]")
-            msg = _(u"Exported {} items ({}) as {} to {} with {} errors").format(
+            msg = _("Exported {} items ({}) as {} to {} with {} errors").format(
                 number,
                 ", ".join(self.portal_type),
                 filename,
@@ -305,7 +304,7 @@ class ExportContent(BrowserView):
                         errors = {"unexported_paths": self.errors}
                         json.dump(errors, f, indent=4)
                     f.write("]")
-                msg = _(u"Exported {} {} with {} errors").format(
+                msg = _("Exported {} {} with {} errors").format(
                     number, self.portal_type, len(self.errors)
                 )
                 logger.info(msg)
@@ -315,7 +314,7 @@ class ExportContent(BrowserView):
                 response.setHeader("content-length", f.tell())
                 response.setHeader(
                     "content-disposition",
-                    'attachment; filename="{0}"'.format(filename),
+                    f'attachment; filename="{filename}"',
                 )
                 if self.include_blobs == 1:
                     # remove marker interface
@@ -355,7 +354,7 @@ class ExportContent(BrowserView):
         query = self.build_query()
         catalog = api.portal.get_tool("portal_catalog")
         brains = catalog.unrestrictedSearchResults(**query)
-        logger.info(u"Exporting {} {}".format(len(brains), self.portal_type))
+        logger.info(f"Exporting {len(brains)} {self.portal_type}")
 
         # Override richtext serializer to export links using resolveuid/xxx
         alsoProvides(self.request, IRawRichTextMarker)
@@ -373,16 +372,16 @@ class ExportContent(BrowserView):
                 continue
 
             if not index % 100:
-                logger.info(u"Handled {} items...".format(index))
+                logger.info(f"Handled {index} items...")
             try:
                 obj = brain.getObject()
             except Exception:
-                msg = u"Error getting brain {}".format(brain.getPath())
+                msg = f"Error getting brain {brain.getPath()}"
                 self.errors.append({"path": None, "message": msg})
                 logger.exception(msg, exc_info=True)
                 continue
             if obj is None:
-                msg = u"brain.getObject() is None {}".format(brain.getPath())
+                msg = f"brain.getObject() is None {brain.getPath()}"
                 logger.error(msg)
                 self.errors.append({"path": None, "message": msg})
                 continue
@@ -404,7 +403,7 @@ class ExportContent(BrowserView):
 
                 yield item
             except Exception:
-                msg = u"Error exporting {}".format(obj.absolute_url())
+                msg = f"Error exporting {obj.absolute_url()}"
                 self.errors.append({"path": obj.absolute_url(), "message": msg})
                 logger.exception(msg, exc_info=True)
 
@@ -458,12 +457,12 @@ class ExportContent(BrowserView):
 
         item = self.global_dict_hook(item, obj)
         if not item:
-            logger.info(u"Skipping %s", obj.absolute_url())
+            logger.info("Skipping %s", obj.absolute_url())
             return
 
         item = self.custom_dict_hook(item, obj)
         if not item:
-            logger.info(u"Skipping %s", obj.absolute_url())
+            logger.info("Skipping %s", obj.absolute_url())
             return
 
         return item
@@ -479,13 +478,13 @@ class ExportContent(BrowserView):
         Use this to modify or skip the serialized data by type.
         Return a dict or None if you want to skip this particular object.
         """
-        hook = getattr(self, "dict_hook_{}".format(self.safe_portal_type), None)
+        hook = getattr(self, f"dict_hook_{self.safe_portal_type}", None)
         if hook and callable(hook):
             item = hook(item, obj)
         return item
 
     def update_data_for_migration(self, item, obj):
-        """Update serialized data to optimze use for migrations.
+        """Update serialized data to optimize use for migrations.
 
         1. Drop unused data
         2. Remove all relationfields (done with the serializer relationvalue_converter)
@@ -602,7 +601,7 @@ class ExportContent(BrowserView):
         content_history_viewlet.site_url = ""
         try:
             full_history = content_history_viewlet.fullHistory() or []
-        except:
+        except Exception:
             logger.info("Could not get history for %s", item["@id"], exc_info=True)
             full_history = []
         history = [i for i in full_history if i["type"] == "versioning"]
@@ -653,6 +652,6 @@ def migrate_field(item, old, new):
 
 def safe_bytes(value, encoding="utf-8"):
     """Convert text to bytes of the specified encoding."""
-    if isinstance(value, six.text_type):
+    if isinstance(value, str):
         value = value.encode(encoding)
     return value

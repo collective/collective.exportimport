@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 from collective.exportimport import config
-from collective.exportimport.testing import (
-    COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,  # noqa: E501,
+from collective.exportimport.testing import (  # noqa: E501,
+    COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING,
 )
 from OFS.interfaces import IOrderedContainer
 from plone import api
@@ -20,7 +19,6 @@ from zope.lifecycleevent import modified
 import json
 import os
 import shutil
-import six
 import tempfile
 import transaction
 import unittest
@@ -74,7 +72,7 @@ class TestExport(unittest.TestCase):
         browser.handleErrors = False
         browser.addHeader(
             "Authorization",
-            "Basic {0}:{1}".format(SITE_OWNER_NAME, SITE_OWNER_PASSWORD),
+            f"Basic {SITE_OWNER_NAME}:{SITE_OWNER_PASSWORD}",
         )
         url = "/".join([self.layer["portal"].absolute_url(), page])
         browser.open(url)
@@ -141,8 +139,8 @@ class TestExport(unittest.TestCase):
         # By default, we adapt the data for migration.  This means some data
         # from the standard REST API call should not be there.
         keys = sorted(info.keys())
-        self.assertNotIn(u"@components", keys)
-        self.assertNotIn(u"next_item", keys)
+        self.assertNotIn("@components", keys)
+        self.assertNotIn("next_item", keys)
 
     def test_export_content_document_without_migration(self):
         # First create some content.
@@ -183,8 +181,8 @@ class TestExport(unittest.TestCase):
 
         # Now all the standard REST API keys should be there.
         keys = sorted(info.keys())
-        self.assertIn(u"@components", keys)
-        self.assertIn(u"next_item", keys)
+        self.assertIn("@components", keys)
+        self.assertIn("next_item", keys)
 
     def test_export_collection(self):
         # First create some content.
@@ -511,9 +509,9 @@ class TestExport(unittest.TestCase):
             data,
             [
                 {
-                    u"to_uuid": doc2.UID(),
-                    u"relationship": u"relatedItems",
-                    u"from_uuid": doc1.UID(),
+                    "to_uuid": doc2.UID(),
+                    "relationship": "relatedItems",
+                    "from_uuid": doc1.UID(),
                 }
             ],
         )
@@ -527,7 +525,7 @@ class TestExport(unittest.TestCase):
         )
         conversation = IConversation(doc1)
         comment = createObject("plone.Comment")
-        comment.text = u"Comment text"
+        comment.text = "Comment text"
         conversation.addComment(comment)
         transaction.commit()
 
@@ -632,8 +630,8 @@ class TestExport(unittest.TestCase):
         self.assertDictEqual(
             data,
             {
-                u"/plone/doc1": u"/plone/doc1-moved",
-                u"/plone/doc2": u"/plone/doc2-moved",
+                "/plone/doc1": "/plone/doc1-moved",
+                "/plone/doc2": "/plone/doc2-moved",
             },
         )
 
@@ -672,11 +670,6 @@ class TestExport(unittest.TestCase):
         portal = self.layer["portal"]
         request = self.layer["request"]
         login(app, SITE_OWNER_NAME)
-        if six.PY2:
-            # in Plone 4.3 this is somehow not set...
-            IAnnotations(request)[
-                "plone.app.versioningbehavior-changeNote"
-            ] = u"initial_version_changeNote"
         doc1 = api.content.create(
             container=portal,
             type="Document",
@@ -698,16 +691,16 @@ class TestExport(unittest.TestCase):
             description="A Description",
         )
 
-        doc1.title = u"Document 1 with changed title"
+        doc1.title = "Document 1 with changed title"
         modified(doc1)
-        doc2.title = u"Document 2 with changed title"
-        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"Föö bar"
+        doc2.title = "Document 2 with changed title"
+        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = "Föö bar"
         modified(doc2)
 
-        doc2.description = u"New description in revision 3"
-        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"I am new!"
+        doc2.description = "New description in revision 3"
+        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = "I am new!"
         modified(doc2)
-        folder1.title = u"Folder 1 with changed title"
+        folder1.title = "Folder 1 with changed title"
         modified(folder1)
 
         transaction.commit()
@@ -748,19 +741,19 @@ class TestExport(unittest.TestCase):
         self.assertEqual(len(versions), 2)
 
         # check first version
-        self.assertEqual(versions["0"]["title"], u"Document 2")
-        self.assertEqual(versions["0"]["description"], u"A Description")
-        self.assertEqual(versions["0"]["changeNote"], u"initial_version_changeNote")
+        self.assertEqual(versions["0"]["title"], "Document 2")
+        self.assertEqual(versions["0"]["description"], "A Description")
+        self.assertEqual(versions["0"]["changeNote"], "initial_version_changeNote")
 
         # check version 2
-        self.assertEqual(versions["1"]["title"], u"Document 2 with changed title")
-        self.assertEqual(versions["1"]["description"], u"A Description")
-        self.assertEqual(versions["1"]["changeNote"], u"Föö bar")
+        self.assertEqual(versions["1"]["title"], "Document 2 with changed title")
+        self.assertEqual(versions["1"]["description"], "A Description")
+        self.assertEqual(versions["1"]["changeNote"], "Föö bar")
 
         # final/current version is the item itself
-        self.assertEqual(item["title"], u"Document 2 with changed title")
-        self.assertEqual(item["description"], u"New description in revision 3")
-        self.assertEqual(item["changeNote"], u"I am new!")
+        self.assertEqual(item["title"], "Document 2 with changed title")
+        self.assertEqual(item["description"], "New description in revision 3")
+        self.assertEqual(item["changeNote"], "I am new!")
 
     def test_export_blob_as_base64(self):
         # First create some content with blobs.
@@ -776,9 +769,9 @@ class TestExport(unittest.TestCase):
             container=portal,
             type="File",
             id="file1",
-            title=u"File 1",
+            title="File 1",
         )
-        file1.file = NamedBlobFile(data=file_data, filename=u"file.pdf")
+        file1.file = NamedBlobFile(data=file_data, filename="file.pdf")
         transaction.commit()
 
         # Now export
@@ -827,9 +820,9 @@ class TestExport(unittest.TestCase):
             container=portal,
             type="File",
             id="file1",
-            title=u"File 1",
+            title="File 1",
         )
-        file1.file = NamedBlobFile(data=file_data, filename=u"file.pdf")
+        file1.file = NamedBlobFile(data=file_data, filename="file.pdf")
         transaction.commit()
 
         # Now export

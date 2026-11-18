@@ -1,6 +1,5 @@
 import os
 
-
 # Central directory for storing exports and reading imports.
 # Useful when you want to export content from one Plone Site
 # to another on the same server.

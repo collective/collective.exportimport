@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 from App.config import getConfiguration
 from collective.exportimport import config
 from collective.exportimport.testing import COLLECTIVE_EXPORTIMPORT_FUNCTIONAL_TESTING
 from DateTime import DateTime
 from OFS.interfaces import IOrderedContainer
 from plone import api
+from plone.app.discussion.interfaces import IConversation
 from plone.app.redirector.interfaces import IRedirectionStorage
 from plone.app.testing import login
 from plone.app.testing import SITE_OWNER_NAME
@@ -18,14 +18,13 @@ from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFPlone.tests import dummy
 from time import sleep
 from zope.annotation.interfaces import IAnnotations
+from zope.component import createObject
 from zope.component import getUtility
 from zope.lifecycleevent import modified
-from plone.app.discussion.interfaces import IConversation
-from zope.component import createObject
+
 import json
 import os
 import shutil
-import six
 import tempfile
 import transaction
 import unittest
@@ -78,38 +77,38 @@ class TestImport(unittest.TestCase):
             container=portal,
             type="Link",
             id="blog",
-            title=u"Blog",
+            title="Blog",
         )
         self.about = api.content.create(
             container=portal,
             type="Folder",
             id="about",
-            title=u"About",
+            title="About",
         )
         self.events = api.content.create(
             container=portal,
             type="Folder",
             id="events",
-            title=u"Events",
+            title="Events",
         )
         self.team = api.content.create(
             container=self.about,
             type="Document",
             id="team",
-            title=u"Team",
+            title="Team",
         )
         self.contact = api.content.create(
             container=self.about,
             type="Document",
             id="contact",
-            title=u"Contact",
+            title="Contact",
         )
         self.image = api.content.create(
             container=portal,
             type="Image",
-            title=u"Image",
+            title="Image",
             id="image",
-            image=NamedImage(dummy.Image(), "image/gif", u"test.gif"),
+            image=NamedImage(dummy.Image(), "image/gif", "test.gif"),
         )
 
     def remove_demo_content(self):
@@ -157,7 +156,7 @@ class TestImport(unittest.TestCase):
         browser.handleErrors = False
         browser.addHeader(
             "Authorization",
-            "Basic {0}:{1}".format(SITE_OWNER_NAME, SITE_OWNER_PASSWORD),
+            f"Basic {SITE_OWNER_NAME}:{SITE_OWNER_PASSWORD}",
         )
         url = "/".join([self.layer["portal"].absolute_url(), page])
         browser.open(url)
@@ -606,7 +605,7 @@ class TestImport(unittest.TestCase):
         transaction.commit()
         self.assertNotIn("doc1", portal.contentIds())
 
-        # Now import it programatically and return state as JSON
+        # Now import it programmatically and return state as JSON
         import_view = portal.restrictedTraverse("@@import_content")
         self.layer["request"].form["form.submitted"] = True
         return_json = json.loads(
@@ -626,6 +625,7 @@ class TestImport(unittest.TestCase):
 
     def test_import_content_from_central_directory(self):
         from collective.exportimport import config
+
         import tempfile
 
         # First create some content.
@@ -739,7 +739,7 @@ class TestImport(unittest.TestCase):
             container=self.about,
             type="Collection",
             id="collection",
-            title=u"Collection",
+            title="Collection",
         )
         # constrain self.about to only allow documents
         constrains = ISelectableConstrainTypes(self.about)
@@ -753,7 +753,7 @@ class TestImport(unittest.TestCase):
                 container=self.about,
                 type="Collection",
                 id="collection2",
-                title=u"Collection 2",
+                title="Collection 2",
             )
         transaction.commit()
 
@@ -797,7 +797,7 @@ class TestImport(unittest.TestCase):
                 container=portal["about"],
                 type="Collection",
                 id="collection2",
-                title=u"Collection 2",
+                title="Collection 2",
             )
 
     def test_import_workflow_history(self):
@@ -865,9 +865,9 @@ class TestImport(unittest.TestCase):
         self.image = api.content.create(
             container=portal,
             type="Image",
-            title=u"Image",
+            title="Image",
             id="image",
-            image=NamedBlobImage(image_data, "image/gif", u"test.gif"),
+            image=NamedBlobImage(image_data, "image/gif", "test.gif"),
         )
         self.assertIn("image", portal.contentIds())
         transaction.commit()
@@ -959,7 +959,7 @@ class TestImport(unittest.TestCase):
     def test_import_defaultpage_for_site(self):
         # Check that the sample format uses the expected string
         browser = self.open_page("@@import_defaultpages")
-        self.assertIn('"uuid": "{}",'.format(config.SITE_ROOT), browser.contents)
+        self.assertIn(f'"uuid": "{config.SITE_ROOT}",', browser.contents)
 
         # First create some content.
         app = self.layer["app"]
@@ -1280,45 +1280,40 @@ class TestImport(unittest.TestCase):
         portal = self.layer["portal"]
         request = self.layer["request"]
         login(app, SITE_OWNER_NAME)
-        if six.PY2:
-            # in Plone 4.3 this is somehow not set...
-            IAnnotations(request)[
-                "plone.app.versioningbehavior-changeNote"
-            ] = u"initial_version_changeNote"
         doc1 = api.content.create(
             container=portal,
             type="Document",
             id="doc1",
-            title=u"Document 1",
-            description=u"A Description",
+            title="Document 1",
+            description="A Description",
         )
         folder1 = api.content.create(
             container=portal,
             type="Folder",
             id="folder1",
-            title=u"Folder 1",
+            title="Folder 1",
         )
         doc2 = api.content.create(
             container=folder1,
             type="Document",
             id="doc2",
-            title=u"Document 2",
-            description=u"A Description",
+            title="Document 2",
+            description="A Description",
         )
         modified(doc1)
         modified(folder1)
         modified(doc2)
 
-        doc1.title = u"Document 1 with changed title"
+        doc1.title = "Document 1 with changed title"
         modified(doc1)
-        doc2.title = u"Document 2 with changed title"
-        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"Föö bar"
+        doc2.title = "Document 2 with changed title"
+        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = "Föö bar"
         modified(doc2)
 
-        doc2.description = u"New description in revision 3"
-        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = u"I am new!"
+        doc2.description = "New description in revision 3"
+        IAnnotations(request)["plone.app.versioningbehavior-changeNote"] = "I am new!"
         modified(doc2)
-        folder1.title = u"Folder 1 with changed title"
+        folder1.title = "Folder 1 with changed title"
         modified(folder1)
 
         transaction.commit()
@@ -1327,7 +1322,7 @@ class TestImport(unittest.TestCase):
         oldest = repo_tool.getHistory(doc2)._retrieve(
             doc2, 0, preserve=[], countPurged=False
         )
-        self.assertEqual(oldest.object.title, u"Document 2")
+        self.assertEqual(oldest.object.title, "Document 2")
 
         # Now export complete portal.
         browser = self.open_page("@@export_content")
@@ -1379,30 +1374,24 @@ class TestImport(unittest.TestCase):
         self.assertIn("doc1", portal.contentIds())
         self.assertEqual(portal["folder1"].portal_type, "Folder")
         doc2 = portal["folder1"]["doc2"]
-        self.assertEqual(doc2.title, u"Document 2 with changed title")
-        self.assertEqual(doc2.description, u"New description in revision 3")
+        self.assertEqual(doc2.title, "Document 2 with changed title")
+        self.assertEqual(doc2.description, "New description in revision 3")
 
         history = repo_tool.getHistoryMetadata(doc2)
         self.assertEqual(history.getLength(countPurged=True), 4)
 
-        if six.PY2:
-            # In 5.1 and 5.0 on py2 this test sometimes fails in gh-actions, locally they pass. Duh!
-            return
-
         history_meta = history.retrieve(2)
-        self.assertEqual(
-            history_meta["metadata"]["sys_metadata"]["comment"], u"Föö bar"
-        )
+        self.assertEqual(history_meta["metadata"]["sys_metadata"]["comment"], "Föö bar")
 
         oldest = repo_tool.getHistory(doc2)._retrieve(
             doc2, 0, preserve=[], countPurged=False
         )
-        self.assertEqual(oldest.object.title, u"Document 2")
+        self.assertEqual(oldest.object.title, "Document 2")
 
         repo_tool.revert(portal["folder1"]["doc2"], 0)
         doc2 = portal["folder1"]["doc2"]
-        self.assertEqual(doc2.title, u"Document 2")
-        self.assertEqual(doc2.description, u"A Description")
+        self.assertEqual(doc2.title, "Document 2")
+        self.assertEqual(doc2.description, "A Description")
 
     def test_reset_dates(self):
         """Reset original modification and creation dates"""

@@ -1,8 +1,7 @@
-# -*- coding: UTF-8 -*-
 from Acquisition import aq_parent
 from bs4 import BeautifulSoup
-from collective.exportimport import _
 from collections import defaultdict
+from collective.exportimport import _
 from logging import getLogger
 from plone import api
 from plone.api.exc import InvalidParameterError
@@ -16,12 +15,11 @@ from plone.portlets.interfaces import IPortletManager
 from plone.uuid.interfaces import IUUID
 from Products.CMFCore.interfaces import IContentish
 from Products.Five import BrowserView
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 from zope.component import getUtilitiesFor
 from zope.component import queryMultiAdapter
 from zope.interface import providedBy
 
-import six
 import transaction
 
 logger = getLogger(__name__)
@@ -40,7 +38,7 @@ FALLBACK_VARIANT = "medium"
 
 class FixHTML(BrowserView):
     def __call__(self):
-        self.title = _(u"Fix links to content and images in richtext")
+        self.title = _("Fix links to content and images in richtext")
         if not self.request.form.get("form.submitted", False):
             return self.index()
         commit = self.request.form.get("form.commit", True)
@@ -48,18 +46,18 @@ class FixHTML(BrowserView):
         msg = []
 
         fix_count = fix_html_in_content_fields(context=self.context, commit=commit)
-        msg.append(_(u"Fixed HTML for {} fields in content items").format(fix_count))
+        msg.append(_("Fixed HTML for {} fields in content items").format(fix_count))
         logger.info(msg[-1])
 
         fix_count = fix_html_in_portlets(context=self.context)
-        msg.append(_(u"Fixed HTML for {} portlets").format(fix_count))
+        msg.append(_("Fixed HTML for {} portlets").format(fix_count))
         logger.info(msg[-1])
 
         # TODO: Fix html in tiles
         # tiles = fix_html_in_tiles()
         # msg = u"Fixed html for {} tiles".format(tiles)
 
-        api.portal.show_message(u" ".join(m + u"." for m in msg), self.request)
+        api.portal.show_message(" ".join(m + "." for m in msg), self.request)
         return self.index()
 
 
@@ -139,13 +137,13 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
                 for old, new in IMAGE_SCALE_MAP.items():
                     # replace plone.app.imaging old scale names with new ones
                     path = path.replace(
-                        "/@@images/image/{old}".format(old=old),
-                        "/@@images/image/{new}".format(new=new),
+                        f"/@@images/image/{old}",
+                        f"/@@images/image/{new}",
                     )
                     # replace old AT traversing scales
                     path = path.replace(
-                        "/image_{old}".format(old=old),
-                        "/@@images/image/{new}".format(new=new),
+                        f"/image_{old}",
+                        f"/@@images/image/{new}",
                     )
 
                 scaled = False
@@ -180,11 +178,11 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
                     if attr == "src":
                         content_link["data-scale"] = scale
                 else:
-                    new_href = "resolveuid/{uuid}/@@images/image".format(uuid=uuid)
+                    new_href = f"resolveuid/{uuid}/@@images/image"
                     if attr == "src":
                         content_link["data-scale"] = ""
             else:
-                new_href = "resolveuid/{uuid}".format(uuid=uuid)
+                new_href = f"resolveuid/{uuid}"
                 if parsed_link.fragment:
                     new_href += "#" + parsed_link.fragment
                 if attr != "srcset":
@@ -208,7 +206,7 @@ def fix_tag_attr(soup, tag, attr, old_portal_url, obj=None):
                         "image-inline",
                     }
                     if image_aligns.isdisjoint(set(iklass)):
-                        # No image-align class is set, so we defaul to inline.
+                        # No image-align class is set, so we default to inline.
                         iklass.append("image-inline")
                     if "image-richtext" not in iklass:
                         iklass.append("image-richtext")
@@ -228,20 +226,17 @@ def find_object(base, path):
     When the target in the link is no content leave the link as is.
     It might be a link to a browser-view, form or script...
     """
-    if six.PY2 and isinstance(path, six.text_type):
-        path = path.encode("utf-8")
     if path.startswith("/"):
         # Make an absolute path relative to the portal root
         obj = api.portal.get()
         portal_path = obj.absolute_url_path() + "/"
-        if path.startswith(portal_path):
-            path = path[len(portal_path) :]
+        path = path.removeprefix(portal_path)
     else:
         obj = aq_parent(base)  # relative urls start at the parent...
 
     try:
         target = obj.unrestrictedTraverse(path)
-    except:
+    except Exception:
         return
     if IContentish.providedBy(target):
         return target
@@ -338,7 +333,7 @@ def fix_html_in_content_fields(
             )
             continue
         if obj is None:
-            logger.error(u"brain.getObject() is None %s", brain.getPath())
+            logger.error("brain.getObject() is None %s", brain.getPath())
             continue
         try:
             changed = False
@@ -356,7 +351,7 @@ def fix_html_in_content_fields(
                             clean_text = fixer(clean_text, obj)
                         except Exception:
                             logger.info(
-                                u"Error while fixing html of %s for %s",
+                                "Error while fixing html of %s for %s",
                                 fieldname,
                                 obj.absolute_url(),
                             )
@@ -372,7 +367,7 @@ def fix_html_in_content_fields(
                         setattr(obj, fieldname, textvalue)
                         changed = True
                         logger.debug(
-                            u"Fixed html for field %s of %s",
+                            "Fixed html for field %s of %s",
                             fieldname,
                             obj.absolute_url(),
                         )
@@ -380,13 +375,13 @@ def fix_html_in_content_fields(
             if changed:
                 fixed_items += 1
                 obj.reindexObject(idxs=("SearchableText",))
-        except:
+        except Exception:
             logger.exception("HTML not fixed for %s", brain.getPath(), exc_info=True)
 
         if fixed_items != 0 and not fixed_items % 1000:
             # Commit every 1000 changed items.
             logger.info(
-                u"Fix html for %s (%s) of %s items (changed %s fields in %s items)",
+                "Fix html for %s (%s) of %s items (changed %s fields in %s items)",
                 index,
                 round(index / total * 100, 2),
                 total,
@@ -397,7 +392,7 @@ def fix_html_in_content_fields(
                 transaction.commit()
 
     logger.info(
-        u"Finished fixing html in content fields (changed %s fields in %s items)",
+        "Finished fixing html in content fields (changed %s fields in %s items)",
         fixed_fields,
         fixed_items,
     )
@@ -468,7 +463,10 @@ def fix_html_in_portlets(context=None):
     if context is None:
         context = api.portal.get()
     fix_count = []
-    f = lambda obj, path: get_portlets(obj, path, fix_count)
+
+    def f(obj, path):
+        return get_portlets(obj, path, fix_count)
+
     context.ZopeFindAndApply(context, search_sub=True, apply_func=f)
     return len(fix_count)
 
@@ -527,7 +525,7 @@ def img_variant_fixer(text, obj=None, fallback_variant=None):
         tag["data-picturevariant"] = variant
 
         classes = tag.get("class", [])
-        new_class = "picture-variant-{}".format(variant)
+        new_class = f"picture-variant-{variant}"
         if new_class not in classes:
             classes.append(new_class)
             tag["class"] = classes
