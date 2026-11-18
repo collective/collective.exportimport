@@ -26,6 +26,10 @@ Changelog
   black, zpretty, codespell).
   [bsuttor]
 
+- Drop the ``hurry.filesize`` dependency: use ``plone.base.utils.human_readable_size``
+  for the large file and image log messages.
+  [bsuttor]
+
 - Fix importing revisions where the id of an object changed by always keeping the final id.
   [pbauer]
 

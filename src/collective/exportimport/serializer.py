@@ -5,8 +5,8 @@ from collective.exportimport.interfaces import IMigrationMarker
 from collective.exportimport.interfaces import IPathBlobsMarker
 from collective.exportimport.interfaces import IRawRichTextMarker
 from collective.exportimport.interfaces import ITalesField
-from hurry.filesize import size
 from plone.app.textfield.interfaces import IRichText
+from plone.base.utils import human_readable_size
 from plone.dexterity.interfaces import IDexterityContent
 from plone.namedfile.interfaces import INamedBlobFileField
 from plone.namedfile.interfaces import INamedBlobImageField
@@ -247,7 +247,7 @@ if HAS_AT:
             if len(data) > IMAGE_SIZE_WARNING:
                 logger.info(
                     "Large image for {}: {}".format(
-                        self.context.absolute_url(), size(len(data))
+                        self.context.absolute_url(), human_readable_size(len(data))
                     )
                 )
             result = {
@@ -284,7 +284,7 @@ if HAS_AT:
             if len(data) > FILE_SIZE_WARNING:
                 logger.info(
                     "Large file for {}: {}".format(
-                        self.context.absolute_url(), size(len(data))
+                        self.context.absolute_url(), human_readable_size(len(data))
                     )
                 )
 
@@ -307,7 +307,7 @@ if HAS_AT:
             if len(data) > IMAGE_SIZE_WARNING:
                 logger.info(
                     "Large image for {}: {}".format(
-                        self.context.absolute_url(), size(len(data))
+                        self.context.absolute_url(), human_readable_size(len(data))
                     )
                 )
             result = {
@@ -333,7 +333,7 @@ if HAS_AT:
             if len(data) > FILE_SIZE_WARNING:
                 logger.info(
                     "Large File for {}: {}".format(
-                        self.context.absolute_url(), size(len(data))
+                        self.context.absolute_url(), human_readable_size(len(data))
                     )
                 )
             result = {

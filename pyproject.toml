@@ -37,7 +37,6 @@ authors = [
 ]
 dependencies = [
     "beautifulsoup4",
-    "hurry.filesize",
     "ijson",
     "plone.api >= 1.8.4",
     "plone.app.contenttypes",
@@ -46,6 +45,7 @@ dependencies = [
     "plone.app.redirector",
     "plone.app.textfield",
     "plone.app.uuid",
+    "plone.base",
     "plone.dexterity",
     "plone.i18n",
     "plone.namedfile",
