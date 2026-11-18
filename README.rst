@@ -73,7 +73,8 @@ If you need help, see:
 Supported versions
 ------------------
 
-Version 2.x supports Plone 6.1 and 6.2 on Python 3.10 to 3.13, and is tested on each of them.
+Version 2.x supports Plone 6.1 on Python 3.10 to 3.13, and Plone 6.2 on Python 3.10 to 3.14.
+It is tested on each of them.
 It uses native namespace packages (PEP 420) and no longer calls ``pkg_resources``, which setuptools 84 (Plone 6.2.3) no longer ships.
 
 To export from Plone 4.3 to 6.0, or from Python 2, install version 1.x (``collective.exportimport < 2``) in the old site:

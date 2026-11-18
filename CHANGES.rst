@@ -6,8 +6,8 @@ Changelog
 ------------------
 
 - Breaking: migrate to PEP 420 native namespaces (setuptools 81 / Plone 6.2).
-  Support Plone 6.1 and 6.2 on Python 3.10 to 3.13 only: Plone 4.3 to 6.0 and
-  Python 2 are dropped (use 1.x to export from them).
+  Support Plone 6.1 on Python 3.10 to 3.13 and Plone 6.2 on Python 3.10 to 3.14
+  only: Plone 4.3 to 6.0 and Python 2 are dropped (use 1.x to export from them).
   [bsuttor]
 
 - Use ``importlib.metadata`` and ``importlib.resources`` instead of
